@@ -1,3 +1,40 @@
+import json
+import re
+
+def save_as_json(self, split_text, file_path, heading):
+    # Initialize an empty list to hold the chunks
+    chunks = []
+    
+    for i, text_chunk in enumerate(split_text):
+        # Clean the text chunk from unwanted characters
+        text_chunk = re.sub(r'[\x80-\x1F]+', '', str(text_chunk))
+        
+        # Create a dictionary with the chunk details
+        chunk_data = {
+            'heading': f'{heading} - Chunk {i + 1}',
+            'text': text_chunk
+        }
+        
+        # Append the chunk data to the chunks list
+        chunks.append(chunk_data)
+    
+    # Create a dictionary to hold the overall structure
+    data = {
+        'document_heading': heading,
+        'chunks': chunks
+    }
+    
+    # Save the data to a JSON file
+    with open(file_path, 'w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False, indent=4)
+    
+    print("Output saved as JSON successfully")
+
+# Example usage
+# Assuming `split_text` is a list of text chunks and `heading` is a string
+# save_as_json(split_text, 'output.json', 'Document Heading')
+
+
 absl-py==2.1.0
 anyio==4.3.0
 argon2-cffi==23.1.0
