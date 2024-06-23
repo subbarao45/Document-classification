@@ -1,4 +1,37 @@
 _prompt_template = """
+Objective: Extract distinct paragraphs related to the provided question from the document.
+
+Scope: Only consider the main body of the document. Exclude the Table of Contents, headers, and footers.
+
+Steps:
+1. Read through the entire document, starting from the first section in the given text after the Table of Contents and ending before any appendices or endnotes.
+2. Identify and count the distinct paragraphs where the content is relevant to the question: "{question}".
+3. Filter and extract these paragraphs, ensuring they match the context of the question.
+4. Provide the filtered content in the following JSON format:
+{
+    "FilteredContent": [
+        {
+            "Paragraph": "Relevant paragraph extracted from the document"
+        }
+    ]
+}
+
+The question is: {question}
+
+The text to analyze is:
+{paragraphs}
+"""
+
+
+
+
+
+
+
+
+
+
+_prompt_template = """
 Objective: Extract and filter relevant content related to the management fee calculation based on the provided question using the given text.
 
 Scope: Only consider the main body of the document. Exclude the Table of Contents, headers, and footers.
