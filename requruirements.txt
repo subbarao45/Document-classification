@@ -1,3 +1,71 @@
+_prompt_template = """
+Objective: Extract and filter relevant content based on the provided question using the given text.
+
+Scope: Only consider the main body of the document. Exclude the Table of Contents, headers, and footers.
+
+Steps:
+1. Read through the entire document, starting from the first section in {paragraphs} after the Table of Contents and ending before any appendices or endnotes.
+2. Identify the relevant sections that address the question: "{question}".
+3. Filter and extract the content from these sections based on the question, ensuring clarity and relevance.
+4. Return the response in the following JSON format:
+{
+    "FilteredContent": [
+        {
+            "Section": "<Section Name or Number>",
+            "Content": "<Relevant content extracted from the document>"
+        }
+    ]
+}
+
+The question is: {question}
+"""
+import os
+from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+
+def extract_filtered_content(pdf_text, _prompt_template, question):
+    # Initialize the AzureChatOpenAI model
+    llm = AzureChatOpenAI(temperature=0, deployment_name=os.environ["DEPLOYMENT_NAME"])
+    
+    # Create the prompt template
+    prompt_template = ChatPromptTemplate(
+        messages=[HumanMessagePromptTemplate.from_template(_prompt_template)],
+        input_variables=["paragraphs", "question"]
+    )
+    
+    # Initialize the LLMChain with the model and prompt template
+    llm_chain = LLMChain(
+        llm=llm,
+        prompt=prompt_template
+    )
+    
+    # Predict the output using the given paragraphs and question
+    output = llm_chain.predict(paragraphs=pdf_text, question=question)
+    
+    return output
+
+# Example usage
+pdf_text = """Your PDF text here. This should be a string containing the text extracted from your PDF document."""
+question = "Can you explain the structure, calculation, and reduction of the Management Fee for each Limited Partner and Series?"
+
+result = extract_filtered_content(pdf_text, _prompt_template, question)
+print("Final Result:", result)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.chains import LLMChain
