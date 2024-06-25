@@ -1,3 +1,60 @@
+
+
+import re
+import json
+
+# Noisy text containing embedded JSON-like structure
+text = '''
+json\n{\n
+
+"paragraph_1": the Fund the capital subscription set (a)\n
+
+"paragraph_2": any right to pa Related Firm) from the conduct ofthat of (and then only to the extent contemplated by this Agreement).
+
+"paragraph_3": The Limited Partners acknowledge and 10.7.2. Fund),
+
+any Portfolio Direct 35 55075046_36 65777438_1"\n}\n```'
+
+# Regular expression to extract the JSON-like content
+pattern = r'\{(?:[^{}]|(?R))*\}'
+
+# Extracting the JSON-like content
+match = re.search(pattern, text, re.DOTALL)
+
+if match:
+    json_like_content = match.group()
+    # Clean up the JSON-like content
+    json_like_content = re.sub(r'\\n', '\n', json_like_content)
+    json_like_content = json_like_content.replace('json', '').replace('```', '').strip()
+    
+    # Load as JSON object
+    try:
+        json_data = json.loads(json_like_content)
+        print(json_data)
+        
+        # Write to a JSON file
+        with open('output.json', 'w') as f:
+            json.dump(json_data, f, indent=4)
+        
+        print("JSON file 'output.json' has been created successfully.")
+    
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+    
+else:
+    print("No JSON-like structure found in the text.")
+
+
+
+
+
+
+
+
+
+
+
+
 _prompt_template = """
 Objective: Extract distinct paragraphs related to the provided question from the document.
 
