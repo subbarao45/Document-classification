@@ -1,3 +1,48 @@
+
+import json
+
+# Define the input string
+input_string = """
+(b) The Management Fee lu de any related profits)
+" paragraph_3": "and similar fees paid on behalf of the Fund, includ ing such expenses
+"paragraph_4": u al to (i) the Limited Partner's total Capital Contributions in respect of Realized
+"""
+
+# Clean and prepare the input string
+input_string = input_string.strip()
+
+# Create a dictionary to hold the key-value pairs
+data = {}
+
+# Split the input string by lines
+lines = input_string.split('\n')
+
+# Process the first line which doesn't have a key
+data["Paragraph_1"] = lines[0].strip()
+
+# Process the remaining lines to extract key-value pairs
+for line in lines[1:]:
+    key_value = line.split(':', 1)  # Split based on the first occurrence of ':'
+    if len(key_value) == 2:
+        key = key_value[0].strip().strip('" ')  # Remove leading/trailing spaces and quotes
+        value = key_value[1].strip().strip('" ')  # Remove leading/trailing spaces and quotes
+        data[key] = value
+
+# Define the output JSON file path
+json_file_path = "snippets.json"
+
+# Write the dictionary to a JSON file
+with open(json_file_path, 'w') as json_file:
+    json.dump(data, json_file, indent=4)
+
+print(f"JSON file '{json_file_path}' has been created successfully.")
+
+
+
+
+
+
+
 import json
 
 # Define the input string
