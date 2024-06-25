@@ -1,6 +1,45 @@
 
 import json
 
+# The given string response
+response = """ "paragraph_1": "31 55075046_36 65777438_1 (b) The Management Fee lu de any related profits)
+paragraph_3": "and similar fees paid on behalf of the Fund, includ ing such expenses
+
+paragraph_4": u al to (i) the Limited Partner's total Capital Contributions in respect of Realized """
+
+# Splitting the response into lines
+lines = response.strip().split('\n')
+
+# Initialize an empty dictionary to hold the JSON data
+json_data = {}
+
+# Iterate over each line and process it
+for line in lines:
+    # Splitting the key and value
+    if ': ' in line:
+        key, value = line.split(': ', 1)
+        # Removing any leading or trailing quotes and whitespace from key and value
+        key = key.strip().strip('"')
+        value = value.strip().strip('"')
+        # Assigning the key-value pair to the dictionary
+        json_data[key] = value
+
+# Convert the dictionary to a JSON string
+json_response = json.dumps(json_data, indent=4)
+
+# Printing the JSON response
+print(json_response)
+
+
+
+
+
+
+
+
+
+import json
+
 # Define the input string
 input_string = """
 (b) The Management Fee lu de any related profits)
