@@ -1,6 +1,26 @@
 
 import json
 
+# Step 1: Original string response
+response = '{"paragraph_1": "31 55075046_36 65777438_1 (b) The Management Fee lu de any related profits) paragraph_3": "and similar fees paid on behalf of the Fund, includ ing such expenses", "paragraph_4": "u al to (i) the Limited Partner\'s total Capital Contributions in respect of Realized"}'
+
+# Step 2: Parse the string into a JSON object
+try:
+    json_object = json.loads(response)
+except json.JSONDecodeError as e:
+    print("JSON decoding failed:", e)
+else:
+    # Step 3: Save the JSON object to a file
+    with open('response.json', 'w') as json_file:
+        json.dump(json_object, json_file, indent=4)
+    
+    print("JSON file created successfully.")
+
+
+
+
+import json
+
 # The given string response
 response = """ "paragraph_1": "31 55075046_36 65777438_1 (b) The Management Fee lu de any related profits)
 paragraph_3": "and similar fees paid on behalf of the Fund, includ ing such expenses
