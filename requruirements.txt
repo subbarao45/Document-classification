@@ -1,4 +1,26 @@
 
+Please generate a JSON object based on the following delimited input "#####". The JSON object must include the keys "management_fee", "paragraph_1", and "paragraph_2", with the corresponding values extracted from the input text. Ensure the JSON object is properly formatted, starting and ending correctly with curly braces and following proper JSON syntax.
+
+Input:
+#####
+management_fee: 2.5%
+paragraph_1: This is the first paragraph of the input text. It provides an introduction and context.
+paragraph_2: This is the second paragraph of the input text. It provides additional details and information.
+#####
+
+Expected JSON output:
+{
+  "management_fee": "2.5%",
+  "paragraph_1": "This is the first paragraph of the input text. It provides an introduction and context.",
+  "paragraph_2": "This is the second paragraph of the input text. It provides additional details and information."
+}
+
+
+
+
+
+
+
 import json
 
 # Step 1: Original string response
