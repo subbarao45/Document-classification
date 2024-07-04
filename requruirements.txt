@@ -1,4 +1,56 @@
 
+import json
+
+def clean_json_data(data):
+    """
+    Recursively remove newline characters from JSON data.
+    
+    :param data: JSON data (dict, list, or str)
+    :return: Cleaned JSON data
+    """
+    if isinstance(data, dict):
+        return {key: clean_json_data(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [clean_json_data(item) for item in data]
+    elif isinstance(data, str):
+        return data.replace('\n', ' ')
+    else:
+        return data
+
+def dump_json_file(json_file_path, json_data):
+    """
+    Dump the JSON file after removing newline characters.
+    
+    :param json_file_path: Path to the JSON file
+    :param json_data: JSON data to be dumped
+    :return: None
+    """
+    try:
+        cleaned_data = clean_json_data(json_data)
+        with open(json_file_path, "w") as json_file:
+            json.dump(cleaned_data, json_file, indent=4)
+        print(f"{json_file_path} created successfully!")
+    except Exception as e:
+        print(f"Failed to create {json_file_path}: {e}")
+
+# Example usage
+json_data = {
+    "keyTerms": [
+        "Affiliate",
+        "Closing Date",
+        "Direct Investment",
+        "General Partner"
+    ],
+    "description": "This is a description\nwith newlines\nthat should be removed."
+}
+
+dump_json_file("output.json", json_data)
+
+
+
+
+
+
 Please generate a JSON object based on the following delimited input "#####". The JSON object must include the keys "management_fee", "paragraph_1", and "paragraph_2", with the corresponding values extracted from the input text. Ensure the JSON object is properly formatted, starting and ending correctly with curly braces and following proper JSON syntax.
 
 Input:
