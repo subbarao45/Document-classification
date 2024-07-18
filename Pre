@@ -1,0 +1,51 @@
+import pandas as pd
+import json
+
+# Assuming ple_json_file_path and ground_truth_rouge_score are already defined
+# Replace ".json" with "Prescribed_language_score.json" in the file path
+ground_truth_rouge_score_path = ple_json_file_path.replace(".json", "Prescribed_language_score.json")
+
+print(ground_truth_rouge_score_path)
+
+# Dump the ground_truth_rouge_score to a JSON file
+with open(ground_truth_rouge_score_path, 'w') as fjson:
+    json.dump(ground_truth_rouge_score, fjson)
+
+print('Successfully dumped ground_truth_rouge_score json file')
+
+# Check the structure of ground_truth_rouge_score
+print(f"Structure of ground_truth_rouge_score: {type(ground_truth_rouge_score)}")
+if isinstance(ground_truth_rouge_score, list):
+    print(f"Example entry: {ground_truth_rouge_score[0]}")
+else:
+    print("ground_truth_rouge_score is not a list")
+
+# Create a DataFrame from the ground_truth_rouge_score dictionary
+ground_truth_rouge_score_df = pd.DataFrame(ground_truth_rouge_score)
+
+# Check the structure of the DataFrame
+print(f"DataFrame structure:\n{ground_truth_rouge_score_df.head()}")
+
+# Ensure the 'results' column exists and is a list
+if 'results' in ground_truth_rouge_score_df.columns and isinstance(ground_truth_rouge_score_df['results'].iloc[0], list):
+    # Explode the 'results' column
+    ground_truth_rouge_score_df = ground_truth_rouge_score_df.explode('results')
+
+    # Create a new DataFrame from the exploded 'results' column
+    score_df = pd.DataFrame(list(ground_truth_rouge_score_df["results"]))
+
+    # Reset index to avoid index errors during concatenation
+    ground_truth_rouge_score_df.reset_index(drop=True, inplace=True)
+    score_df.reset_index(drop=True, inplace=True)
+
+    # Concatenate the original DataFrame (without 'results' column) with the new DataFrame
+    final_score_df = pd.concat([ground_truth_rouge_score_df.drop(columns=["results"]), score_df], axis=1)
+
+    # Generate the CSV file name by replacing ".json" with ".csv" in the original path
+    csv_file_name = ground_truth_rouge_score_path.replace(".json", ".csv")
+
+    # Save the final DataFrame to a CSV file
+    final_score_df.to_csv(csv_file_name, index=False)
+    print(f"{csv_file_name} groundtruth scores saved successfully!")
+else:
+    print("Error: 'results' column not found or not in expected format.")
