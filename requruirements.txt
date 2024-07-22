@@ -1,3 +1,33 @@
+
+Hi team,
+
+From the start, I have faced issues with Zoom meetings that are still not resolved. Occasionally, the problem recurs. Additionally, I have encountered VDI issues where typing is delayed. This month, my VDI (DaaS DC3) stopped working, and I raised a ticket. They assigned me another DC3 PRI2, which worked until Saturday evening, but now I am facing VDI issues again.
+
+They have assigned me three VDIs: DaaS DC3 PRI (1), DaaS DC3 PRI (2), and DaaS GDC PRI. Instead of DC3 PRI (1), they provided DC3 PRI (2), which was working, but now it has been removed. I have also checked DC3 PRI (1) and DaaS GDC PRI, but they are not working either. To resolve this issue, I called the desktop support team at 08045248999 and explained my situation. They raised a ticket (ticket number: INC29179773). Previously, I faced VDI issues and raised different tickets as well. I can provide those ticket numbers if needed.
+
+How can we complete our work if we keep facing these issues? Please treat this as a high priority and provide a dedicated VDI for me.
+
+Thank you.
+
+
+
+
+
+
+Is this conversation helpful so far?
+
+
+
+
+
+
+ChatGPT can make mistakes. Check important
+
+
+
+
+
+
 import pandas as pd
 import json
 
