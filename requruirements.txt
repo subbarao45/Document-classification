@@ -1,3 +1,302 @@
+
+
+{
+  "version": 1,
+  "vars": {
+    "pm.azure.blob.connection": {
+      "auth_type": "MANAGED",
+      "mi_client_id": "5da05a4c-edb2-4f9f-8ad8-d11f0214f557",
+      "account_url": "https://npeedevgtsd01txtmrm.blob.core.windows.net",
+      "doc_container": "npeedevgtsd01txtmrm-strgcont-txtmrm-01"
+    },
+    "di.azure.blob.connection": {
+      "auth_type": "MANAGED",
+      "mi_client_id": "5da05a4c-edb2-4f9f-8ad8-d11f0214f557",
+      "account_url": "https://npeedevgtsd01txtmrm.blob.core.windows.net",
+      "doc_container": "npeedevgtsd01txtmrm-strgcont-txtmrm-01"
+    },
+    "input.document_path": {
+      "source": "AzureBlob",
+      "params": {
+        "connection": "{vars.pm.azure.blob.connection}",
+        "storage_location": "{payload.documents[0].storagePath.absolute_path}"
+      }
+    }
+  },
+  "artifacts": {
+    "pageDimensions": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "documentLayout": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "logicalChunks": {
+      "source": "AzureBlob",
+      "data": [],
+      "params": {
+        "connection": "{vars.di.azure.blob.connection}",
+        "absolute_location": "<path_to_file>",
+        "encoding": "utf_8"
+      },
+      "extant": false
+    },
+    "extractsUsingPrescribedLanguage": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "aiFilteredExtracts": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "keyTerms": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "regexFilteredDefinitions": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "keyTermDefinitions": {
+      "source": "Transient",
+      "data": {
+        "KeyTerm": [],
+        "KeyTerm2": []
+      },
+      "params": {},
+      "extant": true
+    },
+    "mFeesInterpretations": {
+      "source": "AzureBlob",
+      "data": [],
+      "params": {
+        "connection": "{vars.di.azure.blob.connection}",
+        "absolute_location": "<path_to_file>",
+        "encoding": "utf_8"
+      },
+      "extant": false
+    },
+    "keyTermInterpretations": {
+      "source": "AzureBlob",
+      "data": [],
+      "params": {
+        "connection": "{vars.di.azure.blob.connection}",
+        "absolute_location": "<path_to_file>",
+        "encoding": "utf_8"
+      },
+      "extant": false
+    },
+    "questions": {
+      "data": [
+        "Can you explain the structure, calculation, and reduction of the Management Fee for each Limited Partner and Series?",
+        "How does the Management Fee relate to Direct Investments, other fees, and the Fund's investments in Primary and Secondary Investee Funds?",
+        "Can you provide details on the Lead Investor's agreement, commitment, and understanding of Management Fees?",
+        "How are the Advisor Compensation, Management Fee, and Incentive Fee determined as per the agreement?",
+        "How are the Management Fees affected by the Fund's investment in any Primary Investee Fund or Secondary Investee Fund?",
+        "Can you explain the calculation, payment timing, and due dates of the Management Fees?",
+        "How are the Excess Start-Up Costs Reduction applied and how do they affect the Management Fees?",
+        "How are the payments of Management Fees handled by the General Partner for a Limited Partner's share with respect to a Class?",
+        "What are the details of the Management Fee as per different sections and programs?",
+        "How is the Management Fee calculated and reduced in relation to various investments and fees?",
+        "What types of fees will the Fund pay in connection with its investments?",
+        "How is the Management Fee calculated for each Limited Partner after specific dates or events?",
+        "What happens if one or more interest holders in a Designated Partner has a certain Capital Commitment?",
+        "How is the US dollar amount determined for a Portfolio Investment in a non-US currency?",
+        "Who is responsible for the expenses and out-of-pocket costs related to the organization, admission, and maintenance of interest in the Fund?"
+      ],
+      "source": "Transient",
+      "params": {},
+      "extant": false
+    },
+    "keywords": {
+      "data": [
+        "Management Fee",
+        "Management fee",
+        "Servicing Fee",
+        "Servicing Fee",
+        "Investment Advisory Fee",
+        "Investment Advisory Fee",
+        "Compensation",
+        "Remuneration",
+        "Expenses",
+        "AIFM Fee",
+        "AIFM Fee"
+      ],
+      "source": "Transient",
+      "params": {},
+      "extant": false
+    },
+    "output": {
+      "pageDimensions": "{artifacts.pageDimensions.data}",
+      "documentLayout": "{artifacts.documentLayout.data}",
+      "logicalChunks": "{artifacts.logicalChunks.data}",
+      "extractsUsingPrescribedLanguage": "{artifacts.extractsUsingPrescribedLanguage.data}",
+      "keyTerms": "{artifacts.keyTerms.data}",
+      "aifilteredExtracts": "{artifacts.aiFilteredExtracts.data}",
+      "mfeesInterpretations": "{artifacts.mFeesInterpretations.data}",
+      "keyTermInterpretations": "{artifacts.keyTermInterpretations.data}"
+    }
+  },
+  "stages": [
+    {
+      "capability": "DocumentParsing",
+      "method": "AzureDocumentIntelligence",
+      "processing_config": {
+        "processing_engine": "ADI",
+        "model": "prebuilt_layout",
+        "endpoint": "https://npeefrdns.cognitiveservices.azure.com/",
+        "key": "dc7c0c7c3a9a4371b7dc983ac7b618b"
+      },
+      "input": {
+        "document_path": "{vars.input.document_path}"
+      },
+      "output": {
+        "(artifacts.logicalChunks.data)": "logicalChunks",
+        "(artifacts.documentLayout.data)": "documentLayout",
+        "(artifacts.pageDimensions.data)": "pageDimensions"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "RegexFiltering",
+      "input": {
+        "logicalChunks": "{artifacts.logicalChunks.data}",
+        "keywords": "{artifacts.keywords.data}"
+      },
+      "output": {
+        "(artifacts.extractsUsingPrescribedLanguage.data)": "extractsUsingPrescribedLanguage"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "Prompting",
+      "processing_config": {
+        "processing_engine": "Azure_openai",
+        "openai_api_type": "azure",
+        "azure_endpoint": "https://ssgpt_predev.openai.azure.com/",
+        "openai_api_version": "2023_07_01_preview",
+        "openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+        "deployment_name": "ssgpt_predev_1_eastus",
+        "model": "gpt_4_32k"
+      },
+      "prompt": {
+        "template": "# Objective You will be given a list of paragraphs. You need to identify the paragraphs that help answer one or more of the questions. # Questions {questions} # Paragraphs {paragraphs} # Steps Step 1: Read through each paragraph and determine if it helps answer one or many of the questions. Step 2: If the paragraph helps answer the question, include the paragraph index in the response. If the paragraph index is already present in the response, do not repeat. If the paragraph does not help answer any of the questions, don't include the paragraph index in the response. Step 3: Respond back with the indexes of the paragraphs and indexes of the questions which were answered in the paragraph. # Output Instructions 1. Generate a JSON response only. Do not give any text apart from the JSON (No prose). 2. The response should be a list of objects containing the fields for each selected paragraph index. 3. Create a field 'indexes': Paragraph index which helped answer one or more of the questions. 4. Create a field 'questions': List of the question indexes that was answered by the paragraph. 5. Don't add anything like json or 'output' in the output.",
+        "input_variables": {
+          "questions": {
+            "indexing_required": true,
+            "data": "{artifacts.questions.data}"
+          },
+          "paragraphs": {
+            "indexing_required": true,
+            "data": "{artifacts.aiFilteredExtracts.data}"
+          }
+        }
+      },
+      "output": {
+        "(artifacts.keyTerms.data)": "keyTerms"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "RegexFiltering",
+      "input": {
+        "logicalChunks": "{artifacts.logicalChunks.data}",
+        "keyTerms": "{artifacts.keyTerms.data}"
+      },
+      "output": {
+        "(artifacts.regexFilteredDefinitions.data)": "regexFilteredDefinitions"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "Prompting",
+      "processing_config": {
+        "processing_engine": "Azure_openai",
+        "openai_api_type": "azure",
+        "azure_endpoint": "https://ssgpt_predev.openai.azure.com/",
+        "openai_api_version": "2023_07_01_preview",
+        "openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+        "deployment_name": "ssgpt_predev_1_eastus",
+        "model": "gpt_4_32k"
+      },
+      "prompt": {
+        "template": "# Objective You will be given a list of paragraphs. Your task is to identify the key terms present in each of the provided paragraphs. There can be one or more key terms in each of the paragraphs. Paragraphs {paragraphs} # Steps to identify the key terms from the Paragraphs: 1. Read through each provided paragraph and identify the key terms which would need some definition to understand the context of the paragraph. 2. Title Case is when only the initial letter of every word is in uppercase. The key terms are always written in Title Case. 3. Identify and extract all the key terms that may possibly have their definitions or more information explained in other parts of the document which are not provided in the Paragraphs. 4. These key terms should be significant to the context. These words are not common and are unique. 5. The key terms should not include the terms that are related to 'fees'. 6. The key terms should not include the name of organization, fund, or partnership. 7. Respond back with the list of key terms against each paragraph. 8. If no key terms are identified against a paragraph, respond back with an empty list. # Output Instructions ##Output Format 1. Generate a JSON response only. Do not give any text apart from the JSON (No prose). If no key terms are identified, then provide an empty list against the specific paragraph. 2. Extract the key terms exactly as they are from the paragraph without making any changes to the case of the words. ##Output Structure 1. The response should be a list of objects corresponding to each paragraph with the below provided fields. 2. Create a field 'index': Should be a paragraph index from the input list of paragraphs for which the key terms are extracted. 3. Create a field 'keyTerms': Contains a list of extracted key terms from the specific paragraph.",
+        "input_variables": {
+          "paragraphs": {
+            "indexing_required": true,
+            "data": "{artifacts.aiFilteredExtracts.data}"
+          }
+        }
+      },
+      "output": {
+        "(artifacts.keyTerms.data)": "keyTerms"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "RegexFiltering",
+      "input": {
+        "logicalChunks": "{artifacts.logicalChunks.data}",
+        "keyTerms": "{artifacts.keyTerms.data}"
+      },
+      "output": {
+        "(artifacts.regexFilteredDefinitions.data)": "regexFilteredDefinitions"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "Prompting",
+      "processing_config": {
+        "processing_engine": "Azure_openai",
+        "openai_api_type": "azure",
+        "azure_endpoint": "https://ssgpt_predev.openai.azure.com/",
+        "openai_api_version": "2023_07_01_preview",
+        "openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+        "deployment_name": "ssgpt-40",
+        "model": "gpt-4-32k"
+      },
+      "prompt": {
+        "template": "# Objective You are tasked to interpret and summarize legal and financial content related to investment funds and management fees. # Steps to Write Interpretations 1. Read through each paragraph provided in the 'Management Fees Related Extracts' and wherever required use the paragraphs in the 'Keyterm Definition Extracts' as reference to understand the content of the paragraph for interpretation. 2. From the understanding of each paragraph in the 'Management Fees Related Extracts' create easily understandable interpretations related to the calculation of Management Fees and its duration. 3. Read through each paragraph provided in the 'Keyterm Definition Extracts' and wherever required use the paragraphs in the 'Management Fees Related Extracts' as reference to understand the content of the paragraph for interpretation. 4. From the understanding of each paragraph in the 'Keyterm Definition Extracts' create easily understandable interpretations related to the definitions of key terms. 5. If the paragraphs in 'Keyterm Definition Extracts' are defining the dates, the values of those might be found in one of the paragraphs in the 'Management Fees Related Extracts'. 6. Break down the interpretation into small sentences. 7. Respond back with the separate interpretations against each paragraph in 'Management Fees Related Extracts' and 'Keyterm Definition Extracts'. # Understanding Indexes The contents of 'Management Fees Related Extracts' and 'Keyterm Definition Extracts' are a numbered list of paragraphs with index starting from 0. # Management Fees Related Extracts {mFeesInterpretationsExtracts} # Keyterm Definition Extracts {KeyTermDefinitionExtracts} # Output Instructions ## Output Structure 1. The response should be a list of objects containing the below provided fields. 2. Create a field 'mFeesInterpretations': Contains the list of fields 'index' and 'interpretation' from 'Management Fees Related Extracts' for which the interpretation is created. 3. Create a field 'keyTermInterpretations': Contains the list of fields 'index' and 'interpretation' from 'Keyterm Definition Extracts' for which the interpretation is created. 4. Each of the above created fields should have the list of objects containing the following subfields: 1. Create a field 'index': Paragraph index from 'Management Fees Related Extracts' for which the interpretation is created. 2. Create a field 'interpretation': List of easily understandable interpretations for the paragraphs in the index. ## Output Format 1. Generate a JSON response only. 2. Do not generate markdown code snippets in the output. Do not give any text apart from the JSON (No prose). 3. Use only ASCII characters to write the interpretations.",
+        "input_variables": {
+          "KeyTermDefinitionExtracts": {
+            "indexing_required": true,
+            "data": "{artifacts.keyTermDefinitions.data}"
+          },
+          "mFeesInterpretationsExtracts": {
+            "indexing_required": true,
+            "data": "{artifacts.aiFilteredExtracts.data}"
+          }
+        }
+      },
+      "output": {
+        "(artifacts.mFeesInterpretations.data)": "mFeesInterpretations",
+        "(artifacts.keyTermInterpretations.data)": "keyTermInterpretations"
+      }
+    }
+
+
+  ]
+}
+
+
+
+
+
+
+
 {
   "version": 1,
   "vars": {
