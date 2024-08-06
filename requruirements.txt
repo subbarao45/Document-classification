@@ -1,3 +1,217 @@
+{
+  "version": 1,
+  "vars": {
+    "pm.azure.blob.connection": {
+      "auth_type": "MANAGED",
+      "mi_client_id": "5da05a4c-edb2-4f9f-8ad8-d11f0214f557",
+      "account_url": "https://npeedevgtsd01txtmrm.blob.core.windows.net",
+      "doc_container": "npeedevgtsd01txtmrm-strgcont-txtmrm-01"
+    },
+    "di.azure.blob.connection": {
+      "auth_type": "MANAGED",
+      "mi_client_id": "5da05a4c-edb2-4f9f-8ad8-d11f0214f557",
+      "account_url": "https://npeedevgtsd01txtmrm.blob.core.windows.net",
+      "doc_container": "npeedevgtsd01txtmrm-strgcont-txtmrm-01"
+    },
+    "input.document_path": {
+      "source": "AzureBlob",
+      "params": {
+        "connection": "{vars.pm.azure.blob.connection}",
+        "storage_location": "{payload.documents[0].storagePath.absolute_path}"
+      }
+    }
+  },
+  "artifacts": {
+    "pageDimensions": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "documentLayout": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "logicalChunks": {
+      "source": "AzureBlob",
+      "data": [],
+      "params": {
+        "connection": "{vars.di.azure.blob.connection}",
+        "absolute_location": "<path_to_file>",
+        "encoding": "utf_8"
+      },
+      "extant": false
+    },
+    "extractsUsingPrescribedLanguage": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "aiFilteredExtracts": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "keyTerms": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "regexFilteredDefinitions": {
+      "source": "Transient",
+      "data": [],
+      "params": {},
+      "extant": false
+    },
+    "keyTermDefinitions": {
+      "source": "Transient",
+      "data": {
+        "KeyTerm1": [],
+        "KeyTerm2": []
+      },
+      "params": {},
+      "extant": true
+    },
+    "feesInterpretations": {
+      "source": "AzureBlob",
+      "data": [],
+      "params": {
+        "connection": "{vars.di.azure.blob.connection}",
+        "absolute_location": "<path_to_file>",
+        "encoding": "utf_8"
+      },
+      "extant": false
+    },
+    "keyTermInterpretations": {
+      "source": "AzureBlob",
+      "data": [],
+      "params": {
+        "connection": "{vars.di.azure.blob.connection}",
+        "absolute_location": "<path_to_file>",
+        "encoding": "utf_8"
+      },
+      "extant": false
+    },
+    "questions": {
+      "data": [
+        "Can you explain the structure, calculation, and reduction of the Management Fee for each Limited Partner and Series?",
+        "How does the Management Fee relate to Direct Investments, other fees, and the Fund's investments in Primary and Secondary Investee Funds?",
+        "Can you provide details on the Lead Investor's agreement, commitment, and understanding of Management Fees?",
+        "How are the Advisor Compensation, Management Fee, and Incentive Fee determined as per the agreement?",
+        "How are the Management Fees affected by the Fund's investment in any Primary Investee Fund or Secondary Investee Fund?",
+        "Can you explain the calculation, payment timing, and due dates of the Management Fees?",
+        "How are the Excess Start-Up Costs Reduction applied and how do they affect the Management Fees?",
+        "How are the payments of Management Fees handled by the General Partner for a Limited Partner's share with respect to a Class?",
+        "What are the details of the Management Fee as per different sections and programs?",
+        "How is the Management Fee calculated and reduced in relation to various investments and fees?",
+        "What types of fees will the Fund pay in connection with its investments?",
+        "How is the Management Fee calculated for each Limited Partner after specific dates or events?",
+        "What happens if one or more interest holders in a Designated Partner has a certain Capital Commitment?",
+        "How is the US dollar amount determined for a Portfolio Investment in a non-US currency?",
+        "Who is responsible for the expenses and out-of-pocket costs related to the organization, admission, and maintenance of interest in the Fund?"
+      ],
+      "source": "Transient",
+      "params": {},
+      "extant": false
+    },
+    "keywords": {
+      "data": [
+        "Management Fee",
+        "Servicing Fee",
+        "Investment Advisory Fee",
+        "Compensation",
+        "Remuneration",
+        "Expenses",
+        "AIFM Fee"
+      ],
+      "source": "Transient",
+      "params": {},
+      "extant": false
+    }
+  },
+  "output": {
+    "pageDimensions": "{artifacts.pageDimensions.data}",
+    "documentLayout": "{artifacts.documentLayout.data}",
+    "logicalChunks": "{artifacts.logicalChunks.data}",
+    "extractsUsingPrescribedLanguage": "{artifacts.extractsUsingPrescribedLanguage.data}",
+    "keyTerms": "{artifacts.keyTerms.data}",
+    "aiFilteredExtracts": "{artifacts.aiFilteredExtracts.data}",
+    "feesInterpretations": "{artifacts.feesInterpretations.data}",
+    "keyTermInterpretations": "{artifacts.keyTermInterpretations.data}"
+  },
+  "stages": [
+    {
+      "capability": "DocumentParsing",
+      "method": "AzureDocumentIntelligence",
+      "processing_config": {
+        "processing_engine": "ADI",
+        "model": "prebuilt_layout",
+        "endpoint": "https://npeefrdns.cognitiveservices.azure.com/",
+        "key": "dc7c0c7c3a9a4371b7dc983ac7b618b"
+      },
+      "input": {
+        "document_path": "{vars.input.document_path}"
+      },
+      "output": {
+        "logicalChunks": "{artifacts.logicalChunks.data}",
+        "documentLayout": "{artifacts.documentLayout.data}",
+        "pageDimensions": "{artifacts.pageDimensions.data}"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "RegexFiltering",
+      "input": {
+        "logicalChunks": "{artifacts.logicalChunks.data}",
+        "keywords": "{artifacts.keywords.data}"
+      },
+      "output": {
+        "extractsUsingPrescribedLanguage": "{artifacts.extractsUsingPrescribedLanguage.data}"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "Prompting",
+      "processing_config": {
+        "processing_engine": "Azure_openai",
+        "openai_api_type": "azure",
+        "azure_endpoint": "https://ssgpt_predev.openai.azure.com/",
+        "openai_api_version": "2023_07_01_preview",
+        "openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+        "deployment_name": "ssgpt_predev_1_eastus",
+        "model": "gpt_4_32k"
+      },
+      "prompt": {
+        "template": "# Objective\nYou will be given a list of paragraphs. You need to identify the paragraphs that help answer one or more of the questions.\n\n# Questions\n(questions)\n\n# Paragraphs\n(paragraphs)\n\n# Steps\nStep 1: Read through each paragraph and determine if it helps answer one or many of the questions.\nStep 2: If the paragraph helps answer the question, include the paragraph index in the response. If the paragraph index is already present in the response, do not repeat. If the paragraph does not help answer any of the questions, don't include the paragraph index in the response.\nStep 3: Respond back with the indexes of the paragraphs and indexes of the questions which were answered in the paragraph.\n\n# Output Instructions\n1. Generate a JSON response only. Do not give any text apart from the JSON (No prose).\n2. The response should be a list of objects containing the fields for each selected paragraph index.\n3. Create a field 'indexes': Paragraph index which helped answer one or more of the questions.\n4. Create a field 'questions': List of the question indexes that was answered by the paragraph.\n5. Don't add anything like 'json' or any other text in the output.",
+        "input_variables": {
+          "questions": {
+            "indexing_required": true,
+            "data": "{artifacts.questions.data}"
+          }
+        }
+      },
+      "output": {
+        "keyTerms": "{artifacts.keyTerms.data}"
+      }
+    },
+    {
+      "capability": "GenAIExtraction",
+      "method": "Prompting",
+      "processing_config": {
+        "processing_engine": "Azure_openai",
+        "openai_api_ty
+
+
+
+
+
+
+
 
 Hi team,
 
