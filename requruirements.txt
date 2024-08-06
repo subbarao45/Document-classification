@@ -1,4 +1,100 @@
 
+from pydantic import BaseModel, Field, HttpUrl
+from typing import Any, Dict, List, Optional
+
+class AzureBlobConnection(BaseModel):
+    auth_type: str = Field("", description="Authentication type for Azure Blob connection")
+    mi_client_id: str = Field("", description="Managed Identity client ID")
+    account_url: HttpUrl = Field("https://npeedevgtsd01txtmrm.blob.core.windows.net", description="URL of the Azure Blob account")
+    doc_container: str = Field("", description="Document container in Azure Blob")
+
+class DocumentPath(BaseModel):
+    source: str = Field("", description="Source of the document")
+    params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Parameters for the document path")
+
+class Artifact(BaseModel):
+    source: str = Field("", description="Source of the Artifact")
+    data: Any = Field(None, description="Data of the artifact")
+    params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Parameters for the artifact")
+    extant: bool = Field(False, description="Whether the artifact is extant")
+
+class Question(BaseModel):
+    data: List[str] = Field(default_factory=list, description="List of questions")
+    source: str = Field("", description="Source of the questions")
+    params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Parameters for the questions")
+    extant: bool = Field(False, description="Whether the questions are extant")
+
+class Keyword(BaseModel):
+    data: List[str] = Field(default_factory=list, description="List of keywords")
+    source: str = Field("", description="Source of the keywords")
+    params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Parameters for the keywords")
+    extant: bool = Field(False, description="Whether the keywords are extant")
+
+class Output(BaseModel):
+    pageDimensions: Optional[Artifact] = Field(default_factory=Artifact, description="Page dimensions data")
+    documentLayout: Optional[Artifact] = Field(default_factory=Artifact, description="Document layout data")
+    logicalChunks: Optional[Artifact] = Field(default_factory=Artifact, description="Logical chunks data")
+    extractsUsingPrescribedLanguage: Optional[Artifact] = Field(default_factory=Artifact, description="Extracts using prescribed language data")
+    keyTerms: Optional[Artifact] = Field(default_factory=Artifact, description="Key terms data")
+    keyTermDefinitions: Optional[Artifact] = Field(default_factory=Artifact, description="Key term definitions data")
+    aiFilteredExtracts: Optional[Artifact] = Field(default_factory=Artifact, description="AI filtered extracts data")
+    mfeesInterpretations: Optional[Artifact] = Field(default_factory=Artifact, description="Management fees interpretations data")
+    keyTermInterpretations: Optional[Artifact] = Field(default_factory=Artifact, description="Key term interpretations data")
+
+class Prompt(BaseModel):
+    template: str = Field("", description="Prompt template")
+    input_variables: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Input variables for the prompt")
+
+class Stage(BaseModel):
+    capability: str = Field("", description="Stage capability")
+    method: str = Field("", description="Stage method")
+    processing_config: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Processing configuration")
+    input: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Stage input")
+    output: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Stage output")
+    prompt: Prompt = Field(default_factory=Prompt, description="Prompt configuration")
+
+class Vars(BaseModel):
+    pm_azure_blob_connection: AzureBlobConnection = Field(default_factory=AzureBlobConnection, alias="pm.azure.blob.connection", description="PM Azure Blob connection")
+    di_azure_blob_connection: AzureBlobConnection = Field(default_factory=AzureBlobConnection, alias="di.azure.blob.connection", description="DI Azure Blob connection")
+    input_document_path: DocumentPath = Field(default_factory=DocumentPath, alias="input.document_path", description="The path of the input document")
+
+class Artifacts(BaseModel):
+    pageDimensions: Artifact = Field(default_factory=Artifact, description="Page dimensions artifact")
+    documentLayout: Artifact = Field(default_factory=Artifact, description="Document layout artifact")
+    logicalChunks: Artifact = Field(default_factory=Artifact, description="Logical chunks artifact")
+    extractsUsingPrescribedLanguage: Artifact = Field(default_factory=Artifact, description="Extracts using prescribed language artifact")
+    aiFilteredExtracts: Artifact = Field(default_factory=Artifact, description="AI filtered extracts artifact")
+    keyTerms: Artifact = Field(default_factory=Artifact, description="Key terms artifact")
+    regexFilteredDefinitions: Artifact = Field(default_factory=Artifact, description="Definitions filtered using regex")
+    keyTermDefinitions: Artifact = Field(default_factory=Artifact, description="Key term definitions artifact")
+    mfeesInterpretations: Artifact = Field(default_factory=Artifact, description="Management fees interpretations artifact")
+    keyTermInterpretations: Artifact = Field(default_factory=Artifact, description="Key term interpretations artifact")
+
+class Model(BaseModel):
+    version: int = Field(1, description="Model version")
+    vars: Vars = Field(..., description="Variables for the model")
+    artifacts: Artifacts = Field(..., description="Artifacts for the model")
+    stages: List[Stage] = Field(default_factory=list, description="Stages of the model")
+    output: Output = Field(default_factory=Output, description="Output of the model")
+
+# Example usage
+model = Model(
+    version=1,
+    vars=Vars(),
+    artifacts=Artifacts(),
+    stages=[Stage()],
+    output=Output()
+)
+print(model)
+
+
+
+
+
+
+
+
+
 
 {
   "version": 1,
