@@ -1,3 +1,71 @@
+
+
+import os
+import json
+
+def run_keyterm_definition_extraction(extracted_keyTermsJson_path, pdf_path, output_path):
+
+    def make_output_dir(dir_name, pdf_path):
+        output_folder = os.path.join(output_path, dir_name)
+        os.makedirs(output_folder, exist_ok=True)
+        file_name = os.path.basename(pdf_path).replace(".pdf", ".json").replace(".PDF", ".json")
+        output_file_path = os.path.join(output_folder, file_name)
+        return output_file_path
+
+    # Initialize variables
+    extracted_text = None
+    new_pages = ""
+    new_keyword_output = ""
+
+    try:
+        with open(extracted_keyTermsJson_path, "r") as file:
+            kt_extract = json.load(file)
+            print("Successfully loaded the JSON file")
+
+        # Process the search strings
+        search_strings = kt_extract.get("keyTerms", [])
+
+        # Extract pages with strings
+        pages = find_pages_with_string_in_quotes(pdf_path, search_strings)
+
+        # Combine pages into a single string
+        for i, text in enumerate(pages):
+            new_pages += f"{i}: " + " ".join(text.splitlines()) + "\n"
+
+        # Process keywords and generate output
+        for i, term in enumerate(kt_extract.get("keyTerms", [])):
+            new_keyword_output += f"{i}: {term}\n"
+
+        # Extract definitions based on the processed pages and keywords
+        extracted_KTD = extract_definitions(new_pages, new_keyword_output)
+
+        # Convert the result to JSON
+        if isinstance(extracted_KTD, str):
+            extracted_KTD = json.loads(extracted_KTD)
+
+        # Generate the output file path
+        extracted_KTD_json_path = make_output_dir("extracted_key_terms_definitions", pdf_path)
+
+        # Write the JSON output to a file
+        with open(extracted_KTD_json_path, 'w', encoding='utf-8') as json_file:
+            json.dump(extracted_KTD, json_file, ensure_ascii=False, indent=4)
+
+        print(f"Successfully dumped the extracted definitions JSON to: {extracted_KTD_json_path}")
+        return extracted_KTD_json_path, extracted_KTD
+
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return None, None
+
+# Example usage:
+# run_keyterm_definition_extraction("path_to_keyterms_json.json", "path_to_pdf.pdf", "output_directory_path")
+
+
+
+
+
+
+
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Any, Dict, List, Optional
 
