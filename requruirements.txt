@@ -1,4 +1,106 @@
 
+import os
+import json
+
+def run_keyterm_definition_extraction(extracted_keyTermsJson_path, pdf_path, output_path):
+    def make_output_dir(dir_name, pdf_path):
+        output_folder = os.path.join(output_path, dir_name)
+        os.makedirs(output_folder, exist_ok=True)
+        file_name = os.path.basename(pdf_path).replace(".pdf", ".json").replace(".PDF", ".json")
+        output_file_path = os.path.join(output_folder, file_name)
+        return output_file_path
+
+    # Initialize variables
+    extracted_text = None
+    new_pages = ""
+    new_keyword_output = ""
+    extracted_definition_json_file_name = ""
+    extracted_definitions_folder_path = ""
+    extracted_definitions = ""
+
+    try:
+        # Load the key terms JSON file
+        with open(extracted_keyTermsJson_path, "r") as file:
+            kt_extract = json.load(file)
+            print("Successfully loaded the JSON file")
+
+        # Process the search strings
+        search_strings = kt_extract['keyTerms']
+        print(f"search_strings: {search_strings}")
+
+        # Extract pages containing the search strings
+        pages = find_pages_with_string_in_quotes(pdf_path, search_strings)
+        pages_chunked = chunk_data(pages)
+        output_final = []
+
+        # Extract definitions for each chunk
+        for chunk in pages_chunked:
+            output = extract_definitions(chunk, search_strings)
+            json_output = json.loads(output)  # Convert string to JSON
+            output_final.extend(json_output)
+
+        print(f'output_final: {output_final}')
+
+        # Determine the output file path
+        extracted_definitions_folder_path = os.path.join(output_path, "extracted_definitions")
+        if not os.path.exists(extracted_definitions_folder_path):
+            os.makedirs(extracted_definitions_folder_path)
+
+        input_subfolder_path = os.path.dirname(pdf_path).replace("\\", "/")
+        if not os.path.exists(input_subfolder_path):
+            os.makedirs(input_subfolder_path)
+
+        extracted_definitions = os.path.join(extracted_definitions_folder_path, input_subfolder_path)
+        if not os.path.exists(extracted_definitions):
+            os.makedirs(extracted_definitions)
+
+        extracted_definition_json_file_name = os.path.basename(pdf_path).replace(".pdf", "_definitions.json").replace(".PDF", "_definitions.json")
+        extracted_definition_json_file_path = os.path.join(extracted_definitions, extracted_definition_json_file_name)
+        extracted_definition_json_file_path = extracted_definition_json_file_path.replace("/", "\\")
+        print(f'extracted_definition_json_file_path: {extracted_definition_json_file_path}')
+
+        # Write the final output to a JSON file
+        with open(extracted_definition_json_file_path, 'w', encoding='utf-8') as ff:
+            json.dump(output_final, ff, ensure_ascii=False, indent=4)
+
+        print(f'Successfully dumped the extracted definitions JSON for the PDF: {pdf_path}')
+
+        # Update the index file
+        ready_output_files = [{
+            "subFolderPath": input_subfolder_path,
+            "keyTermDefinitionsJson": extracted_definition_json_file_name
+        }]
+        index_data = {
+            "rootPath": extracted_definitions_folder_path,
+            "readyOutputFiles": ready_output_files
+        }
+
+        index_json = json.dumps(index_data, indent=4)
+        kt_def_output_index_path = os.path.join(extracted_definitions_folder_path, "index.json")
+        with open(kt_def_output_index_path, "w") as json_file:
+            json_file.write(index_json)
+
+    except Exception as e:
+        print(f"Exception: {e}")
+        errored_out_files = []
+        errored_out_files.append({
+            'input_file_name': os.path.basename(pdf_path),
+            'input_file_path': pdf_path,
+            'error': str(e)
+        })
+        raise Exception(e)
+
+    return extracted_definition_json_file_path, output_final
+
+# Example usage:
+run_keyterm_definition_extraction("path_to_keyterms_json.json", "path_to_pdf.pdf", "output_directory_path")
+
+
+
+
+
+
+
 
 import os
 import json
