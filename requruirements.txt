@@ -1,1 +1,124 @@
+import re
+import os
+import json
+
+class KeywordFilterMethod:
+
+    def extract(self, data) -> list[dict]:
+        """
+        Extract the data based on keywords
+        :param data: JSON data containing logicalChunks
+        :return: List of dictionaries containing extracted data
+        """
+        terms = [
+            "Management Fee",
+            "Management +Fee",
+            "Servicing Fee",
+            "Servicing +Fee",
+            "Investment Advisory Fee",
+            "Investment +Advisory +Fee",
+            "Compensation",
+            "Remuneration",
+            "Expenses",
+            "AIFM Fee",
+            "AIFM +Fee",
+        ]
+        patterns = self.compile_search_patterns(terms)
+        return self.extract_data_with_terms(data, patterns)
+
+    def compile_search_patterns(self, terms):
+        """
+        Compile the search pattern using the terms provided
+        :param terms: List of keywords
+        :return: List of compiled regex patterns
+        """
+        return [re.compile(re.escape(term)) for term in terms]
+
+    def search_terms_in_content(self, node_content, patterns):
+        """
+        Search the terms in content provided
+        :param node_content: Content of the node
+        :param patterns: List of regex patterns
+        :return: True if any pattern matches, otherwise False
+        """
+        for pattern in patterns:
+            if pattern.search(node_content):
+                return True
+        return False
+
+    def extract_data_with_terms(self, data, patterns):
+        """
+        Extract the data based on keywords
+        :param data: JSON data containing logicalChunks
+        :param patterns: List of regex patterns
+        :return: List of dictionaries containing extracted data
+        """
+        extracted_data = []
+        logical_chunks = data.get('logicalChunks', [])  # Ensure it's a list
+        for item in logical_chunks:
+            if isinstance(item, list):  # Check if item is a list
+                for node in item:
+                    if isinstance(node, dict):  # Check if node is a dictionary
+                        content = node.get('content', '')  # Safely get content
+                        if self.search_terms_in_content(content, patterns):
+                            extracted_data.append(item)
+                            break
+        return extracted_data
+
+    def merge_content(self, json_data):
+        """
+        Merge the content of the extracted data
+        :param json_data: JSON data containing extractsUsingPrescribedLanguage
+        :return: Merged content dictionary
+        """
+        extracts = json_data.get('extractsUsingPrescribedLanguage', [])  # Ensure it's a list
+        combined_strings = []
+        for item in extracts:
+            if isinstance(item, list):  # Check if item is a list
+                combined_string = ' '.join(node.get('content', '') for node in item if isinstance(node, dict))
+                combined_strings.append(combined_string)
+        return {'extractsUsingPrescribedLanguage': combined_strings}
+
+def dump_json_file(json_file_path, json_data):
+    """
+    Dump the JSON data into a file
+    :param json_file_path: Path to save the JSON file
+    :param json_data: Data to save
+    :return: None
+    """
+    try:
+        with open(json_file_path, "w") as json_file:
+            json.dump(json_data, json_file, indent=4)
+    except Exception as e:
+        print(f"Error writing JSON file {json_file_path}: {e}")
+
+if __name__ == "__main__":
+    data_file_path = r"H:\management_fee_extraction\extracts_output\output5\LEGAL-#148074-v3-1824_Private_Equity_Fund_LP_(TJU)_-_AR_LPA_docprocessing.json"
+    output_dest_dir = r"H:\management_fee_extraction\extracts_output\output5"
+
+    # Load the JSON data from file
+    with open(data_file_path, "r") as json_file:
+        data = json.load(json_file)
+
+    # Create an instance of KeywordFilterMethod and process the data
+    obj = KeywordFilterMethod()
+    paragraphs = obj.extract(data)
+
+    # Prepare file paths for saving the results
+    file_name = os.path.splitext(os.path.basename(data_file_path))[0]
+
+    filtered_images_json_file_path = os.path.join(output_dest_dir, f"{file_name}_filtered_images.json")
+    merged_content_json_file_path = os.path.join(output_dest_dir, f"{file_name}_prescribed_extracts.json")
+
+    # Dump filtered paragraphs to a JSON file
+    dump_json_file(filtered_images_json_file_path, {'extractsUsingPrescribedLanguage': paragraphs})
+
+    # Merge content and dump to JSON file
+    merged_content = obj.merge_content({'extractsUsingPrescribedLanguage': paragraphs})
+    dump_json_file(merged_content_json_file_path, merged_content)
+
+    # Print results for verification
+    print(f"Filtered images JSON saved to: {filtered_images_json_file_path}")
+    print(f"Merged content JSON saved to: {merged_content_json_file_path}")
+    print("Merged Content:", json.dumps(merged_content, indent=4))
 
