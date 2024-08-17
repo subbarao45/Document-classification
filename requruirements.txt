@@ -1,3 +1,48 @@
+
+import re
+
+def get_filtered_paras(search_string, merged_para, count, quotation_marks_paragraphs):
+    """
+    Filters paragraphs based on the search string and updates the count.
+    :param search_string: The string to search for in the paragraphs.
+    :param merged_para: The paragraph to search within.
+    :param count: The current count of filtered paragraphs.
+    :param quotation_marks_paragraphs: The list of paragraphs that have already been filtered.
+    :return: Updated list of filtered paragraphs and the count.
+    """
+    # Correct the pattern for regex search
+    pattern = rf'[^"]*{re.escape(search_string)}[^"]*'
+
+    # Check if the pattern is found in the merged paragraph
+    if re.search(pattern, merged_para):
+        indexing_para = merged_para
+
+        # Ensure the paragraph is not already in the list
+        if indexing_para not in quotation_marks_paragraphs:
+            # Correct string concatenation and append the paragraph
+            filtered_para = str(count) + " " + merged_para
+            print(f"filtered_para: {filtered_para}")
+
+            quotation_marks_paragraphs.append(filtered_para)
+            count += 1
+
+    return quotation_marks_paragraphs, count
+
+# Example usage:
+search_string = "Management Fee"
+merged_para = "This paragraph talks about Management Fee and other details."
+count = 1
+quotation_marks_paragraphs = []
+
+result, updated_count = get_filtered_paras(search_string, merged_para, count, quotation_marks_paragraphs)
+
+print("Filtered Paragraphs:", result)
+print("Updated Count:", updated_count)
+
+
+
+
+
 import re
 import os
 import json
