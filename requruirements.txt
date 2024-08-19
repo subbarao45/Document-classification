@@ -2,6 +2,128 @@ import os
 import json
 import re
 
+def get_filtered_paras(search_string, merged_para, quotation_marks_paragraphs, count):
+    """
+    Filters paragraphs based on the search string and updates the count.
+    :param search_string: The string to search for in the paragraphs.
+    :param merged_para: The paragraph to search within.
+    :param quotation_marks_paragraphs: The list of paragraphs that have already been filtered.
+    :param count: The current count of filtered paragraphs.
+    :return: Updated list of filtered paragraphs and the count.
+    """
+    pattern = rf'[^"]*{re.escape(search_string)}[^"]*'
+    if re.search(pattern, merged_para):
+        if merged_para not in quotation_marks_paragraphs:
+            filtered_para = str(count) + " " + merged_para
+            quotation_marks_paragraphs.append(filtered_para)
+            count += 1
+    return quotation_marks_paragraphs, count
+
+def extract_definitions(quotation_marks_paragraphs, list_indexed_keyterms):
+    """
+    Simulate the extraction of definitions based on indexed key terms.
+    """
+    # This is a placeholder for the actual definition extraction logic.
+    return json.dumps({"definitions": quotation_marks_paragraphs})
+
+def load_json(file_path):
+    """
+    Load JSON data from a file.
+    :param file_path: Path to the JSON file.
+    :return: Parsed JSON data.
+    """
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return json.load(file)
+
+def run_keyterms_definitions_extract(pdf_path, logical_chunks_file, extracted_keyterms_json_path, output_dir):
+    """
+    Process a PDF and associated logical chunks file to extract key terms and their definitions.
+    :param pdf_path: Path to the input PDF.
+    :param logical_chunks_file: Path to the JSON file containing logical chunks.
+    :param extracted_keyterms_json_path: Path to the JSON file containing key terms.
+    :param output_dir: Directory where the output JSON will be saved.
+    :return: JSON output and the path to the saved JSON file.
+    """
+    # Check if the PDF name matches the logical chunks file name
+    pdf_base_name = os.path.splitext(os.path.basename(pdf_path))[0]
+    logical_chunks_base_name = os.path.splitext(os.path.basename(logical_chunks_file))[0].replace("logicalchunks", "").strip()
+
+    if pdf_base_name != logical_chunks_base_name:
+        raise ValueError(f"Mismatch: PDF base name '{pdf_base_name}' does not match logical chunks base name '{logical_chunks_base_name}'.")
+
+    extracted_definition_json_file_name = pdf_base_name + "_generated_definitions.json"
+    extracted_definition_json_path = os.path.join(output_dir, extracted_definition_json_file_name)
+
+    # Load key terms
+    with open(extracted_keyterms_json_path, "r") as json_file:
+        data = json.load(json_file)
+
+    keyterm_index = 0
+    list_indexed_keyterms = []
+
+    search_strings = data["keyTerms"]
+    for search_string in search_strings:
+        indexed_keyterm = f"{keyterm_index} {search_string}"
+        keyterm_index += 1
+        list_indexed_keyterms.append(indexed_keyterm)
+
+    # Load logical chunks
+    file_data = load_json(logical_chunks_file)
+
+    count = 0
+    quotation_marks_paragraphs = []
+
+    for items in file_data["logicalChunks"]:
+        for search_string in search_strings:
+            # For chunks that need merging of content
+            if len(items) >= 2:
+                merged_para = ""
+                for i in range(len(items)):
+                    para = items[i]["content"]
+                    merged_para += " " + para
+                quotation_marks_paragraphs, count = get_filtered_paras(search_string, merged_para.strip(), quotation_marks_paragraphs, count)
+            # For chunks having only one content
+            elif len(items) == 1:
+                for contents in items:
+                    content = contents["content"]
+                    quotation_marks_paragraphs, count = get_filtered_paras(search_string, content, quotation_marks_paragraphs, count)
+
+    # Extract definitions based on the filtered paragraphs
+    output = extract_definitions(quotation_marks_paragraphs, list_indexed_keyterms)
+    json_output = json.loads(output)
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Save the extracted definitions to a JSON file
+    with open(extracted_definition_json_path, "w", encoding="utf-8") as ff:
+        json.dump(json_output, ff, ensure_ascii=False, indent=4)
+
+    print(f"Successfully dumped the extracted definitions JSON for the PDF: {pdf_path}")
+
+    return json_output, extracted_definition_json_path
+
+# Testing the function
+pdf_path = r"H:\management_fee_extraction\pipeline_test\LEGAL-#148074-v3-1824_Private_Equity_Fund_LP_(TJU)_-_AR_LPA.PDF"
+logical_chunks_file = r"H:\management_fee_extraction\extracts_output\output5\LEGAL-#148074-v3-1824_Private_Equity_Fund_LP_(TJU)_-_AR_LPA_logical_chunks.json"
+extracted_keyterms_json_path = r"H:\management_fee_extraction\extracts_output\output5\LEGAL-#148074-v3-1824_Private_Equity_Fund_LP_(TJU)_-_AR_LPA_generated_keyterms.json"
+output_dir = r"H://management_fee_extraction//extracts_output//output7//"
+
+json_output, extracted_definition_json_path = run_keyterms_definitions_extract(pdf_path, logical_chunks_file, extracted_keyterms_json_path, output_dir)
+
+print(json_output)
+print(extracted_definition_json_path)
+
+
+
+
+
+
+
+import os
+import json
+import re
+
 def load_json(file_path):
     """Utility function to load JSON data from a file."""
     with open(file_path, "r", encoding="utf-8") as file:
