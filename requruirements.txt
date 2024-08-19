@@ -1,4 +1,87 @@
+import os
+import json
+import re
 
+def load_json(file_path):
+    """Utility function to load JSON data from a file."""
+    with open(file_path, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+def get_filtered_paras(search_string, merged_para, quotation_marks_paragraphs, count):
+    """
+    Filters paragraphs based on the search string and updates the count.
+    :param search_string: The string to search for in the paragraphs.
+    :param merged_para: The paragraph to search within.
+    :param quotation_marks_paragraphs: The list of paragraphs that have already been filtered.
+    :param count: The current count of filtered paragraphs.
+    :return: Updated list of filtered paragraphs and the count.
+    """
+    pattern = rf'[^"]*{re.escape(search_string)}[^"]*'
+    if re.search(pattern, merged_para):
+        indexing_para = merged_para
+        if indexing_para not in quotation_marks_paragraphs:
+            filtered_para = str(count) + " " + merged_para
+            quotation_marks_paragraphs.append(filtered_para)
+            count += 1
+    return quotation_marks_paragraphs, count
+
+def extract_definitions(quotation_marks_paragraphs, list_indexed_keyterms):
+    """
+    This is a placeholder for the actual implementation of extracting definitions.
+    It would process the filtered paragraphs and indexed keyterms to produce output.
+    """
+    # Assuming this function returns a JSON-serializable object as output.
+    return {"definitions": [{"keyterm": keyterm, "paragraph": para} for keyterm, para in zip(list_indexed_keyterms, quotation_marks_paragraphs)]}
+
+def run_keyterms_definitions_extract(pdf_path, logical_chunks_file, extracted_keyterms_json_path, output_dir):
+    extracted_definition_json_file_name = os.path.basename(pdf_path)
+    extracted_definition_json_file_name = extracted_definition_json_file_name.replace(".pdf", "_generated_definitions.json").replace(".PDF", "_generated_definitions.json")
+    extracted_definition_json_path = os.path.join(output_dir, extracted_definition_json_file_name)
+
+    # Load key terms from the JSON file
+    data = load_json(extracted_keyterms_json_path)
+    search_strings = data["keyTerms"]
+
+    # Index key terms
+    list_indexed_keyterms = [str(i) + " " + search_string for i, search_string in enumerate(search_strings)]
+
+    # Load logical chunks
+    file_data = load_json(logical_chunks_file)
+    
+    count = 0
+    quotation_marks_paragraphs = []
+
+    for items in file_data["logicalChunks"]:
+        for search_string in search_strings:
+            if len(items) >= 2:
+                merged_para = ""
+                for item in items:
+                    merged_para += item["content"] + " "
+                quotation_marks_paragraphs, count = get_filtered_paras(search_string, merged_para, quotation_marks_paragraphs, count)
+            elif len(items) == 1:
+                for item in items:
+                    content = item["content"]
+                    quotation_marks_paragraphs, count = get_filtered_paras(search_string, content, quotation_marks_paragraphs, count)
+
+    # Extract definitions
+    output = extract_definitions(quotation_marks_paragraphs, list_indexed_keyterms)
+
+    # Save the extracted definitions to a JSON file
+    with open(extracted_definition_json_path, "w", encoding="utf-8") as ff:
+        json.dump(output, ff, ensure_ascii=False, indent=4)
+
+    return output, extracted_definition_json_path
+
+# Testing
+pdf_path = r"H:\management_fee_extraction\pipeline_test\LEGAL-#148074-v3-1824_Private_Equity_Fund_LP_(TJU)_-_AR_LPA.PDF"
+logical_chunks_file = r"H:\management_fee_extraction\extracts_output\output5\LEGAL-#148074-v3-1824_Private_Equity_Fund_LP_(TJU)_-_AR_LPA_logical_chunks.json"
+extracted_keyterms_json_path = r"H:\management_fee_extraction\extracts_output\output5\LEGAL-#148074-v3-1824_Private_Equity_Fund_LP_(TJU)_-_AR_LPA_generated_keyterms.json"
+output_dir = r"H:\management_fee_extraction\extracts_output\output7"
+
+json_output, extracted_definition_json_path = run_keyterms_definitions_extract(pdf_path, logical_chunks_file, extracted_keyterms_json_path, output_dir)
+
+print(json_output)
+print(extracted_definition_json_path)
 import re
 
 def get_filtered_paras(search_string, merged_para, count, quotation_marks_paragraphs):
