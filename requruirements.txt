@@ -1,3 +1,133 @@
+
+import logging
+import os
+from azure.identity import ManagedIdentityCredential
+from azure.storage.blob import BlobServiceClient
+
+from genai.processing_daemon.methods.adi_processing import adiProcessing
+from common_svc.logger.log_util import configure_loggers
+
+# Configure loggers
+configure_loggers()
+logger = logging.getLogger(__name__)
+
+class DocumentParsing:
+    def __init__(self):
+        pass
+
+    def pdfMiner(self):
+        raise Exception("The method pdfMiner is not available.")
+
+    def connect_to_azure_blob(self, input_document_path):
+        # Connect to Azure Blob Storage using Managed Identity.
+        connection_string = input_document_path["params"]["connection_string"]
+
+        try:
+            credential = ManagedIdentityCredential(client_id=connection_string["mi_client_id"])
+
+            # Create a BlobServiceClient using the account URL and the Managed Identity Credential
+            blob_service_client = BlobServiceClient(
+                account_url=connection_string["account_url"],
+                credential=credential
+            )
+
+            # Create a ContainerClient for the specified container
+            container_client = blob_service_client.get_container_client(connection_string["container_name"])
+
+            logger.info("Connected to Azure Blob Container")
+            return container_client
+
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
+            return None
+
+    def download_pdf_from_blob(self, input_document_path, tmpdir):
+        """
+        Download a PDF file from Azure Blob Storage and save it to a specified directory.
+        Return the file path including the file name.
+        """
+        container_client = self.connect_to_azure_blob(input_document_path)
+        if not container_client:
+            return None
+
+        params = input_document_path["params"]
+        storage_location = params["storage_location"]
+        blob_name = os.path.basename(storage_location)
+
+        # Define the full path for the downloaded file
+        pdf_file_path = os.path.join(tmpdir, blob_name)
+
+        # Get the BlobClient for the specified blob
+        blob_client = container_client.get_blob_client(blob_name)
+
+        # Download the blob content and write it to the file
+        with open(pdf_file_path, 'wb') as pdf_file:
+            download_stream = blob_client.download_blob()
+            pdf_file.write(download_stream.readall())
+
+        return pdf_file_path
+
+    def ADI(self, processing_config, input_document_path):
+        model_name = processing_config["model"]
+        endpoint = processing_config["endpoint"]
+        key = processing_config["key"]
+
+        adi_object = adiProcessing()
+
+        output_dir = os.path.join("tmp", "output")
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Download PDF from Azure Blob
+        input_document_path = self.download_pdf_from_blob(input_document_path, output_dir)
+        if not input_document_path:
+            return None
+
+        try:
+            # Example method calls assuming run_prescribed_extracts_azure exists
+            page_dim_json_file_path, _doc_layout_json_file_path, doc_layout = adi_object.run_prescribed_extracts_azure(
+                input_document_path, output_dir, model_name, endpoint, key)
+
+            merged_content = adi_object.run_prescribed_extracts_azure(
+                input_document_path, output_dir, model_name, endpoint, key)
+
+            return merged_content
+
+        except Exception as e:
+            logger.exception("Exception Occurred while extracting ADI results: %s", e)
+            return None
+
+# Testing
+processing_config = {
+    "processing_engine": "ADI",
+    "model": "Layout",
+    "endpoint": "https://npeefrdns.cognitiveservices.azure.com/",
+    "key": "dc7c"
+}
+
+input_document_path = {
+    "storage_type": "blob",
+    "container_name": "sample",
+    "params": {
+        "connection_string": {
+            "account_url": "https://<your-account-name>.blob.core.windows.net",
+            "container_name": "sample",
+            "mi_client_id": "<your-managed-identity-client-id>"
+        },
+        "storage_location": "PVT Markets/data/LPA/1719852c-91ac-498a-b4ad-508cdab7cbad/1885_private_opportunities_fund_ip_-_2nd_ar_lpa_march_16_2021.pdf"
+    }
+}
+
+docparser = DocumentParsing()
+merged_content = docparser.ADI(processing_config, input_document_path)
+
+print(merged_content)
+
+
+
+
+
+
+
 import os
 import json
 import re
