@@ -1,3 +1,75 @@
+
+import pandas as pd
+import numpy as np
+
+def export_evaluation_metrics_as_csv(actual, predicted, scores, file_type):
+
+    def equalize_lengths(actual, predicted):
+        len_actual = len(actual)
+        len_predicted = len(predicted)
+
+        if len_actual > len_predicted:
+            predicted.extend([None] * (len_actual - len_predicted))
+        elif len_predicted > len_actual:
+            actual.extend([None] * (len_predicted - len_actual))
+
+        return actual, predicted
+
+    actual, predicted = equalize_lengths(actual, predicted)
+
+    actual_set = set(actual)
+    predicted_set = set(predicted)
+
+    all_items = list(actual_set.union(predicted_set))
+
+    df = pd.DataFrame(index=all_items, columns=["actual", "predicted"])
+
+    df["actual"] = [item if item in actual_set else np.nan for item in all_items]
+    df["predicted"] = [item if item in predicted_set else np.nan for item in all_items]
+
+    df.reset_index(drop=True, inplace=True)
+
+    df_eval = df.dropna(subset=["actual"])
+    predicted = df_eval["predicted"].tolist()
+    actual = df_eval["actual"].tolist()
+
+    all_terms = list(set(predicted + actual))
+
+    # Debug statement to check the type of scores
+    print(f"scores type: {type(scores)}, scores content: {scores}")
+
+    if isinstance(scores, dict):
+        df["Accuracy"] = scores.get("accuracy", np.nan)
+        df["Precision"] = scores.get("precision", np.nan)
+        df["Recall"] = scores.get("recall", np.nan)
+        df["F1 Score"] = scores.get("F1 score", np.nan)
+    else:
+        raise ValueError("Expected 'scores' to be a dictionary with keys like 'accuracy', 'precision', etc.")
+
+    df = df[["actual", "predicted", "Accuracy", "Precision", "Recall", "F1 Score"]]
+
+    df.loc[1:, "input file name"] = np.nan
+    df.loc[1:, "Accuracy"] = np.nan
+    df.loc[1:, "Precision"] = np.nan
+    df.loc[1:, "Recall"] = np.nan
+    df.loc[1:, "F1 Score"] = np.nan
+
+    output_filename = "evaluation_metrics.csv"  # Modify this as needed
+
+    if file_type == "excel":
+        output_filename = output_filename.replace(".csv", ".xlsx")
+        df.to_excel(output_filename, index=False)
+    else:
+        df.to_csv(output_filename, index=False)
+
+    print(f"{output_filename} Metrics file saved")
+
+    return df
+
+
+
+
+
 import pandas as pd
 import numpy as np
 
