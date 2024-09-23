@@ -1,4 +1,772 @@
 
+
+ChatGPT 4o
+
+You said:
+{
+
+"version": 1,
+
+"vars": {
+
+"pm_azure_blob_connection": {
+
+"auth_type": "MANAGED",
+
+"mi_client_id": "5da05a4c-edb2-4f9f-8ad8-d11f0214f557",
+
+"account_url": "https://npeedevgtsd01txtmrm.blob.core.windows.net",
+
+"doc_container": "pvt-markets"
+
+},
+
+"di_azure_blob_connection": {
+
+"auth_type": "MANAGED",
+
+"mi_client_id": "5da05a4c-edb2-4f9f-8ad8-d11f0214f557",
+
+"account_url": "https://npeedevgtsd01txtmrm.blob.core.windows.net",
+
+"doc_container": "npeedevgtsd@1txtmrm-strgcont-txtmrm-01"
+
+}, "input_document_path": {
+
+"source": "AzureBlob",
+
+I
+
+params": { "
+
+}
+
+}
+
+"connection": "{vars.pm_azure_blob_connection)",
+
+"storage_location": "(payload.documents[0].storagePath.absolute_path}"
+
+},
+
+"artifacts": {
+
+"pageDimensions": {
+
+"source": "Transient",
+
+"data": [],
+
+"params": {},
+
+"extant": false
+
+},
+"documentLayout": {
+
+"source": "Transient",
+
+"data": [],
+
+"params": {},
+
+"extant": false
+
+},
+
+"logicalChunks": {
+
+"source": "AzureBlob",
+
+"data": [],
+
+"params": {
+
+"connection": "{vars.di_azure_blob_connection)",
+
+"absolute_location": "<path_to_file>",
+
+"encoding": "utf_8 e.g.// utf_8, binary, file_like_object"
+
+},
+
+"extant": false
+
+}, "extractsUsingPrescribed Language": {
+
+"source": "Transient",
+
+I
+
+"data": [],
+
+"params": {},
+
+"extant": false
+
+},
+
+"aiFilteredExtracts": {
+
+"source": "Transient",
+
+"data": [],
+
+"params": {}, "extant": false
+},
+
+"keyTerms": {
+
+"source": "Transient",
+
+"data": [],
+
+"params": {},
+
+"extant": false
+
+}, "regexFilteredDefinitions": {
+
+"source": "Transient",
+
+"data": [],
+
+"params": {},
+
+"extant": false
+
+},
+
+"keyTermDefinitions": {
+
+"source": "Transient",
+
+"data": [],
+
+"params": {},
+
+"extant": true
+
+},
+
+"keyTermMapping":{
+
+"source": "Transient",
+
+"data": [],
+
+"params": {},
+
+"extant": true
+
+},
+
+"mFees Interpretations": {
+
+"source": "AzureBlob",
+
+data": [], "
+
+"params": {
+
+"connection": "{vars.di_azure_blob_connection)",
+
+"absolute_location": "<path_to_file>",
+"encoding": "utf_8 e.g.// utf_8, binary, file_like_object"
+
+},
+
+"extant": false
+
+},
+
+"keyTermInterpretations": {
+
+"source": "AzureBlob",
+
+"data": [],
+
+"params": {
+
+"connection": "{vars.di_azure_blob_connection)",
+
+"absolute_location": "<path_to_file>",
+
+"encoding": "utf_8 e.g.// utf_8, binary, file_like_object"
+
+},
+
+"extant": false
+
+}
+
+}, "output": {
+
+"pageDimensions": "(artifacts.pageDimensions.data}", "documentLayout": "(artifacts.documentLayout.data}",
+
+"logicalChunks": "{artifacts.logicalChunks.data}",
+
+"extractsUsing PrescribedLanguage": "{artifacts.extractsUsing PrescribedLanguage.data}",
+
+"keyTerms": "{artifacts.keyTerms.data)",
+
+"keyTermDefinitions": "{artifacts.keyTermDefinitions.data)",
+
+"keyTermMapping": "{artifacts.keyTermMapping.data)",
+
+"aiFilteredExtracts": "{artifacts.aiFilteredExtracts.data}", "mFees Interpretations": "{artifacts.mFees Interpretations.data)",
+
+"keyTermInterpretations": "{artifacts.keyTermInterpretations.data}"
+
+},
+"stages": [
+
+{
+
+"capability": "DocumentParsing",
+
+"method": "AzureDocument Intelligence",
+
+"label": "DocumentParsing",
+
+"processing_config": {
+
+"processing_engine": "Azure-openai",
+
+"model": "prebuilt-layout",
+
+"endpoint": "https://npee-use2-dev-fr-01.cognitiveservices.azure.com/",
+
+"key": "bacfb986c0874ace9211551852829213"
+
+},
+
+"input": {
+
+"document_path": "{vars.input_document_path}"
+
+}, "output": {
+
+"(artifacts.logicalChunks.data}": "logicalChunks",
+
+"{artifacts.documentLayout.data)": "document Layout",
+
+"(artifacts.pageDimensions.data)": "pageDimensions"
+
+"capability": "GenAIExtraction",
+
+"method": "RegexFiltering",
+
+"label": "Logical Chunks Regex Filtering",
+
+"input": {
+
+"logicalChunks": "(artifacts.logicalChunks.data}",
+
+"keywords": [
+
+"Management Fee",
+
+"Management +Fee",
+
+I
+
+}
+
+"Servicing Fee", "Servicing +Fee",
+
+"Investment Advisory Fee",
+"Investment +Advisory +Fee",
+
+"Compensation",
+
+"Remuneration",
+
+"Expenses",
+
+"AIFM Fee",
+
+"AIFM +Fee"
+
+},
+
+]
+
+"{artifacts.extractsUsing Prescribed Language.data}": "extractsUsing Prescribed Language"
+
+}
+
+"output": {
+
+"capability": "GenAIExtraction",
+
+"method": "Prompting",
+
+"label": "AI Filtered MFees Related Extracts",
+
+"processing_config": {
+
+"model_connection": {
+
+"model_provider_type": "AzureOpenAI",
+
+"openai_api_type": "azure",
+
+"azure_openai_endpoint": "https://ssgpt-predev.openai.azure.com/",
+
+"azure_openai_api_version": "2023-07-01-preview",
+
+"openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+
+"deployment_name": "ssgpt-40"
+
+}, "temperature": 0,
+
+"seed": 17
+
+"prompt": {
+
+"template":" Objective \nYou will be given a list of paragraphs. You need to identify the paragraphs that helpenser one or more of exes which helped answer one or more of the questions. Ind. Create a field 'questions: List of the question Indexes that was wered by the paragra (
+
+"input variables"
+
+"questions":{
+
+"indexing required": true,
+
+"data":[
+
+"Can you explain the calculation, payment timing, and due dates of the Management Fees?"
+
+"How are the Management Fees affected by the Fund's Investment in any Primary Investee fund or Secondary Investee Fund, "How is the Management Fee calculated and reduced in relation to various Investments and fees
+
+"paragraphs": {
+
+"indexing required": true,
+
+"date": "(artifacts.extractsUsing PrescribedLanguage.data)"
+
+"post process required": true
+
+"output" (
+
+"(artifacts.eiFilteredExtracts.data)": "aifilteredExtracts"
+
+"capability": "GenAZExtraction",
+
+"method": "Prompting",
+
+"label": "Keyteres Identification",
+
+"processing config":{
+
+model connection: (
+
+"model provider_type": "AzureüpenAI",
+
+"openai api type": "azurM
+"azure_openai_endpoint": "https://ssgpt-predev.openai.azure.com/",
+
+"azure_openai_api_version": "2023-07-01-preview",
+
+"openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+
+"deployment_name": "ssgpt-40"
+
+},
+
+"temperature": 0,
+
+"seed": 17
+
+},
+
+"prompt": {
+
+"template": "\n# Objective\nYou will be given a list of paragraphs. Your task is to identify the keyterms present in eac
+
+ing company, financial services company and partnership.\n7. Respond back with the list of keyterms against each Paragraph in title case
+
+"input_variables": {
+
+"paragraphs": {
+
+"indexing_required": true,
+
+"data": "{artifacts.aiFilteredExtracts.data}"
+
+}
+
+},
+
+"post_process_required": true
+
+},
+
+"output": {
+
+"{artifacts.keyTerms.data}": "keyTerms"
+
+"capability": "GenAIExtraction",
+
+"method": "RegexFiltering",
+
+"label": "Regex Filtered Keyterm Definitions",
+
+input": { "
+
+"logicalChunks": "fartifacts.logicalChunks.data}",
+
+"keyTerms": "{artifacts.keyTerms.data}"
+
+},
+"output": {
+
+"(artifacts.regexFilteredDefinitions.data)": "regexFilteredDefinitions"
+
+}
+
+"capability": "GenAIExtraction",
+
+"method": "Prompting",
+
+"label": "AI Filtered Keyterm Definitions",
+
+processing_config": { "
+
+"model_connection": {
+
+"model_provider_type": "AzureOpenAI",
+
+"openai_api_type": "azure",
+
+"azure_openai_endpoint": "https://ssgpt-predev.openai.azure.com/",
+
+"azure_openai_api_version": "2023-07-01-preview",
+
+"openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+
+"deployment_name": "ssgpt-40"
+
+},
+
+"temperature": 0,
+
+"seed": 2
+
+}, "prompt": {
+
+"template": "\n# Objective\nYou will be provided with a numbered list of Paragraphs and Keyterms. For each of the provided Keyter
+
+hat provides the definition of the Keyterm, return -1 within a list as the index response to the Keyterm.\n\n\n# Output Instructions:\n\n## Outpu
+
+"input_variables": { "paragraphs ": {
+
+"indexing_required": true,
+
+"data": "(artifacts.regexFilteredDefinitions.data)"
+
+}, "keyterms": {
+
+"indexing_required": true,
+
+"data": "{artifacts.keyTerms.data)"
+}
+
+}, "post_process_required": true
+
+}, "output": {
+
+"(artifacts.keyTermDefinitions.data)": "keyTermDefinitions",
+
+"(artifacts.keyTermMapping.data)": "keyTermMapping"
+
+}
+
+"capability": "GenAIExtraction",
+
+"method" : "Prompting",
+
+"label": "AI MFees Interpretations",
+
+"processing_config": {
+
+"model_connection": {
+
+"model_provider_type": "AzureOpenAI",
+
+"openai_api_type": "azure",
+
+"azure_openai_endpoint": "https://ssgpt-predev.openai.azure.com/",
+
+"azure_openai_api_version": "2023-07-01-preview",
+
+"openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+
+"deployment_name": "ssgpt-40"
+
+},
+
+"temperature": 0,
+
+"seed": 2
+
+}, "prompt": {
+
+"template": "\n# Objective\nYou are tasked to interpret and summarize legal and financial content related to investment funds and manag in title case or capital letters are not changed in the interpretation.\n6. Break down the interpretation into small sentences.\n7. If you are not able terpretations for the paragraph using the reference of 'Keyterm Definition Extracts' if required to understand the content of the paragraph for interpr
+
+input_variables": { " "
+
+mFees InterpretationsExtracts": {
+
+"indexing_required": true,
+"data": "(artifacts.aiFilteredExtracts.data}" },
+
+"KeyTermDefinitionExtracts": {
+
+"indexing_required": true,
+
+"data": "{artifacts.keyTermDefinitions.data}"
+
+}
+
+},
+
+"post_process_required": false
+
+}, "output": {
+
+"{artifacts.mFees Interpretations.data)": "mFees Interpretations"
+
+}
+
+"capability": "GenAIExtraction",
+
+"method": "Prompting",
+
+"label": "AI Keyterm Definitions Interpretations",
+
+"processing_config": {
+
+"model_connection": {
+
+"model_provider_type": "AzureOpenAI",
+
+"openai_api_type": "azure",
+
+"azure_openai_endpoint": "https://ssgpt-predev.openai.azure.com/",
+
+"azure_openai_api_version": "2023-07-01-preview", "openai_api_key": "43d6ab1448834574807eff7a195f76f3",
+
+"deployment_name": "ssgpt-40"
+
+},
+
+"temperature": 0,
+
+"seed": 2
+
+}, "prompt": {
+
+"template": "\n# Objective\nYou are tasked to interpret and summarize legal and financial content related to investment f wotation of the keyterm definition.\n\n# Understanding the layout of 'Keyterm Definition Extracts' provided in the i
+
+The contents of 'Keyterm Definition Extracts' are bullet listed paragraphs, with each paragraph containing the mapping of s.",
+
+"input_variables": {
+
+"KeyTermDefinitionExtracts": {
+
+"indexing_required": true,
+
+"data": "{artifacts.keyTermDefinitions.data}"
+
+},
+
+"keyTermMapping": {
+
+"indexing_required": true,
+
+"data": "{artifacts.keyTermMapping.data}"
+
+}
+
+},
+
+"post_process_required": true
+
+},
+
+"output": {
+
+"{artifacts.key TermInterpretations.data}": "key Term Interpretations"
+
+}
+
+}
+
+]
+
+}
+
+
+
+""Create a high level flowchat of work flow and create a detailed technical stage wise documentation and create service wise functinolity write up
+ChatGPT said:
+ChatGPT
+To create a comprehensive understanding of the provided JSON configuration, we'll break it down into a detailed flowchart of the workflow and a stage-wise documentation that includes service-wise functionality descriptions. Here's the approach:
+
+High-Level Flowchart of Workflow
+Input Document Acquisition
+
+Source: Azure Blob Storage.
+Connections: pm_azure_blob_connection and di_azure_blob_connection.
+Data: Input document path fetched from Azure Blob.
+Artifact Generation and Initialization
+
+Artifacts Created:
+Page Dimensions
+Document Layout
+Logical Chunks
+Extracts Using Prescribed Language
+AI Filtered Extracts
+Key Terms
+Key Term Definitions
+Key Term Mapping
+MFees Interpretations
+Key Term Interpretations
+Document Parsing Stage
+
+Capability: DocumentParsing
+Method: AzureDocument Intelligence (prebuilt-layout model).
+Output: Logical chunks, document layout, and page dimensions.
+Regex Filtering Stage
+
+Capability: GenAIExtraction
+Method: RegexFiltering
+Input: Logical chunks filtered with specified keywords (Management Fees, Compensation, etc.).
+Output: Extracts using Prescribed Language.
+AI Filtering of Extracts
+
+Capability: GenAIExtraction
+Method: Prompting with AzureOpenAI.
+Output: AI Filtered MFees Related Extracts.
+Key Terms Identification
+
+Capability: GenAIExtraction
+Method: Prompting with AzureOpenAI.
+Output: Key Terms.
+Regex Filtering of Key Term Definitions
+
+Capability: GenAIExtraction
+Method: RegexFiltering
+Output: Regex Filtered Key Term Definitions.
+AI Filtered Key Term Definitions
+
+Capability: GenAIExtraction
+Method: Prompting with AzureOpenAI.
+Output: Key Term Definitions and Mapping.
+AI MFees Interpretations
+
+Capability: GenAIExtraction
+Method: Prompting with AzureOpenAI.
+Output: MFees Interpretations.
+AI Key Term Definitions Interpretations
+
+Capability: GenAIExtraction
+Method: Prompting with AzureOpenAI.
+Output: Key Term Interpretations.
+Stage-wise Documentation
+Input Document Acquisition
+
+Description: Fetches documents from Azure Blob Storage using managed identity connections (pm_azure_blob_connection and di_azure_blob_connection).
+Purpose: To provide input data for processing through the Azure OpenAI models.
+Document Parsing
+
+Description: Parses the document to identify layout and logical chunks using Azure Cognitive Services.
+Functionality:
+Extracts structural information like page dimensions and layout.
+Identifies logical sections of the document for further analysis.
+Regex Filtering of Logical Chunks
+
+Description: Uses regex patterns to filter logical chunks for specific keywords related to fees and financial terms.
+Functionality:
+Focuses on terms like "Management Fee," "Compensation," and other financial keywords.
+Extracts text segments relevant to fee calculations and descriptions.
+AI Filtering of Extracts
+
+Description: Applies Azure OpenAI models to refine filtered chunks by identifying relevant fee-related content.
+Functionality:
+Uses prompting techniques to focus on answering specific financial questions.
+Outputs filtered extracts that provide relevant answers.
+Key Terms Identification
+
+Description: Identifies key financial and legal terms within the filtered extracts.
+Functionality:
+Uses AI models to detect and list key terms.
+Provides context for understanding financial terminology within the document.
+Regex Filtering of Key Term Definitions
+
+Description: Further filters the key terms to refine their definitions using regex patterns.
+Functionality:
+Matches and extracts text that defines the identified key terms.
+AI Filtered Key Term Definitions
+
+Description: AI models provide detailed definitions and mapping for identified key terms.
+Functionality:
+Outputs refined definitions that are contextually accurate for financial interpretations.
+MFees Interpretations
+
+Description: Interprets the filtered extracts related to management fees and other financial terms.
+Functionality:
+Breaks down complex financial text into manageable summaries.
+Provides interpretative insights for legal and financial understanding.
+Key Term Definitions Interpretations
+
+Description: Provides a clear, summarized interpretation of key term definitions with contextual mapping.
+Functionality:
+Offers a simplified, accurate understanding of complex legal and financial definitions.
+Supports clearer comprehension for non-technical stakeholders.
+Service-Wise Functionality Write-up
+Azure Blob Storage
+
+Manages document storage and retrieval securely using managed identity for access.
+Azure Cognitive Services - Document Intelligence
+
+Parses and analyzes document structure, enabling logical division and understanding of document layouts.
+Azure OpenAI Services
+
+Implements AI-driven extraction, filtering, and interpretation of financial and legal text.
+Models configured with specific prompting strategies to ensure accurate, relevant outputs.
+Regex Filtering and AI Extraction Methods
+
+Ensures precise identification of terms and extracts based on defined patterns and AI model capabilities.
+Enhances the accuracy of document analysis by combining deterministic regex and probabilistic AI techniques.
+This documentation provides a detailed overview of each step, outlining how Azure and OpenAI services are used to process, extract, and interpret complex financial documents effectively. Let me know if you need any specific adjustments or further details!
+
+
+
+
+
+
+You said:
+I need flow chat diagram 
+ChatGPT said:
+ChatGPT
+
+Create a flowchart diagram illustrating a document processing workflow using Azure and AI services. The flowchart should include the following stages: 1) Input Document Acquisition from Azure Blob Storage, 2) Artifact Generation and Initialization with components like Page Dimensions, Document Layout, Logical Chunks, etc., 3) Document Parsing using Azure Document Intelligence, 4) Regex Filtering of Logical Chunks with specific keywords, 5) AI Filtering of Extracts using Azure OpenAI, 6) Key Terms Identification using AI, 7) Regex Filtering of Key Term Definitions, 8) AI Filtered Key Term Definitions, 9) AI MFees Interpretations, and 10) AI Key Term Definitions Interpretations. The flowchart should have clear directional arrows showing the flow of data between each stage, with each stage represented by a distinct box labeled accordingly.
+Here is the flowchart diagram illustrating the document processing workflow using Azure and AI services. It includes all the stages from document acquisition to AI interpretations as described. You can review and use it for your reference!
+
+
+
+
+
+
+
+
+
+
+
+
 ChatGPT
 
 You said:
