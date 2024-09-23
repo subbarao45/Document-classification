@@ -1,3 +1,92 @@
+Algorithm for the Document Processing Workflow
+Here's a step-by-step algorithm that outlines the complete process for the document processing workflow using Azure and AI services:
+
+Initialize Connections and Load Configurations
+
+Establish connections to Azure Blob Storage using managed identity configurations (pm_azure_blob_connection and di_azure_blob_connection).
+Load configurations for AI models, regex patterns, and document processing settings.
+Input Document Acquisition
+
+Retrieve the input document from Azure Blob Storage using the specified connection details.
+Validate the document's format and accessibility.
+Artifact Generation and Initialization
+
+Initialize artifacts to capture essential document metadata:
+Page Dimensions: Record the size of each page in the document.
+Document Layout: Identify structural elements such as text blocks, tables, and images.
+Logical Chunks: Segment the document into manageable sections for targeted analysis.
+Document Parsing using Azure Document Intelligence
+
+Parse the document using the Azure Cognitive Services model (prebuilt-layout).
+Extract and store the document layout, page dimensions, and logical chunks for further processing.
+Regex Filtering of Logical Chunks
+
+Apply regex patterns to the logical chunks to filter out sections containing specific financial keywords.
+Extract chunks that match the keywords such as “Management Fee,” “Compensation,” and other relevant terms.
+AI Filtering of Extracts Using Azure OpenAI
+
+Use Azure OpenAI models to further refine the filtered logical chunks.
+Input: Filtered logical chunks.
+Output: AI-filtered extracts containing relevant paragraphs that answer predefined financial questions.
+Key Terms Identification
+
+Identify key financial and legal terms within the AI-filtered extracts using the AI model.
+Extract a list of key terms that are significant for understanding the financial context of the document.
+Regex Filtering of Key Term Definitions
+
+Apply regex patterns to further filter the identified key terms to pinpoint exact definitions within the document.
+Extract text snippets that provide definitions for the key terms.
+AI Filtered Key Term Definitions
+
+Use Azure OpenAI to refine and enhance the definitions of the key terms.
+Input: Regex-filtered key term definitions.
+Output: Contextualized, detailed definitions of each key term.
+AI MFees Interpretations
+
+Generate interpretations of the management fee-related extracts using AI models.
+Simplify complex financial language into concise, understandable summaries.
+Provide interpretations that highlight critical insights about management fees and their calculations.
+AI Key Term Definitions Interpretations
+
+Use AI models to provide clear and comprehensive interpretations of the key term definitions.
+Cross-reference key term definitions with relevant document content to ensure accuracy.
+Generate summarized interpretations that facilitate easy understanding of complex financial and legal terms.
+Output Generation
+
+Compile the results, including page dimensions, document layout, logical chunks, filtered extracts, key terms, definitions, and interpretations.
+Format the output data for presentation, reporting, or further analysis by end-users.
+Error Handling and Validation
+
+Implement error handling for data retrieval, model processing, and interpretation stages.
+Validate outputs at each stage to ensure consistency and accuracy before final output generation.
+End of Process
+
+Save the processed data and results back to Azure Blob Storage or an alternative storage solution as required.
+Log the process flow and outputs for auditing and troubleshooting purposes.
+Key Points
+The algorithm leverages a combination of regex filtering and AI-driven extraction techniques to ensure precise identification and interpretation of key financial terms within complex documents.
+Each step is validated and cross-referenced to ensure data integrity and accuracy, providing reliable outputs that enhance decision-making.
+The integration of Azure OpenAI models adds contextual understanding to the extracted information, making it easier to navigate complex legal and financial language.
+This algorithm provides a structured approach to processing and analyzing financial documents, enabling automated insights that are critical for legal, financial, and compliance needs. Let me know if you need further details or specific code implementations for each step!
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. Check
+
+
+
+
+
+
+
+
 
 1. Input Document Acquisition
 Description: This stage involves fetching the input documents from Azure Blob Storage using a managed identity for secure access. The system connects to specific Azure Blob containers using predefined connection settings to locate and retrieve the document files needed for processing.
