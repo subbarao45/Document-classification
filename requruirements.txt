@@ -1,3 +1,76 @@
+
+# Initialize counters and sums
+correct_matches = 0  # Total correctly matched paragraphs
+matched_completeness_sum = 0  # Sum of completeness scores for matched paragraphs
+matched_count = 0  # Count of matched paragraphs
+total_gt_paragraphs = len(ground_truth_paragraphs)  # Total ground truth paragraphs
+completeness_sum = 0  # Sum of completeness scores for all predictions
+
+# Process predictions and ground truth
+for gt_para, predicted_para in zip(ground_truth_paragraphs, predicted_paragraphs):
+    # Find best match score and index for each ground truth paragraph
+    best_match_score, best_match_idx = get_best_match(gt_para, predicted_para)
+
+    if best_match_score > 0:  # Match found
+        correct_matches += 1
+        matched_completeness_sum += best_match_score  # Only for matched paragraphs
+        matched_count += 1
+
+    completeness_sum += best_match_score  # Sum completeness for all paragraphs
+
+    # Append row-wise results
+    result_rows.append({
+        "groundTruth": gt_para,
+        "predicted": predicted_para if predicted_para else "",
+        "extracted": best_match_score > 0,  # True if a match exists
+        "matching_ai_index": best_match_idx if best_match_score > 0 else -1,
+        "completeness": best_match_score,
+        "correctness": 1 if best_match_score > 0 else 0
+    })
+
+# Process extra ground truth paragraphs not matched with any prediction
+extra_gts = [gt for gt in ground_truth_paragraphs if gt not in [row["groundTruth"] for row in result_rows]]
+
+for pr_gt in extra_gts:
+    result_rows.append({
+        "groundTruth": pr_gt,
+        "predicted": None,
+        "extracted": False,
+        "matching_ai_index": None,
+        "completeness": 0,
+        "correctness": 0
+    })
+
+# Calculate Overall Metrics
+overall_correctness = correct_matches / total_gt_paragraphs if total_gt_paragraphs > 0 else 0
+overall_completeness = (
+    matched_completeness_sum / matched_count if matched_count > 0 else 0
+)
+
+# Calculate Recall and Precision
+count_based_recall = correct_matches / total_gt_paragraphs if total_gt_paragraphs > 0 else 0
+count_based_precision = correct_matches / len(predicted_paragraphs) if len(predicted_paragraphs) > 0 else 0
+
+# Calculate Business Score
+business_score = (0.6 * overall_correctness) + (0.4 * overall_completeness)
+
+# Summary of results
+summary = {
+    "Overall Correctness": overall_correctness,
+    "Overall Completeness": overall_completeness,
+    "Recall": count_based_recall,
+    "Precision": count_based_precision,
+    "Business Score": business_score
+}
+
+# Return final result rows and summary
+return result_rows, summary
+
+
+
+
+
+
 Algorithm for the Document Processing Workflow
 Here's a step-by-step algorithm that outlines the complete process for the document processing workflow using Azure and AI services:
 
