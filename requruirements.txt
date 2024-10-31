@@ -1,4 +1,10 @@
 
+
+=SUMPRODUCT(--(ISNUMBER(SEARCH(TRIM(MID(SUBSTITUTE(A1, " ", REPT(" ", 100)), ROW(INDIRECT("1:" & LEN(A1)-LEN(SUBSTITUTE(A1, " ", ""))+1))*100-99, 100)), B1)))) / (LEN(A1)-LEN(SUBSTITUTE(A1, " ", ""))+1) * 100
+
+
+
+
 # Initialize counters and sums
 correct_matches = 0  # Total correctly matched paragraphs
 matched_completeness_sum = 0  # Sum of completeness scores for matched paragraphs
