@@ -1,3 +1,98 @@
+
+
+import fitz  # PyMuPDF
+import re
+
+def extract_headings_with_sections(pdf_path):
+    """
+    Extract headings, subheadings, and section numbers from a PDF using PyMuPDF,
+    filtering out noisy content like standalone numbers and retaining valid headings.
+
+    Parameters:
+        pdf_path (str): Path to the PDF file.
+
+    Returns:
+        list: A list of dictionaries containing page number, section number, and cleaned text.
+    """
+    # Open the PDF
+    doc = fitz.open(pdf_path)
+    extracted_data = []
+
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        blocks = page.get_text("dict")["blocks"]
+
+        for block in blocks:
+            if "lines" not in block:
+                continue
+
+            for line in block["lines"]:
+                if "spans" not in line:
+                    continue
+
+                for span in line["spans"]:
+                    text = span["text"].strip()
+
+                    # Skip noisy content: Only keep lines with valid text and patterns
+                    if len(text) <= 2 or text.isdigit():
+                        continue
+
+                    # Clean the text: Remove dots or unwanted characters
+                    cleaned_text = re.sub(r"[\.]{2,}", "", text).strip()
+                    cleaned_text = re.sub(r"\s{2,}", " ", cleaned_text)  # Remove extra spaces
+
+                    # Regex to identify valid section numbers (e.g., 1, 1.1, 1.1.1)
+                    match = re.match(r"^(\d+(\.\d+)*)(\s+.+)", cleaned_text)
+                    if match:
+                        section_number = match.group(1).strip()  # Extract the section number
+                        heading_text = match.group(3).strip()    # Extract the heading text
+
+                        # Append valid headings only
+                        if heading_text:
+                            extracted_data.append({
+                                "page": page_num + 1,
+                                "section_number": section_number,
+                                "text": heading_text
+                            })
+
+    return extracted_data
+
+
+def print_extracted_data(data):
+    """
+    Print extracted headings, subheadings, and section numbers in a formatted table.
+
+    Parameters:
+        data (list): List of extracted data dictionaries.
+    """
+    print(f"{'Page':<6} {'Section':<10} {'Text'}")
+    print("=" * 50)
+    for item in data:
+        print(f"{item['page']:<6} {item['section_number']:<10} {item['text']}")
+
+
+# Path to your PDF file
+pdf_path = "example.pdf"
+
+# Extract headings, subheadings, and section numbers
+extracted_data = extract_headings_with_sections(pdf_path)
+
+# Print the extracted data
+if extracted_data:
+    print_extracted_data(extracted_data)
+else:
+    print("No valid headings or subheadings found in the document.")
+
+
+
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import re
 
