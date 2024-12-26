@@ -1,4 +1,54 @@
 
+
+import fitz  # PyMuPDF
+import re
+
+def extract_headings_and_subheadings(pdf_path):
+    headings = []
+    section_pattern = re.compile(r'^\d+(\.\d+)*')  # Matches patterns like 1, 1.1, 1.1.1, etc.
+    
+    # Open the PDF
+    doc = fitz.open(pdf_path)
+    
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        blocks = page.get_text("dict")["blocks"]
+        
+        for block in blocks:
+            if "lines" in block:
+                for line in block["lines"]:
+                    # Extract font size and text
+                    text = " ".join(span["text"] for span in line["spans"]).strip()
+                    font_size = line["spans"][0]["size"]  # Assuming all spans in the line have the same size
+                    
+                    if section_pattern.match(text):  # Match section numbers
+                        headings.append((font_size, text))
+    
+    # Post-process: Categorize by font size
+    # Assuming larger font sizes are main headings
+    font_sizes = [size for size, _ in headings]
+    threshold = sum(font_sizes) / len(font_sizes)  # Use average font size as a threshold
+    
+    main_headings = [text for size, text in headings if size > threshold]
+    subheadings = [text for size, text in headings if size <= threshold]
+    
+    return main_headings, subheadings
+
+# Usage
+pdf_path = "your_document.pdf"
+main_headings, subheadings = extract_headings_and_subheadings(pdf_path)
+
+print("Main Headings:")
+print("\n".join(main_headings))
+
+print("\nSubheadings:")
+print("\n".join(subheadings))
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import re
 
