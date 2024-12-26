@@ -1,7 +1,46 @@
 
+import fitz  # PyMuPDF
+import re
+
+def extract_headings_from_pdf(pdf_path):
+    headings = []
+    section_pattern = re.compile(r'^\d+(\.\d+)*')  # Matches patterns like 1, 1.1, 1.1.1, etc.
+    
+    # Open the PDF
+    doc = fitz.open(pdf_path)
+    
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        blocks = page.get_text("dict")["blocks"]
+        
+        for block in blocks:
+            if "lines" in block:
+                for line in block["lines"]:
+                    text = " ".join(span["text"] for span in line["spans"]).strip()
+                    if section_pattern.match(text):  # Match section numbers
+                        headings.append(text)
+    
+    return headings
+
+# Usage
+pdf_path = "your_document.pdf"
+headings = extract_headings_from_pdf(pdf_path)
+print("\n".join(headings))
+
+
+
+
+
+
+
+
 
 import fitz  # PyMuPDF
 import re
+
+
+
+
 
 def extract_headings_with_sections(pdf_path):
     """
