@@ -1,3 +1,110 @@
+
+
+import fitz  # PyMuPDF
+import re
+import csv
+
+def is_invalid_heading(text):
+    """
+    Check if a heading is invalid (empty, only special characters, or only numbers).
+    """
+    return re.fullmatch(r"[\W_]*|\d+", text.strip()) is not None
+
+def extract_headings_and_subheadings(pdf_path):
+    """
+    Extract both top-level headings (e.g., '1. Organization') and clean subheadings (e.g., '1.1 Mission Statement') from a PDF.
+    """
+    headings = []
+
+    # Open the PDF file
+    document = fitz.open(pdf_path)
+
+    for page_number in range(len(document)):
+        page = document[page_number]
+        blocks = page.get_text("dict")["blocks"]
+
+        for block in blocks:
+            for line in block.get("lines", []):
+                for span in line.get("spans", []):
+                    font_name = span["font"]
+                    font_size = span["size"]
+                    text = span["text"].strip()
+                    is_upper = text.isupper()
+
+                    # Regex to match headings and subheadings
+                    # Matches: "1. Organization", "1.1 Mission Statement", "1.1.1 Details"
+                    match = re.match(r"^(\d+(\.\d+)*\.?)\s+(.*?)(\.|\s)*$", text)
+                    if match:
+                        section = match.group(1)  # Section number (e.g., "1.", "1.1.")
+                        title = match.group(3)  # Title text
+
+                        # Exclude invalid headings
+                        if not is_invalid_heading(title):
+                            # Differentiate between top-level headings and subheadings
+                            if len(section.split(".")) == 1:  # Top-level heading (e.g., "1.")
+                                headings.append({
+                                    "type": "Heading",
+                                    "section": section,
+                                    "text": title.strip(),
+                                    "page_number": page_number + 1
+                                })
+                            elif len(section.split(".")) > 1:  # Subheading (e.g., "1.1")
+                                headings.append({
+                                    "type": "Subheading",
+                                    "section": section,
+                                    "text": title.strip(),
+                                    "page_number": page_number + 1
+                                })
+
+    return headings
+
+def save_headings_to_csv(headings, csv_file):
+    """
+    Save the extracted headings and subheadings to a CSV file.
+    """
+    with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Page", "Type", "Section", "Text"])
+        for heading in headings:
+            writer.writerow([
+                heading["page_number"],
+                heading["type"],
+                heading["section"],
+                heading["text"]
+            ])
+
+def main(pdf_path):
+    """
+    Main function to extract and save headings and subheadings from a PDF.
+    """
+    csv_file = pdf_path.replace(".pdf", "_headings.csv").replace(".PDF", "_headings.csv")
+    headings = extract_headings_and_subheadings(pdf_path)
+    
+    count = 0
+    for heading in headings:
+        print(f"Page {heading['page_number']} ({heading['type']}): {heading['section']} {heading['text']}")
+        count += 1
+
+    print(f"Number of headings and subheadings: {count}")
+    save_headings_to_csv(headings, csv_file)
+    print(f"Headings and subheadings saved to {csv_file}")
+
+# Example usage
+if __name__ == "__main__":
+    pdf_path = "example.pdf"  # Replace with the path to your PDF file
+    main(pdf_path)
+
+
+
+
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import re
 import csv
