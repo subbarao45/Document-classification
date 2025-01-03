@@ -1,4 +1,71 @@
 
+POPPLER_PATH = r"C:\poppler\bin"  # Replace with the path to your Poppler installation
+
+def extract_text_from_pdf(pdf_path):
+    """
+    Extract text from a PDF using PyMuPDF for text-based PDFs.
+    If PyMuPDF fails, fallback to OCR using pytesseract.
+    """
+    document = fitz.open(pdf_path)
+    text_content = []
+
+    for page_number in range(len(document)):
+        page = document[page_number]
+        text = page.get_text()
+
+        if not text.strip():  # If the page has no text, fallback to OCR
+            images = convert_from_path(pdf_path, first_page=page_number + 1, last_page=page_number + 1, poppler_path=POPPLER_PATH)
+            for image in images:
+                ocr_text = pytesseract.image_to_string(image)
+                text_content.append(ocr_text)
+        else:
+            text_content.append(text)
+
+    return "\n".join(text_content)
+Step 3: Install Required Python Libraries
+Ensure the following libraries are installed:
+
+bash
+Copy code
+pip install PyMuPDF pdf2image pytesseract pillow
+Step 4: Test Poppler Installation
+Run the following command to verify that Poppler is installed correctly:
+
+bash
+Copy code
+pdftoppm -h
+If you see the help message, Poppler is correctly installed.
+
+Step 5: Run the Script
+After configuring the Poppler path and installing dependencies, run the script:
+
+bash
+Copy code
+python your_script.py
+Expected Output
+If everything is set up correctly, the script will extract headings and subheadings from your PDF and save them to a CSV file.
+
+Let me know if you encounter further issues!
+
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. Check important info.
+
+
+
+
+
+
+
 
 import fitz  # PyMuPDF
 import pytesseract
