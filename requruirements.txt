@@ -1,4 +1,102 @@
 
+import fitz  # PyMuPDF
+import csv
+import re
+
+def is_invalid_heading(text):
+    """Check if a heading is invalid (empty, only special characters, or only numbers)."""
+    return re.fullmatch(r"[\W_]*|\d+", text.strip()) is not None
+
+def extract_headings(line):
+    """Extract headings or subheadings from a given line."""
+    match = re.match(r"^(\d+(\.\d+)*\.?)\s+([^\.\n]+)", line)  # Match section numbers and titles
+    heading = None
+
+    if match:
+        section = match.group(1)  # Section number (e.g., "1.", "1.1.")
+        title = match.group(3)  # Title text (e.g., "Formation and Continuation")
+
+        if not is_invalid_heading(title):  # Check if the heading is valid
+            if len(section.split(".")) == 1:  # Top-level heading
+                heading = {
+                    "type": "Heading",
+                    "section": section,
+                    "text": section.strip() + " " + title.strip(),  # Combine section and title
+                }
+            elif len(section.split(".")) > 1:  # Subheading
+                heading = {
+                    "type": "Subheading",
+                    "section": section,
+                    "text": section.strip() + " " + title.strip(),  # Combine section and title
+                }
+
+    return heading
+
+def extract_headings_from_pdf(pdf_path):
+    """Extract headings from a PDF file."""
+    headings = []
+    document = fitz.open(pdf_path)
+
+    for page_number in range(len(document)):
+        page = document[page_number]
+        blocks = page.get_text("dict")["blocks"]
+
+        temp = ""
+
+        for block in blocks:
+            for line in block.get("lines", []):
+                for span in line.get("spans", []):
+                    # Identify headings based on font size or style
+                    if span["size"] >= 10:  # Adjust threshold if needed
+                        line_text = span["text"].strip()
+
+                        if line_text != "":
+                            if re.match(r'^\d+\.*\s*$', line_text):
+                                # Likely a standalone section number
+                                temp = line_text
+                            else:
+                                # Combine with previous line if it's a continuation
+                                line_text = temp + " " + line_text if temp else line_text
+                                temp = ""  # Reset temp after combining
+
+                                # Extract headings
+                                heading = extract_headings(line_text.strip())
+                                if heading:
+                                    headings.append({
+                                        "page_number": page_number + 1,
+                                        "type": heading["type"],
+                                        "text": heading["text"].strip(),
+                                    })
+
+    return headings
+
+def save_headings_to_csv(pdf_path):
+    """Extract headings and save them to a CSV file."""
+    headings = extract_headings_from_pdf(pdf_path)
+    csv_file = pdf_path.replace(".pdf", "_headings.csv").replace(".PDF", "_headings.csv")
+
+    with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Page", "Type", "Text"])  # CSV header
+        for heading in headings:
+            writer.writerow([heading["page_number"], heading["type"], heading["text"]])
+
+    print(f"Results saved to the file: {csv_file}")
+
+# Example usage:
+# save_headings_to_csv("example.pdf")
+
+
+
+
+
+
+
+
+
+
+
+
 
 import fitz  # PyMuPDF
 import csv
