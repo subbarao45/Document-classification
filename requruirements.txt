@@ -1,4 +1,83 @@
 
+
+import openai
+import pandas as pd
+
+# Set your OpenAI API key
+openai.api_key = "your_openai_api_key"
+
+def generate_questions(paragraph, num_questions=5):
+    """
+    Generate questions based on a paragraph using GPT-4.
+    """
+    prompt = f"""
+    Based on the following paragraph, generate {num_questions} meaningful and relevant questions:
+    
+    Paragraph:
+    {paragraph}
+    
+    Questions:
+    """
+    try:
+        # Call GPT-4 model
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant for generating questions."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=500,
+            temperature=0.7
+        )
+        # Extract and return the questions
+        questions = response['choices'][0]['message']['content']
+        return questions.strip()
+    except Exception as e:
+        return f"Error: {e}"
+
+def process_excel(file_path, output_path, num_questions=5):
+    """
+    Process the Excel file, generate questions for each paragraph, and save the results.
+    """
+    # Read the Excel file
+    df = pd.read_excel(file_path)
+
+    # Check for the required columns
+    if 'Paragraph' not in df.columns:
+        raise ValueError("The Excel file must contain a 'Paragraph' column.")
+
+    # Generate questions for each paragraph
+    questions_list = []
+    for index, row in df.iterrows():
+        paragraph = row['Paragraph']
+        if pd.isna(paragraph):  # Skip empty paragraphs
+            questions_list.append("")
+            continue
+        print(f"Generating questions for S. No {row['S. No']}...")
+        questions = generate_questions(paragraph, num_questions=num_questions)
+        questions_list.append(questions)
+
+    # Add questions to a new column
+    df['Questions'] = questions_list
+
+    # Save the updated DataFrame to a new Excel file
+    df.to_excel(output_path, index=False)
+    print(f"Questions have been added and saved to {output_path}")
+
+if __name__ == "__main__":
+    # Input Excel file path
+    input_file = "input_file.xlsx"  # Replace with your input file path
+    output_file = "output_with_questions.xlsx"  # Replace with your desired output file path
+
+    # Number of questions to generate per paragraph
+    num_questions = 5
+
+    # Process the Excel file
+    process_excel(input_file, output_file, num_questions=num_questions)
+
+
+
+
 import fitz  # PyMuPDF
 import csv
 import re
