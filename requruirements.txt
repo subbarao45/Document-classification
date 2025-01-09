@@ -1,4 +1,69 @@
 
+# Step 1: Stop Proxy
+import os
+from pathlib import Path
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Remove proxy settings if they exist
+if "https_proxy" in os.environ:
+    del os.environ["https_proxy"]
+if "http_proxy" in os.environ:
+    del os.environ["http_proxy"]
+
+print("Proxy settings have been removed.")
+
+# Step 2: Set Hugging Face Cache Directory
+# Set the Hugging Face home to a writable directory in Databricks
+hf_home_path = "/dbfs/tmp/huggingface_cache/"
+os.environ["HF_HOME"] = hf_home_path
+
+# Ensure the directory exists
+if not os.path.exists(hf_home_path):
+    os.makedirs(hf_home_path, exist_ok=True)
+print(f"Hugging Face cache directory set to: {hf_home_path}")
+
+# Step 3: Download Model and Tokenizer
+model_name = "gpt2"  # Small model for testing
+
+try:
+    print("Downloading model...")
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        device_map="auto",  # Automatically map model to available devices
+        trust_remote_code=True  # Allow downloading custom models if needed
+    )
+    print("Model downloaded successfully.")
+except Exception as e:
+    print(f"Error downloading model: {e}")
+
+try:
+    print("Downloading tokenizer...")
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name,
+        trust_remote_code=True
+    )
+    print("Tokenizer downloaded successfully.")
+except Exception as e:
+    print(f"Error downloading tokenizer: {e}")
+
+# Step 4: Verify Downloaded Files
+print(f"Checking downloaded files in: {hf_home_path}")
+try:
+    files = list(Path(hf_home_path).rglob("*"))
+    if files:
+        print("Downloaded files:")
+        for file in files:
+            print(file)
+    else:
+        print("No files found. Model might not have been saved properly.")
+except Exception as e:
+    print(f"Error checking files: {e}")
+
+
+
+
+
+
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
