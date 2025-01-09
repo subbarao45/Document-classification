@@ -1,5 +1,62 @@
 
 
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import os
+
+# Environment setup
+os.environ['CURL_CA_BUNDLE'] = ''
+os.environ["HF_HOME"] = "/Volumes/dev2_catalog_01/default/txt-wtf-pe/hf/test-model/"  # Change to a test directory
+
+# Small model for testing
+model_name = "gpt2"  # You can also try "bert-base-uncased" or any lightweight model
+
+# Load the model
+print("Downloading model...")
+try:
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        device_map='auto',  # Automatically map model to available devices
+        trust_remote_code=True  # Allow downloading custom models if needed
+    )
+    print("Model downloaded successfully.")
+except Exception as e:
+    print(f"Error downloading model: {e}")
+
+# Load the tokenizer
+print("Downloading tokenizer...")
+try:
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name,
+        trust_remote_code=True
+    )
+    print("Tokenizer downloaded successfully.")
+except Exception as e:
+    print(f"Error downloading tokenizer: {e}")
+
+# Check if the model and tokenizer are saved
+hf_home_path = os.environ["HF_HOME"]
+print(f"Checking model files in: {hf_home_path}")
+try:
+    from pathlib import Path
+
+    files = list(Path(hf_home_path).rglob("*"))
+    if files:
+        print("Downloaded files:")
+        for file in files:
+            print(file)
+    else:
+        print("No files found. Model might not have been saved properly.")
+except Exception as e:
+    print(f"Error checking files: {e}")
+
+
+
+
+
+
+
+
 import openai
 import pandas as pd
 
