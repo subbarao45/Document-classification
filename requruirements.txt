@@ -1,4 +1,90 @@
 
+import os
+from pathlib import Path
+from sentence_transformers import SentenceTransformer
+
+# Set Hugging Face cache directory
+hf_home_path = r"C:\Users\subba\OneDrive\Desktop\test"
+os.environ["HF_HOME"] = hf_home_path
+
+# Ensure the directory exists
+if not os.path.exists(hf_home_path):
+    os.makedirs(hf_home_path, exist_ok=True)
+print(f"Hugging Face cache directory set to: {hf_home_path}")
+
+# Load model
+try:
+    print("Downloading model...")
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", cache_folder=hf_home_path)
+    print("Model downloaded successfully.")
+except Exception as e:
+    print(f"Error downloading model: {e}")
+
+# Verify downloaded files
+print(f"Checking downloaded files in: {hf_home_path}")
+try:
+    files = list(Path(hf_home_path).rglob("*"))
+    if files:
+        print("Downloaded files:")
+        for file in files:
+            print(file)
+    else:
+        print("No files found. Model might not have been saved properly.")
+except Exception as e:
+    print(f"Error checking files: {e}")   "give me example how we load the model use it
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+# Set Hugging Face cache directory
+hf_home_path = r"C:\Users\subba\OneDrive\Desktop\test"
+
+# Load the model
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", cache_folder=hf_home_path)
+print("Model loaded successfully!")
+
+# Example sentences
+sentences = [
+    "The weather is sunny and warm.",
+    "It’s a bright and sunny day.",
+    "I love going to the beach when the weather is nice.",
+    "Rainy days make me want to stay indoors."
+]
+
+# Generate embeddings for sentences
+print("\nGenerating embeddings for sentences...")
+embeddings = model.encode(sentences)
+print("Embeddings generated!")
+
+# Display embeddings
+print("\nSentence embeddings:")
+for i, embedding in enumerate(embeddings):
+    print(f"Sentence {i+1}: {sentences[i]}")
+    print(f"Embedding (first 5 dimensions): {embedding[:5]}\n")
+
+# Compute similarity between two sentences
+print("\nCalculating similarity between the first two sentences...")
+similarity = cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
+print(f"Similarity between '{sentences[0]}' and '{sentences[1]}': {similarity:.2f}")
+
+# Perform semantic search
+print("\nPerforming semantic search...")
+query = "What is the weather like?"
+query_embedding = model.encode(query)
+similarities = cosine_similarity([query_embedding], embeddings)[0]
+
+# Find the most similar sentence
+most_similar_idx = np.argmax(similarities)
+print(f"Query: {query}")
+print(f"Most similar sentence: {sentences[most_similar_idx]} (Similarity: {similarities[most_similar_idx]:.2f})")
+
+
+
+
+
+
+
+
 # Step 1: Stop Proxy
 import os
 from pathlib import Path
