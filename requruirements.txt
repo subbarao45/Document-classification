@@ -1,4 +1,113 @@
 
+
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.llms import AzureChatOpenAI
+import PyPDF2
+
+def extract_text_from_pdf(pdf_path):
+    """
+    Extracts text from a PDF file.
+    
+    Args:
+        pdf_path (str): Path to the PDF file.
+        
+    Returns:
+        str: Combined text from all pages of the PDF.
+    """
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text()
+    return text
+
+def generate_questions_from_text(pdf_text, num_questions=25):
+    """
+    Generates question-answer pairs from the given text.
+    
+    Args:
+        pdf_text (str): Input text to generate questions from.
+        num_questions (int): Number of question-answer pairs to generate.
+    
+    Returns:
+        list: List of question-answer pairs in JSON format.
+    """
+    # Prompt template for generating questions and answers
+    prompt_template = PromptTemplate.from_template("""
+        You are a Financial expert with a deep understanding of corporate finance, investment strategies, and accounting. 
+        Your task is to generate precise and accurate question-answer pairs based on the input text. 
+        Each question should be clear, concise, and relevant to the financial domain, while the answers should be comprehensive yet easy to understand. 
+        
+        Ensure the questions target different levels of difficulty ranging from beginner to expert. Also, make sure there are different types of questions such as:
+        - Factual
+        - Procedural
+        - Explanatory
+        - Inferential
+        - Conceptual
+        - Reasoning-based
+
+        Input Text: {paragraph}
+
+        Generate {num_questions} questions along with their answers. Present the output in JSON format as:
+        [
+            {
+                "question": "Question text here",
+                "answer": "Answer text here"
+            },
+            ...
+        ]
+    """)
+
+    # LLM setup
+    llm = AzureChatOpenAI(
+        temperature=0, 
+        api_version="2023-06-01-preview",  # Replace with your actual API version
+        azure_endpoint="YOUR_AZURE_ENDPOINT",  # Replace with your Azure endpoint
+        deployment_name="ssgpt-40", 
+        seed=42
+    )
+
+    # Create LLM Chain
+    llm_chain = LLMChain(llm=llm, prompt=prompt_template)
+
+    # Predict output
+    output = llm_chain.predict(paragraph=pdf_text, num_questions=num_questions)
+
+    return output
+
+
+# Path to the PDF file
+pdf_path = "your_pdf_file.pdf"  # Replace with the actual file path
+
+try:
+    # Step 1: Extract text from the PDF
+    pdf_text = extract_text_from_pdf(pdf_path)
+    print("PDF Text Extracted Successfully.")
+
+    # Step 2: Generate questions and answers
+    questions_and_answers = generate_questions_from_text(pdf_text, num_questions=25)
+    print("Questions and Answers Generated Successfully.")
+
+    # Step 3: Display the results
+    import json
+    print(json.dumps(questions_and_answers, indent=2))
+
+except Exception as e:
+    print(f"Error: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
