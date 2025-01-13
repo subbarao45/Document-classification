@@ -1,3 +1,228 @@
+from langchain.prompts.prompt import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+import pandas as pd
+import json
+
+def generate_questions_by_type(paragraph, num_questions=3):
+    """
+    Generates categorized questions and answers (Factual, Procedural, etc.)
+    """
+    question_types = [
+        "Factual",
+        "Procedural",
+        "Explanatory",
+        "Inferential",
+        "Conceptual",
+        "Reasoning-based"
+    ]
+
+    # Define prompts for each question type
+    prompt_templates = {
+        "Factual": """
+            You are a financial expert with a deep understanding of corporate finance, investment strategies, and accounting.
+            Generate {num_questions} factual question-answer pairs based on the input text.
+            
+            Factual questions should:
+            - Focus on specific details, definitions, or data.
+            - Provide precise answers without unnecessary elaboration.
+
+            Input Text: {paragraph}
+
+            Output:
+            [
+                {{
+                    "question": "Your factual question here",
+                    "answer": "Your factual answer here"
+                }},
+                ...
+            ]
+            Ensure the response is a valid JSON object.
+        """,
+        "Procedural": """
+            You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+            Generate {num_questions} procedural question-answer pairs based on the input text.
+
+            Procedural questions should:
+            - Focus on processes, methods, or sequences of steps.
+            - Provide step-by-step answers that are logical and easy to follow.
+
+            Input Text: {paragraph}
+
+            Output:
+            [
+                {{
+                    "question": "Your procedural question here",
+                    "answer": [
+                        "Step 1: Description of the first step.",
+                        "Step 2: Description of the second step.",
+                        "Step 3: Description of the third step."
+                    ]
+                }},
+                ...
+            ]
+            Ensure the response is a valid JSON object.
+        """,
+        "Explanatory": """
+            You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+            Generate {num_questions} explanatory question-answer pairs based on the input text.
+
+            Explanatory questions should:
+            - Clarify complex concepts or ideas in the text.
+            - Provide step-by-step explanations to improve understanding.
+
+            Input Text: {paragraph}
+
+            Output:
+            [
+                {{
+                    "question": "Your explanatory question here",
+                    "answer": [
+                        "Step 1: Introduction to the concept or idea.",
+                        "Step 2: Explanation of the key elements.",
+                        "Step 3: How these elements interact or apply in practice.",
+                        "Step 4: Conclusion or summary of the explanation."
+                    ]
+                }},
+                ...
+            ]
+            Ensure the response is a valid JSON object.
+        """,
+        "Inferential": """
+            You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+            Generate {num_questions} inferential question-answer pairs based on the input text.
+
+            Inferential questions should:
+            - Require interpreting information or drawing logical conclusions.
+            - Encourage predictions or implications based on the provided data.
+            - Include answers that justify the inference with clear reasoning.
+
+            Input Text: {paragraph}
+
+            Output:
+            [
+                {{
+                    "question": "Your inferential question here",
+                    "answer": "Your inference-based answer with justification here."
+                }},
+                ...
+            ]
+            Ensure the response is a valid JSON object.
+        """,
+        "Conceptual": """
+            You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+            Generate {num_questions} conceptual question-answer pairs based on the input text.
+
+            Conceptual questions should:
+            - Explore theories, principles, or abstract ideas.
+            - Provide answers that are detailed and cover the underlying concepts comprehensively.
+
+            Input Text: {paragraph}
+
+            Output:
+            [
+                {{
+                    "question": "Your conceptual question here",
+                    "answer": "Your conceptual answer here."
+                }},
+                ...
+            ]
+            Ensure the response is a valid JSON object.
+        """,
+        "Reasoning-based": """
+            You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+            Generate {num_questions} reasoning-based question-answer pairs based on the input text.
+
+            Reasoning-based questions should:
+            - Require logical argumentation, critical thinking, or evaluation.
+            - Include answers that justify conclusions with a logical explanation.
+
+            Input Text: {paragraph}
+
+            Output:
+            [
+                {{
+                    "question": "Your reasoning-based question here",
+                    "answer": "Your reasoning-based answer with justification here."
+                }},
+                ...
+            ]
+            Ensure the response is a valid JSON object.
+        """
+    }
+
+    # Initialize the Azure LLM
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version="2023-06-01-preview",
+        azure_openai_api_base="YOUR_AZURE_ENDPOINT",  # Replace with your Azure endpoint
+        deployment_name="ssgpt-40"
+    )
+
+    all_questions = []
+    for question_type, template in prompt_templates.items():
+        try:
+            prompt = PromptTemplate(input_variables=["paragraph", "num_questions"], template=template)
+            llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+            response = llm_chain.predict(paragraph=paragraph, num_questions=str(num_questions))
+            questions_and_answers = json.loads(response)
+
+            for qa in questions_and_answers:
+                all_questions.append({
+                    "Question Type": question_type,
+                    "Question": qa["question"],
+                    "Answer": qa["answer"]
+                })
+        except json.JSONDecodeError:
+            print(f"Error: Invalid JSON for {question_type} questions.")
+            print("Raw Response:", response)
+        except Exception as e:
+            print(f"Error generating {question_type} questions: {e}")
+
+    return all_questions
+
+# Save results to Excel
+def save_to_excel(questions_and_answers, output_file="questions_by_type.xlsx"):
+    """
+    Saves categorized questions and answers to an Excel file.
+    """
+    if questions_and_answers:
+        df = pd.DataFrame(questions_and_answers)
+        df.to_excel(output_file, index=False)
+        print(f"Questions and answers saved to {output_file}.")
+    else:
+        print("No data to save.")
+
+# Main execution
+if __name__ == "__main__":
+    paragraph = """
+    The Management Fee is a percentage of the committed capital used to cover operational costs. 
+    The term of the fund is 10 years, with an option for two 1-year extensions. 
+    Investors are responsible for operational and organizational expenses, including the Investor Servicing Fee.
+    """
+    try:
+        questions_and_answers = generate_questions_by_type(paragraph, num_questions=3)
+        if questions_and_answers:
+            save_to_excel(questions_and_answers, "questions_by_type.xlsx")
+        else:
+            print("No questions generated.")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
