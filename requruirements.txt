@@ -1,4 +1,122 @@
 
+
+from langchain.prompts.prompt import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+import pandas as pd
+import json
+
+def generate_questions_by_type(paragraph, num_questions=3):
+    """
+    Generates categorized questions and answers (Procedural, Explanatory, etc.)
+    """
+    question_types = [
+        "Factual",
+        "Procedural",
+        "Explanatory",
+        "Inferential",
+        "Conceptual",
+        "Reasoning-based"
+    ]
+
+    # Template for generating categorized questions
+    prompt_template = PromptTemplate(
+        input_variables=["paragraph", "question_type", "num_questions"],
+        template="""
+            You are a financial expert with expertise in corporate finance, investment strategies, and accounting. 
+            Your task is to generate {num_questions} {question_type} question-answer pairs based on the input text.
+
+            Ensure:
+            - The questions are clear, concise, and aligned with the {question_type} type.
+            - Answers are comprehensive yet easy to understand.
+            - The response is a valid JSON array in the format:
+              [
+                  {{
+                      "question": "Your question here",
+                      "answer": "Your answer here"
+                  }},
+                  ...
+              ]
+
+            Input Text: {paragraph}
+        """
+    )
+
+    # Create the LLM
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version="2023-06-01-preview",
+        azure_openai_api_base="YOUR_AZURE_ENDPOINT",  # Replace with your Azure endpoint
+        deployment_name="ssgpt-40"
+    )
+
+    llm_chain = LLMChain(llm=llm, prompt=prompt_template)
+
+    # Generate questions for each type
+    all_questions = []
+    for question_type in question_types:
+        try:
+            response = llm_chain.predict(
+                paragraph=paragraph,
+                question_type=question_type,
+                num_questions=str(num_questions)
+            )
+            questions_and_answers = json.loads(response)
+
+            for qa in questions_and_answers:
+                all_questions.append({
+                    "Question Type": question_type,
+                    "Question": qa["question"],
+                    "Answer": qa["answer"]
+                })
+        except json.JSONDecodeError:
+            print(f"Error: Invalid JSON for {question_type} questions.")
+            continue
+        except Exception as e:
+            print(f"Error: {e}")
+            continue
+
+    return all_questions
+
+def save_to_excel(questions_and_answers, output_file="questions_by_type.xlsx"):
+    """
+    Saves categorized questions and answers to an Excel file.
+    """
+    if questions_and_answers:
+        df = pd.DataFrame(questions_and_answers)
+        df.to_excel(output_file, index=False)
+        print(f"Questions and answers saved to {output_file}.")
+    else:
+        print("No data to save.")
+
+# Example Usage
+paragraph = """
+The Management Fee is a percentage of the committed capital used to cover operational costs. 
+The term of the fund is 10 years, with an option for two 1-year extensions. 
+Investors are responsible for operational and organizational expenses, including the Investor Servicing Fee.
+"""
+
+try:
+    questions_and_answers = generate_questions_by_type(paragraph, num_questions=3)
+    if questions_and_answers:
+        save_to_excel(questions_and_answers, "questions_by_type.xlsx")
+    else:
+        print("No questions generated.")
+except Exception as e:
+    print(f"Error: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
 from langchain.prompts.prompt import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.chat_models import AzureChatOpenAI
