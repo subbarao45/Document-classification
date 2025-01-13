@@ -1,5 +1,42 @@
 
 
+combined_prompt_template = PromptTemplate(
+    input_variables=["paragraph", "num_questions"],
+    template="""
+        You are an expert in finance and accounting. Your task is to generate {num_questions} question-answer pairs covering all the following types:
+        - Factual
+        - Procedural
+        - Explanatory
+        - Inferential
+        - Conceptual
+        - Reasoning-based
+
+        Requirements:
+        - Ensure an even distribution of questions among all types.
+        - Questions should be clear, concise, and relevant to the text.
+        - Answers should be accurate, comprehensive, and easy to understand.
+
+        Input Text: {paragraph}
+
+        Generate the response in the following JSON format:
+        [
+            {{
+                "question": "Your question here",
+                "answer": "Your answer here",
+                "type": "Type of the question here (e.g., Factual, Procedural, etc.)"
+            }},
+            ...
+        ]
+        Ensure the response is a valid JSON and contains no extra text outside the JSON format.
+    """
+)
+
+
+
+
+
+
+
 from langchain.prompts.prompt import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.chat_models import AzureChatOpenAI
