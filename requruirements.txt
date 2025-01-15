@@ -6,6 +6,131 @@ import PyPDF2
 import pandas as pd
 import json
 
+# Prompts remain the same as earlier
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text()
+    return text
+
+# Function to generate questions for a specific type
+def generate_questions(paragraph, question_type, num_questions, prompt_template):
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version="2023-06-01-preview",
+        azure_openai_api_base="YOUR_AZURE_ENDPOINT",  # Replace with your Azure endpoint
+        deployment_name="ssgpt-40"
+    )
+
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions"],
+        template=prompt_template
+    )
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions)
+        )
+        return json.loads(response)
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON for {question_type} questions.")
+        return []
+    except Exception as e:
+        print(f"Error generating {question_type} questions: {e}")
+        return []
+
+# Function to generate questions for all types
+def generate_questions_by_all_types(paragraph, num_questions):
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Explanatory": EXPLANATORY_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    all_questions = []
+    for question_type, prompt in question_types_and_prompts.items():
+        questions = generate_questions(paragraph, question_type, num_questions, prompt)
+        for qa in questions:
+            all_questions.append({
+                "Question Type": question_type,
+                "Question": qa["question"],
+                "Answer": qa["answer"]
+            })
+    return all_questions
+
+# Function to save results to Excel
+def save_to_excel(questions_and_answers, output_file):
+    if questions_and_answers:
+        df = pd.DataFrame(questions_and_answers)
+        df.to_excel(output_file, index=False)
+        print(f"Questions and answers saved to {output_file}.")
+    else:
+        print(f"No data to save for {output_file}.")
+
+# Function to process all PDF files in a directory and its subdirectories
+def process_pdfs_in_subdirectories(root_directory, num_questions=3, output_folder="output"):
+    """
+    Processes all PDF files in the given directory and its subdirectories.
+    """
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for dirpath, _, filenames in os.walk(root_directory):
+        for filename in filenames:
+            if filename.endswith('.pdf'):
+                pdf_path = os.path.join(dirpath, filename)
+                try:
+                    print(f"Processing: {pdf_path}")
+                    # Extract text from the PDF
+                    pdf_text = extract_text_from_pdf(pdf_path)
+
+                    # Generate questions
+                    questions_and_answers = generate_questions_by_all_types(pdf_text, num_questions)
+
+                    # Save results to Excel
+                    relative_path = os.path.relpath(pdf_path, root_directory)
+                    output_file = os.path.join(output_folder, relative_path.replace(".pdf", "_questions.xlsx"))
+
+                    # Ensure the subdirectory structure in the output folder
+                    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                    save_to_excel(questions_and_answers, output_file)
+                except Exception as e:
+                    print(f"Error processing {pdf_path}: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import os
+from langchain.prompts.prompt import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+import PyPDF2
+import pandas as pd
+import json
+
 # Prompts remain the same as provided in earlier examples
 
 # Function to extract text from a PDF
