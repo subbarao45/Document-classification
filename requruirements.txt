@@ -6,6 +6,256 @@ import PyPDF2
 import pandas as pd
 import json
 
+# Define prompts for each question type
+FACTUAL_PROMPT = """
+    You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+    Your task is to generate {num_questions} factual question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions focus on specific details, definitions, or data.
+    - Answers are precise and concise.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "Your factual question here",
+            "answer": "Your factual answer here"
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+PROCEDURAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate {num_questions} procedural question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions focus on processes, methods, or sequences of steps.
+    - Answers provide detailed, step-by-step explanations.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "Your procedural question here",
+            "answer": [
+                "Step 1: Description of the first step.",
+                "Step 2: Description of the second step.",
+                ...
+            ]
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+EXPLANATORY_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate {num_questions} explanatory question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions aim to clarify concepts or ideas in the text.
+    - Answers are comprehensive, including step-by-step reasoning.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "Your explanatory question here",
+            "answer": [
+                "Step 1: Introduction to the concept or idea.",
+                "Step 2: Explanation of key elements.",
+                "Step 3: How these elements interact or apply in practice.",
+                ...
+            ]
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+INFERENTIAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate {num_questions} inferential question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions encourage interpretation or conclusions based on the data.
+    - Answers justify inferences with logical reasoning.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "Your inferential question here",
+            "answer": "Your inference-based answer with justification here."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+CONCEPTUAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate {num_questions} conceptual question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions explore theories, principles, or ideas.
+    - Answers provide detailed explanations of the underlying concepts.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "Your conceptual question here",
+            "answer": "Your conceptual answer here."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+REASONING_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate {num_questions} reasoning-based question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions require logical argumentation or critical thinking.
+    - Answers justify conclusions with clear and logical reasoning.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "Your reasoning-based question here",
+            "answer": "Your reasoning-based answer with justification here."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+# Extract text from a PDF
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text()
+    return text
+
+# Generate questions for a specific type
+def generate_questions(paragraph, question_type, num_questions, prompt_template):
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version="2023-06-01-preview",
+        azure_openai_api_base="YOUR_AZURE_ENDPOINT",  # Replace with your Azure endpoint
+        deployment_name="ssgpt-40"
+    )
+
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions"],
+        template=prompt_template
+    )
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions)
+        )
+        return json.loads(response)
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON for {question_type} questions.")
+        return []
+    except Exception as e:
+        print(f"Error generating {question_type} questions: {e}")
+        return []
+
+# Generate questions for all types
+def generate_questions_by_all_types(paragraph, num_questions):
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Explanatory": EXPLANATORY_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    all_questions = []
+    for question_type, prompt in question_types_and_prompts.items():
+        questions = generate_questions(paragraph, question_type, num_questions, prompt)
+        for qa in questions:
+            all_questions.append({
+                "Question Type": question_type,
+                "Question": qa["question"],
+                "Answer": qa["answer"]
+            })
+    return all_questions
+
+# Save results to Excel
+def save_to_excel(questions_and_answers, output_file="questions_by_type.xlsx"):
+    if questions_and_answers:
+        df = pd.DataFrame(questions_and_answers)
+        df.to_excel(output_file, index=False)
+        print(f"Questions and answers saved to {output_file}.")
+    else:
+        print("No data to save.")
+
+# Process multiple PDFs in a loop
+def process_multiple_pdfs(pdf_paths, num_questions=3, output_folder="output"):
+    """
+    Process multiple PDFs and generate categorized questions for each.
+    """
+    for pdf_path in pdf_paths:
+        try:
+            print(f"Processing PDF: {pdf_path}")
+            # Extract text
+            pdf_text = extract_text_from_pdf(pdf_path)
+
+            # Generate questions
+            questions_and_answers = generate_questions_by_all_types(pdf_text, num_questions)
+
+            # Save to Excel
+            output_file = f"{output_folder}/{pdf_path.split('/')[-1].replace('.pdf', '_questions.xlsx')}"
+            save_to_excel(questions_and_answers, output_file)
+
+        except Exception as e:
+            print(f"Error processing {pdf_path}: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from langchain.prompts.prompt import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+import PyPDF2
+import pandas as pd
+import json
+
 # Define separate prompts for each question type
 FACTUAL_PROMPT = """
     You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
