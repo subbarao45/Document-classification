@@ -1,3 +1,143 @@
+# Prompts for Factual, Procedural, Inferential, Conceptual, and Reasoning-based questions
+
+FACTUAL_PROMPT = """
+    You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+    Your task is to generate up to {num_questions} distinct factual question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions focus on specific details, names, titles, or entities mentioned in the input text.
+    - Answers are precise and concise.
+    - Questions and answers must be unique and should not repeat.
+    - If fewer distinct questions are possible, return only the available ones.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "What is the name of the entity mentioned in the input text?",
+            "answer": "Name or entity mentioned in the input text."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+PROCEDURAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct procedural question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions focus on processes, methods, or sequences of steps.
+    - Answers provide detailed, step-by-step instructions with clear descriptions for each step.
+    - Questions and answers must be unique and should not repeat.
+    - If fewer distinct questions are possible, return only the available ones.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "What are the steps to achieve or complete this process?",
+            "answer": [
+                "Step 1: Brief description of the first step.",
+                "Step 2: Brief description of the second step.",
+                "Step 3: Add additional steps as needed."
+            ]
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+INFERENTIAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct inferential question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions require interpretation or conclusions derived from the input text.
+    - Answers justify the inference with clear logical reasoning.
+    - Questions and answers must be unique and should not repeat.
+    - If fewer distinct questions are possible, return only the available ones.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "What inference can be made about {specific topic}?",
+            "answer": "The inference that can be drawn is {logical explanation}."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+CONCEPTUAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct conceptual question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions explore theories, principles, or core concepts mentioned in the text.
+    - Answers provide a detailed explanation of the underlying concept or principle.
+    - Questions and answers must be unique and should not repeat.
+    - If fewer distinct questions are possible, return only the available ones.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "What is the concept of {specific principle or idea} in the input text?",
+            "answer": "The concept refers to {detailed explanation}."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+REASONING_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct reasoning-based question-answer pairs based on the input text.
+
+    Ensure:
+    - All questions begin with "Why".
+    - Questions require logical argumentation, critical thinking, or evaluation.
+    - Answers justify conclusions with clear and logical reasoning.
+    - Questions and answers must be unique and should not repeat.
+    - If fewer distinct questions are possible, return only the available ones.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "Why does this happen or exist based on the input text?",
+            "answer": "Detailed reasoning or justification for the question."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 import tiktoken
 from langchain.prompts.prompt import PromptTemplate
