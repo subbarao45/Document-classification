@@ -14,6 +14,49 @@ def json_to_text(json_obj):
             text += f"{key}: {value}\n"
     return text
 
+# Read JSON data from a file
+file_path = "data.json"  # Replace with the path to your JSON file
+
+try:
+    with open(file_path, "r") as json_file:
+        json_data = json.load(json_file)  # Load JSON data from the file
+
+    # Convert JSON to plain text
+    text_output = json_to_text(json_data)
+
+    # Print or save the text output
+    print(text_output)
+
+    # Optionally save the text to another file
+    with open("output.txt", "w") as text_file:
+        text_file.write(text_output)
+
+except FileNotFoundError:
+    print(f"Error: File '{file_path}' not found.")
+except json.JSONDecodeError:
+    print(f"Error: File '{file_path}' is not a valid JSON file.")
+
+
+
+
+
+
+
+import json
+
+def json_to_text(json_obj):
+    # Convert JSON object to a human-readable text format
+    text = ""
+    for key, value in json_obj.items():
+        if isinstance(value, dict):  # Handle nested dictionaries
+            text += f"{key}:\n"
+            text += json_to_text(value)  # Recursive call for nested dictionaries
+        elif isinstance(value, list):  # Handle lists
+            text += f"{key}: {', '.join(map(str, value))}\n"
+        else:
+            text += f"{key}: {value}\n"
+    return text
+
 # Example JSON object
 json_data = {
     "name": "John Doe",
