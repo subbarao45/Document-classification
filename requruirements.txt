@@ -1,4 +1,50 @@
 
+import json
+
+def json_to_text(json_obj):
+    # Convert JSON object to a human-readable text format
+    text = ""
+    for key, value in json_obj.items():
+        if isinstance(value, dict):  # Handle nested dictionaries
+            text += f"{key}:\n"
+            text += json_to_text(value)  # Recursive call for nested dictionaries
+        elif isinstance(value, list):  # Handle lists
+            text += f"{key}: {', '.join(map(str, value))}\n"
+        else:
+            text += f"{key}: {value}\n"
+    return text
+
+# Example JSON object
+json_data = {
+    "name": "John Doe",
+    "age": 30,
+    "address": {
+        "street": "123 Main St",
+        "city": "New York",
+        "zipcode": "10001"
+    },
+    "hobbies": ["reading", "traveling", "coding"]
+}
+
+# Convert JSON to plain text
+text_output = json_to_text(json_data)
+
+# Print the result
+print(text_output)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 import PyPDF2
 import pandas as pd
