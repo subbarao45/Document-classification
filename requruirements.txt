@@ -3,6 +3,289 @@ import os
 import PyPDF2
 import pandas as pd
 import json
+import tiktoken
+from langchain.prompts.prompt import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+
+# Function to calculate tokens using tiktoken
+def calculate_tokens(text, model="gpt-3.5-turbo"):
+    """
+    Calculate the number of tokens in a given text using tiktoken.
+
+    Args:
+        text (str): Input text.
+        model (str): Model name to determine the encoding (default: "gpt-3.5-turbo").
+
+    Returns:
+        int: Number of tokens in the text.
+    """
+    try:
+        if model in ["gpt-3.5-turbo", "gpt-4"]:
+            encoding = tiktoken.get_encoding("cl100k_base")
+        elif model == "text-davinci-003":
+            encoding = tiktoken.get_encoding("p50k_base")
+        else:
+            raise ValueError(f"Unsupported model: {model}")
+
+        return len(encoding.encode(text))
+    except Exception as e:
+        print(f"Error calculating tokens: {e}")
+        return 0
+
+# Prompts
+FACTUAL_PROMPT = """
+    You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+    Your task is to generate up to {num_questions} distinct factual question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions focus on specific details, names, titles, or entities mentioned in the input text.
+    - Questions and answers must be distinct, unique, and not repeated.
+    - If fewer unique questions are possible, return only the available ones.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "What is the name of the entity mentioned in the input text?",
+            "answer": "Name or entity mentioned in the input text."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+PROCEDURAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct procedural question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions focus on processes, methods, or sequences of steps.
+    - Answers provide detailed, step-by-step instructions.
+    - Questions and answers must be distinct, unique, and not repeated.
+    - If fewer unique questions are possible, return only the available ones.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "What are the steps to achieve or complete this process?",
+            "answer": [
+                "Step 1: Brief description of the first step.",
+                "Step 2: Brief description of the second step.",
+                "Step 3: Add additional steps as needed."
+            ]
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+REASONING_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct reasoning-based question-answer pairs based on the input text.
+
+    Ensure:
+    - All questions begin with "Why".
+    - Questions require logical argumentation, critical thinking, or evaluation.
+    - Questions and answers must be distinct, unique, and not repeated.
+    - If fewer unique questions are possible, return only the available ones.
+
+    Input Text: {paragraph}
+
+    Output format:
+    [
+        {{
+            "question": "Why does this happen or exist based on the input text?",
+            "answer": "Detailed reasoning or justification for the question."
+        }},
+        ...
+    ]
+    Ensure the response is a valid JSON array.
+"""
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path):
+    """
+    Extracts text from a PDF file.
+
+    Args:
+        pdf_path (str): Path to the PDF file.
+
+    Returns:
+        str: Extracted text.
+    """
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text()
+    return text
+
+# Function to validate and extract valid JSON from responses
+def extract_valid_json(response):
+    """
+    Extract valid JSON from a response string.
+
+    Args:
+        response (str): Response string.
+
+    Returns:
+        list: Parsed JSON list.
+    """
+    try:
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+        if json_start != -1 and json_end != -1:
+            return json.loads(response[json_start:json_end + 1])
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON detected.")
+    return []
+
+# Function to remove duplicate questions and answers
+def remove_duplicates(questions):
+    """
+    Remove duplicate questions and answers.
+
+    Args:
+        questions (list): List of question-answer dictionaries.
+
+    Returns:
+        list: Unique question-answer pairs.
+    """
+    seen_questions = set()
+    seen_answers = set()
+    unique_questions = []
+
+    for qa in questions:
+        question_text = qa["question"]
+        answer_text = str(qa["answer"])  # Convert list-type answers to strings for comparison
+
+        if question_text not in seen_questions and answer_text not in seen_answers:
+            seen_questions.add(question_text)
+            seen_answers.add(answer_text)
+            unique_questions.append(qa)
+
+    return unique_questions
+
+# Function to generate questions by all types
+def generate_questions_by_all_types(paragraph, total_questions, chunk_size=10):
+    """
+    Generate categorized questions and answers for all types, ensuring uniqueness.
+
+    Args:
+        paragraph (str): Input text.
+        total_questions (int): Total number of questions to generate.
+        chunk_size (int): Number of questions to generate per chunk.
+
+    Returns:
+        list: List of question-answer dictionaries with metadata.
+    """
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    all_questions = []
+
+    for question_type, prompt in question_types_and_prompts.items():
+        questions = generate_questions_in_chunks(paragraph, question_type, total_questions, prompt, chunk_size)
+
+        # Remove duplicates
+        questions = remove_duplicates(questions)
+
+        # Add metadata
+        for qa in questions:
+            question_text = qa["question"]
+            answer_text = qa["answer"]
+            all_questions.append({
+                "Question Type": question_type,
+                "Question": question_text,
+                "Answer": answer_text,
+                "Question Length (Chars)": len(question_text),
+                "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else sum(len(str(a)) for a in answer_text),
+                "Question Tokens": calculate_tokens(question_text),
+                "Answer Tokens": calculate_tokens(answer_text if isinstance(answer_text, str) else " ".join(answer_text))
+            })
+
+        # Break if the desired number of questions is reached
+        if len(all_questions) >= total_questions:
+            break
+
+    # Return the top N unique questions
+    return all_questions[:total_questions]
+
+# Function to save results to Excel
+def save_to_excel(questions_and_answers, output_file):
+    """
+    Save the questions and answers to an Excel file.
+
+    Args:
+        questions_and_answers (list): List of question-answer dictionaries.
+        output_file (str): Path to the output Excel file.
+    """
+    if questions_and_answers:
+        df = pd.DataFrame(questions_and_answers)
+        df.to_excel(output_file, index=False)
+        print(f"Questions and answers saved to {output_file}.")
+    else:
+        print(f"No data to save for {output_file}.")
+
+# Function to process all PDF files in a directory and its subdirectories
+def process_pdfs_in_subdirectories(root_directory, total_questions=10, chunk_size=10, output_folder="output"):
+    """
+    Processes all PDF files in the given directory and its subdirectories.
+
+    Args:
+        root_directory (str): Root directory containing PDF files.
+        total_questions (int): Number of questions to generate per file.
+        chunk_size (int): Number of questions to generate per chunk.
+        output_folder (str): Directory to save the output Excel files.
+    """
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for dirpath, _, filenames in os.walk(root_directory):
+        for filename in filenames:
+            if filename.endswith('.pdf'):
+                pdf_path = os.path.join(dirpath, filename)
+                try:
+                    print(f"Processing: {pdf_path}")
+                    # Extract text from the PDF
+                    pdf_text = extract_text_from_pdf(pdf_path)
+
+                    # Generate questions
+                    questions_and_answers = generate_questions_by_all_types(pdf_text, total_questions, chunk_size)
+
+                    # Save results to Excel
+                    relative_path = os.path.relpath(pdf_path, root_directory)
+                    output_file = os.path.join(output_folder, relative_path.replace(".pdf", "_questions.xlsx"))
+
+                    # Ensure the subdirectory structure in the output folder
+                    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                    save_to_excel(questions_and_answers, output_file)
+                except Exception as e:
+                    print(f"Error processing {pdf_path}: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+import os
+import PyPDF2
+import pandas as pd
+import json
 from langchain.prompts.prompt import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.chat_models import AzureChatOpenAI
