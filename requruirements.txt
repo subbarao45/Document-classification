@@ -1,4 +1,107 @@
 
+import fitz  # PyMuPDF
+import pdfplumber
+from PIL import Image
+import pytesseract
+import io
+import sys
+
+# Set the path to the Tesseract executable (make sure it's properly set up)
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # Adjust for your setup
+
+def extract_text_from_pdf(pdf_path):
+    full_text = ""
+    
+    # 1. Extract text from PDF using PyMuPDF (fitz)
+    try:
+        with fitz.open(pdf_path) as doc:
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                page_text = page.get_text("text")
+                full_text += page_text
+                if page_text.strip():  # Print extracted text from PyMuPDF
+                    print(f"Extracted text from page {page_num + 1} using PyMuPDF:\n{page_text}")
+                    sys.stdout.flush()
+    except Exception as e:
+        print(f"Error extracting text with PyMuPDF: {e}")
+        sys.stdout.flush()
+
+    # 2. Extract text from PDF using pdfplumber (to handle tables)
+    if not full_text:  # Only try pdfplumber if no text was extracted yet
+        try:
+            with pdfplumber.open(pdf_path) as pdf:
+                for page_num, page in enumerate(pdf.pages):
+                    page_text = page.extract_text()
+                    full_text += page_text
+                    if page_text.strip():  # Print extracted text from pdfplumber
+                        print(f"Extracted text from page {page_num + 1} using pdfplumber:\n{page_text}")
+                        sys.stdout.flush()
+
+                    # Extract table data if available
+                    table = page.extract_tables()
+                    if table:
+                        print(f"Extracted table from page {page_num + 1}:")
+                        for row in table:
+                            row_text = " | ".join(row)
+                            print(row_text)
+                            full_text += "\n" + row_text  # Append table data to full text
+                        sys.stdout.flush()
+        except Exception as e:
+            print(f"Error extracting text with pdfplumber: {e}")
+            sys.stdout.flush()
+
+    # 3. If no text found, extract OCR text from images (using pytesseract)
+    if not full_text:
+        print("No regular text found, attempting OCR extraction from images...")
+        sys.stdout.flush()
+        ocr_text = ""
+        try:
+            with fitz.open(pdf_path) as doc:
+                for page_num in range(len(doc)):
+                    page = doc.load_page(page_num)
+                    for img_index, img in enumerate(page.get_images(full=True)):
+                        xref = img[0]
+                        base_image = doc.extract_image(xref)
+                        image_bytes = base_image["image"]
+                        image = Image.open(io.BytesIO(image_bytes))
+                        
+                        # Perform OCR on the image and collect the extracted text
+                        extracted_text = pytesseract.image_to_string(image)
+                        if extracted_text.strip():  # Check if OCR text was found
+                            ocr_text += extracted_text
+                            print(f"OCR text extracted from page {page_num + 1}, image {img_index + 1}:\n{extracted_text}")
+                        else:
+                            print(f"No OCR text found in image on page {page_num + 1}, image {img_index + 1}")
+                        sys.stdout.flush()
+
+            # Append OCR text to the main text variable
+            if ocr_text.strip():
+                full_text += ocr_text
+            else:
+                print("No OCR text extracted.")
+                sys.stdout.flush()
+
+        except Exception as e:
+            print(f"Error extracting text using OCR: {e}")
+            sys.stdout.flush()
+
+    return full_text
+
+# Example usage
+pdf_path = "path_to_pdf.pdf"  # Replace with the path to your PDF
+pdf_text = extract_text_from_pdf(pdf_path)
+print("\nFinal extracted text (including OCR and tables):\n", pdf_text)
+
+
+
+
+
+
+
+
+
+
+
 https://github.com/UB-Mannheim/tesseract/wiki
 
 
