@@ -1,3 +1,8 @@
+
+https://github.com/UB-Mannheim/tesseract/wiki
+
+
+
 import fitz  # PyMuPDF
 from PIL import Image
 import pytesseract
