@@ -1,3 +1,56 @@
+import fitz  # PyMuPDF
+from PIL import Image
+import pytesseract
+import io
+import sys
+
+# Function to extract OCR text from images in the PDF
+def extract_ocr_from_pdf(pdf_path):
+    ocr_text = ""
+    print("Attempting OCR extraction from images...")
+
+    try:
+        with fitz.open(pdf_path) as doc:
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                # Extract images
+                for img_index, img in enumerate(page.get_images(full=True)):
+                    xref = img[0]
+                    base_image = doc.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    image = Image.open(io.BytesIO(image_bytes))
+                    
+                    # Perform OCR on the image and collect the extracted text
+                    extracted_text = pytesseract.image_to_string(image)
+                    if extracted_text.strip():  # Check if any OCR text was found
+                        ocr_text += extracted_text
+                        print(f"OCR text extracted from page {page_num + 1}, image {img_index + 1}:\n{extracted_text}")
+                    else:
+                        print(f"No OCR text found in image on page {page_num + 1}, image {img_index + 1}")
+                    sys.stdout.flush()
+
+        if ocr_text.strip():
+            print("\nFinal OCR extracted text:\n")
+            print(ocr_text)  # Print the full OCR text if any was extracted
+        else:
+            print("No OCR text extracted from any images.")
+        
+    except Exception as e:
+        print(f"Error extracting text using OCR: {e}")
+        sys.stdout.flush()
+
+# Example usage
+pdf_path = "path_to_pdf.pdf"  # Replace with the path to your PDF
+extract_ocr_from_pdf(pdf_path)
+
+
+
+
+
+
+
+
+
 
 import os
 import fitz  # PyMuPDF
