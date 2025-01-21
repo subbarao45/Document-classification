@@ -1,3 +1,222 @@
+import os
+import time
+import signal
+import sys
+import PyPDF2
+import pandas as pd
+import json
+import tiktoken
+from langchain.prompts.prompt import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+import logging
+
+# Configure logging
+logging.basicConfig(
+    filename="batch_processing.log",
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+def log_info(message):
+    logging.info(message)
+    print(message)
+
+def log_error(message):
+    logging.error(message)
+    print(message)
+
+# Function to calculate tokens using tiktoken
+def calculate_tokens(text, model="gpt-4"):
+    try:
+        if model in ["gpt-3.5-turbo", "gpt-4"]:
+            encoding = tiktoken.get_encoding("cl100k_base")
+        elif model == "text-davinci-003":
+            encoding = tiktoken.get_encoding("p50k_base")
+        else:
+            raise ValueError(f"Unsupported model: {model}")
+        return len(encoding.encode(text))
+    except Exception as e:
+        log_error(f"Error calculating tokens: {e}")
+        return 0
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    try:
+        with open(pdf_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                text += page.extract_text()
+    except Exception as e:
+        log_error(f"Error extracting text from {pdf_path}: {e}")
+    return text
+
+# Function to divide items into batches
+def divide_into_batches(items, batch_size):
+    for i in range(0, len(items), batch_size):
+        yield items[i:i + batch_size]
+
+# Prompts for question generation
+FACTUAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct factual question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions focus on specific details, names, titles, or entities mentioned in the input text.
+    - Questions and answers must be distinct, unique, and not repeated.
+
+    Input Text: {paragraph}
+"""
+
+PROCEDURAL_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct procedural question-answer pairs based on the input text.
+
+    Ensure:
+    - Questions focus on processes, methods, or sequences of steps.
+    - Answers provide detailed, step-by-step instructions.
+    - Questions and answers must be distinct, unique, and not repeated.
+
+    Input Text: {paragraph}
+"""
+
+REASONING_PROMPT = """
+    You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+    Generate up to {num_questions} distinct reasoning-based question-answer pairs based on the input text.
+
+    Ensure:
+    - All questions begin with "Why".
+    - Questions require logical argumentation, critical thinking, or evaluation.
+    - Questions and answers must be distinct, unique, and not repeated.
+
+    Input Text: {paragraph}
+"""
+
+# Function to generate questions for a batch of paragraphs
+def generate_questions_for_batch(paragraphs, total_questions_per_paragraph, chunk_size=10):
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    all_questions = []
+
+    for question_type, prompt in question_types_and_prompts.items():
+        for i, paragraph in enumerate(paragraphs):
+            log_info(f"Processing {question_type} questions for paragraph {i + 1}/{len(paragraphs)}...")
+            try:
+                llm = AzureChatOpenAI(
+                    temperature=0,
+                    azure_openai_api_base="https://<your-endpoint>.openai.azure.com/",
+                    deployment_name="gpt4-0",
+                    api_version="2023-06-01-preview"
+                )
+
+                prompt_template = PromptTemplate(
+                    input_variables=["paragraph", "num_questions"],
+                    template=prompt
+                )
+
+                llm_chain = LLMChain(llm=llm, prompt=prompt_template)
+                response = llm_chain.predict(paragraph=paragraph, num_questions=str(total_questions_per_paragraph))
+                questions = json.loads(response)
+
+                for qa in questions:
+                    question_text = qa["question"]
+                    answer_text = qa["answer"]
+                    all_questions.append({
+                        "Question Type": question_type,
+                        "Question": question_text,
+                        "Answer": answer_text,
+                        "Question Length (Chars)": len(question_text),
+                        "Answer Length (Chars)": len(str(answer_text)),
+                        "Question Tokens": calculate_tokens(question_text),
+                        "Answer Tokens": calculate_tokens(answer_text)
+                    })
+            except Exception as e:
+                log_error(f"Error processing {question_type} questions for paragraph {i + 1}: {e}")
+    return all_questions
+
+# Function to save results to Excel
+def save_to_excel(questions_and_answers, output_file):
+    if questions_and_answers:
+        df = pd.DataFrame(questions_and_answers)
+        df.to_excel(output_file, index=False)
+        log_info(f"Questions and answers saved to {output_file}.")
+    else:
+        log_info(f"No data to save for {output_file}.")
+
+# Function to continuously monitor and process PDFs
+def monitor_and_process(root_directory, batch_size=5, total_questions=10, chunk_size=10, output_folder="output", interval=300):
+    log_info("Starting continuous monitoring...")
+    processed_files = set()
+
+    while True:
+        try:
+            pdf_files = []
+            for dirpath, _, filenames in os.walk(root_directory):
+                for filename in filenames:
+                    if filename.endswith('.pdf'):
+                        pdf_files.append(os.path.join(dirpath, filename))
+
+            new_files = [f for f in pdf_files if f not in processed_files]
+
+            if new_files:
+                log_info(f"Found {len(new_files)} new files. Processing...")
+                pdf_batches = list(divide_into_batches(new_files, batch_size))
+
+                for batch_index, batch in enumerate(pdf_batches):
+                    log_info(f"Processing batch {batch_index + 1}/{len(pdf_batches)}...")
+                    paragraphs = [extract_text_from_pdf(pdf_path) for pdf_path in batch]
+                    batch_questions = generate_questions_for_batch(paragraphs, total_questions, chunk_size)
+                    batch_output_file = os.path.join(output_folder, f"batch_{batch_index + 1}_questions.xlsx")
+                    save_to_excel(batch_questions, batch_output_file)
+
+                processed_files.update(new_files)
+            else:
+                log_info("No new files found.")
+
+        except Exception as e:
+            log_error(f"Error during monitoring: {e}")
+
+        time.sleep(interval)
+
+# Graceful shutdown
+def graceful_shutdown(signal_received, frame):
+    log_info("Shutting down gracefully...")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, graceful_shutdown)
+signal.signal(signal.SIGTERM, graceful_shutdown)
+
+# Main execution
+if __name__ == "__main__":
+    root_directory = "path/to/pdf/folder"
+    output_folder = "path/to/output/folder"
+    batch_size = 5
+    total_questions = 10
+    chunk_size = 10
+    interval = 300
+
+    monitor_and_process(root_directory, batch_size, total_questions, chunk_size, output_folder, interval)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import json
 
