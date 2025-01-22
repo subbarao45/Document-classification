@@ -1,3 +1,45 @@
+
+from PIL import Image
+import pytesseract
+import fitz  # PyMuPDF
+import os
+
+# Configure Tesseract executable path (Windows only)
+# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+def extract_text_from_pdf(pdf_path, output_folder):
+    # Ensure the output folder exists
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    doc = fitz.open(pdf_path)
+    for page_number in range(len(doc)):
+        page = doc[page_number]
+        pix = page.get_pixmap()  # Render the page as an image
+        image_path = os.path.join(output_folder, f"page_{page_number + 1}.png")
+        pix.save(image_path)  # Save the rendered image
+        print(f"Saved image: {image_path}")
+
+        # Use Tesseract to extract text
+        extracted_text = pytesseract.image_to_string(Image.open(image_path))
+        text_file = os.path.join(output_folder, f"page_{page_number + 1}.txt")
+        with open(text_file, "w", encoding="utf-8") as f:
+            f.write(extracted_text)
+        print(f"Extracted text saved to: {text_file}")
+
+# Example Usage
+pdf_path = "example.pdf"  # Replace with your PDF file path
+output_folder = "output"
+extract_text_from_pdf(pdf_path, output_folder)
+
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import os
 
