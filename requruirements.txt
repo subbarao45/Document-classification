@@ -1,4 +1,26 @@
 
+
+import base64
+
+# Base64 encoded string with incorrect padding
+encoded_text = "SGVsbG8gV29ybGQ"
+
+# Add padding
+missing_padding = len(encoded_text) % 4
+if missing_padding:
+    encoded_text += '=' * (4 - missing_padding)
+
+# Decode the Base64 string
+decoded_text = base64.b64decode(encoded_text).decode('utf-8')
+print(decoded_text)  # Output: Hello World
+
+
+
+
+
+
+
+
 import base64
 
 # Base64 encoded string with incorrect padding
