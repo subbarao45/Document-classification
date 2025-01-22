@@ -1,4 +1,74 @@
 
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdftypes import resolve1, stream_value
+from PIL import Image
+import os
+import io
+
+def extract_images_from_pdf(pdf_path, output_folder):
+    # Ensure the output folder exists
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Open the PDF file
+    with open(pdf_path, "rb") as file:
+        parser = PDFParser(file)
+        document = PDFDocument(parser)
+
+        # Iterate through all pages in the PDF
+        for page_number, page in enumerate(PDFPage.create_pages(document), start=1):
+            resources = resolve1(page.resources)
+            if resources and '/XObject' in resources:
+                xobjects = resolve1(resources['/XObject'])
+                for obj_name, obj in xobjects.items():
+                    obj_resolved = resolve1(obj)
+                    if obj_resolved.get('/Subtype') == '/Image':
+                        try:
+                            # Extract the image stream
+                            image_stream = stream_value(obj_resolved)
+                            image_data = image_stream.get_data()
+
+                            # Get image properties
+                            width = obj_resolved.get('/Width', 0)
+                            height = obj_resolved.get('/Height', 0)
+                            color_space = obj_resolved.get('/ColorSpace', '/DeviceRGB')
+
+                            # Define image mode
+                            mode = "RGB" if color_space == '/DeviceRGB' else "L"
+
+                            # Convert image data to a PIL Image
+                            image = Image.frombytes(mode, (width, height), image_data)
+
+                            # Save the image
+                            image_filename = os.path.join(
+                                output_folder, f"page_{page_number}_{obj_name[1:]}.png"
+                            )
+                            image.save(image_filename)
+                            print(f"Saved image: {image_filename}")
+                        except Exception as e:
+                            print(f"Error extracting image on page {page_number}: {e}")
+            else:
+                print(f"No XObject found on page {page_number}")
+
+# Example Usage
+pdf_path = "example.pdf"  # Replace with your PDF file path
+output_folder = "extracted_images"
+extract_images_from_pdf(pdf_path, output_folder)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import fitz
 
