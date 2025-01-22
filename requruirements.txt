@@ -1,3 +1,40 @@
+import fitz  # PyMuPDF
+import os
+
+def extract_images_with_pymupdf(pdf_path, output_folder):
+    # Ensure the output folder exists
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    doc = fitz.open(pdf_path)
+    for page_number in range(len(doc)):
+        page = doc.load_page(page_number)
+        images = page.get_images(full=True)
+
+        for img_index, img in enumerate(images):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            image_ext = base_image["ext"]
+
+            image_filename = os.path.join(
+                output_folder, f"image_page_{page_number + 1}_{img_index + 1}.{image_ext}"
+            )
+            with open(image_filename, "wb") as image_file:
+                image_file.write(image_bytes)
+            print(f"Saved image: {image_filename}")
+
+# Example Usage
+pdf_path = "example.pdf"  # Replace with your PDF file path
+output_folder = "extracted_images"
+extract_images_with_pymupdf(pdf_path, output_folder)
+
+
+
+
+
+
+
 
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
