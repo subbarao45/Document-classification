@@ -20,6 +20,67 @@ def extract_images_from_pdf(pdf_path, output_folder):
         # Iterate through the pages in the PDF
         for page_number, page in enumerate(PDFPage.create_pages(document), start=1):
             resources = resolve1(page.resources)
+            if resources and '/XObject' in resources:
+                xobjects = resolve1(resources['/XObject'])
+                for obj_name, obj in xobjects.items():
+                    obj_resolved = resolve1(obj)
+                    # Check if the object is an image
+                    if obj_resolved.get('/Subtype') == '/Image':
+                        # Extract image data
+                        image_stream = stream_value(obj_resolved)
+                        image_data = image_stream.get_data()
+                        width = obj_resolved.get('/Width', 0)
+                        height = obj_resolved.get('/Height', 0)
+
+                        if width > 0 and height > 0:
+                            # Determine the color space
+                            color_space = obj_resolved.get('/ColorSpace', '/DeviceRGB')
+                            mode = "RGB" if color_space == '/DeviceRGB' else "L"
+
+                            # Save the image using Pillow
+                            image = Image.frombytes(mode, (width, height), image_data)
+                            image_filename = f"{output_folder}/image_page_{page_number}_{obj_name}.png"
+                            image.save(image_filename)
+                            print(f"Saved image: {image_filename}")
+
+# Example Usage
+pdf_path = "example.pdf"  # Replace with your PDF file
+output_folder = "extracted_images"
+extract_images_from_pdf(pdf_path, output_folder)
+
+
+
+
+
+
+
+
+
+
+
+
+
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdftypes import resolve1, stream_value
+from PIL import Image
+import os
+import io
+
+def extract_images_from_pdf(pdf_path, output_folder):
+    # Create the output folder if it doesn't exist
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Open the PDF file
+    with open(pdf_path, "rb") as file:
+        parser = PDFParser(file)
+        document = PDFDocument(parser)
+
+        # Iterate through the pages in the PDF
+        for page_number, page in enumerate(PDFPage.create_pages(document), start=1):
+            resources = resolve1(page.resources)
             if resources and 'XObject' in resources:
                 xobjects = resolve1(resources['XObject'])
                 for obj_name, obj in xobjects.items():
