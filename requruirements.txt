@@ -1,4 +1,41 @@
 
+from langchain.chains import LLMChain
+
+def process_ocr_with_gpt4(ocr_text_by_page, prompt_template, llm):
+    formatted_ocr_by_page = {}
+
+    # Process each page's OCR text with GPT-4
+    for page_num, ocr_text in ocr_text_by_page.items():
+        if not ocr_text.strip():  # Skip empty OCR text
+            continue
+
+        try:
+            # Create the prompt template
+            prompt = PromptTemplate(template=prompt_template, input_variables=["content"])
+
+            # Initialize the LLMChain with the LLM and the prompt
+            llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+            # Format the OCR text using GPT-4
+            formatted_ocr_text = llm_chain.predict(content=ocr_text)
+
+            # Save the formatted text by page
+            formatted_ocr_by_page[page_num] = formatted_ocr_text
+
+        except Exception as e:
+            print(f"Error formatting OCR text for Page {page_num} with GPT-4: {e}")
+            formatted_ocr_by_page[page_num] = f"Error formatting OCR text: {e}"
+
+    return formatted_ocr_by_page
+
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import pdfplumber
 from PIL import Image
