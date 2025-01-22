@@ -1,4 +1,81 @@
 
+import os
+import base64
+import re
+from langchain.chat_models import AzureChatOpenAI
+
+# Replace these with your Azure OpenAI configurations
+azure_openai_api_version = "2023-03-15-preview"
+azure_openai_endpoint = "https://your-endpoint.openai.azure.com/"
+deployment_name = "ssgpt-40"
+
+# Sort files numerically
+def sort_numerically(file_list):
+    """Sort files numerically by extracting numbers from filenames."""
+    def extract_numbers(file_name):
+        return [int(num) for num in re.findall(r'\d+', file_name)]
+
+    return sorted(file_list, key=extract_numbers)
+
+# Convert images to Base64
+def images_to_base64(folder_path):
+    base64_images = {}
+    # Get all files and sort them numerically
+    file_list = sort_numerically(os.listdir(folder_path))
+    for image_file in file_list:
+        if image_file.endswith((".png", ".jpg", ".jpeg")):
+            image_path = os.path.join(folder_path, image_file)
+            with open(image_path, "rb") as file:
+                encoded_string = base64.b64encode(file.read()).decode("utf-8")
+                base64_images[image_file] = encoded_string
+    return base64_images
+
+# Call the LLM with Base64 images
+def call_llm_with_images(base64_images):
+    messages = [{"role": "user", "content": "Please compare the following images:"}]
+    for image_name, base64_string in base64_images.items():
+        messages.append({
+            "role": "user",
+            "content": f"Image: {image_name}\nBase64:\n{base64_string[:100]}..."  # Truncated for readability
+        })
+
+    # Initialize the Azure OpenAI Chat model
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version=azure_openai_api_version,
+        azure_endpoint=azure_openai_endpoint,
+        deployment_name=deployment_name
+    )
+
+    # Invoke the model
+    response = llm.invoke(messages)
+    return response
+
+# Main Workflow
+output_folder = "extracted_images"  # Replace with your folder containing images
+
+# Convert images to Base64
+base64_images = images_to_base64(output_folder)
+
+# Call LLM with Base64-encoded images
+response = call_llm_with_images(base64_images)
+
+# Print the response
+print("LLM Response:")
+print(response)
+
+
+
+
+
+
+
+
+
+
+
+
+
 def images_to_base64(folder_path):
     base64_images = {}
     for image_file in sorted(os.listdir(folder_path)):
