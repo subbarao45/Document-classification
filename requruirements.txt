@@ -1,4 +1,52 @@
 
+def images_to_base64(folder_path):
+    base64_images = {}
+    for image_file in sorted(os.listdir(folder_path)):
+        if image_file.endswith((".png", ".jpg", ".jpeg")):
+            image_path = os.path.join(folder_path, image_file)
+            with open(image_path, "rb") as file:
+                encoded_string = base64.b64encode(file.read()).decode("utf-8")
+                base64_images[image_file] = encoded_string
+    return base64_images
+
+
+
+def call_llm_with_images(base64_images):
+    # Start the LLM messages structure
+    messages = [{"role": "user", "content": "Please compare the following images:"}]
+    
+    # Append each Base64-encoded image as a structured message
+    for image_name, base64_string in base64_images.items():
+        messages.append({
+            "role": "user",
+            "content": f"Image: {image_name}\nBase64:\n{base64_string[:100]}..."  # Truncated for readability
+        })
+
+    # Initialize the Azure OpenAI Chat model
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version=azure_openai_api_version,
+        azure_endpoint=azure_openai_endpoint,
+        deployment_name=deployment_name
+    )
+
+    # Invoke the model with the messages
+    try:
+        response = llm.invoke(messages)
+        return response
+    except Exception as e:
+        print(f"Error calling LLM: {e}")
+        return None
+
+
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import os
 import base64
