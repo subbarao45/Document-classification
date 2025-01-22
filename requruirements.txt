@@ -1,4 +1,64 @@
 
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+
+def process_ocr_with_gpt4(content_dict, prompt_template, azure_openai_api_version, azure_openai_endpoint):
+    """
+    Process a dictionary of OCR text with GPT-4.
+
+    Parameters:
+        content_dict (dict): A dictionary where keys are page numbers and values are OCR text.
+        prompt_template (str): The prompt template for GPT-4.
+        azure_openai_api_version (str): Azure OpenAI API version.
+        azure_openai_endpoint (str): Azure OpenAI endpoint URL.
+
+    Returns:
+        dict: A dictionary with the same keys, but values are the formatted text.
+    """
+    if not isinstance(content_dict, dict):
+        raise ValueError("The input should be a dictionary where keys are page numbers and values are OCR text.")
+
+    # Initialize the Azure OpenAI model
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version=azure_openai_api_version,
+        azure_endpoint=azure_openai_endpoint
+    )
+
+    # Prepare the prompt template
+    prompt = PromptTemplate(template=prompt_template, input_variables=["content"])
+
+    # Initialize the LLM chain
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    # Dictionary to store formatted results
+    formatted_content_dict = {}
+
+    # Process each page's content
+    for page_number, ocr_text in content_dict.items():
+        try:
+            if not isinstance(ocr_text, str):
+                raise ValueError(f"Value for page {page_number} must be a string.")
+            
+            # Use the LLM chain to format the OCR text
+            formatted_text = llm_chain.predict(content=ocr_text)
+            formatted_content_dict[page_number] = formatted_text
+        except Exception as e:
+            print(f"Error formatting content for page {page_number} with GPT-4: {e}")
+            formatted_content_dict[page_number] = f"Error: {e}"
+
+    return formatted_content_dict
+
+
+
+
+
+
+
+
+
+
 from langchain.chains import LLMChain
 
 def process_ocr_with_gpt4(ocr_text_by_page, prompt_template, llm):
