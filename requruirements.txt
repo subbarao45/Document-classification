@@ -1,4 +1,161 @@
 
+import fitz  # PyMuPDF
+import pdfplumber
+from PIL import Image
+import pytesseract
+import io
+
+def extract_text_from_pdf(pdf_path):
+    final_text = ""  # Combined text for all pages
+    ocr_text_by_page = {}  # Store OCR-specific text by page number
+
+    try:
+        with fitz.open(pdf_path) as doc:
+            for page_num in range(len(doc)):
+                page_text = ""
+
+                # Step 1: Extract text using PyMuPDF
+                try:
+                    page = doc.load_page(page_num)
+                    pymupdf_text = page.get_text("text")
+                    page_text += pymupdf_text or ""
+                except Exception as e:
+                    print(f"PyMuPDF Error on Page {page_num + 1}: {e}")
+
+                # Step 2: Extract text and tables using pdfplumber
+                try:
+                    with pdfplumber.open(pdf_path) as pdf:
+                        page_plumber = pdf.pages[page_num]
+                        pdfplumber_text = page_plumber.extract_text()
+                        page_text += pdfplumber_text or ""
+
+                        # Extract table data
+                        tables = page_plumber.extract_tables()
+                        if tables:
+                            for table in tables:
+                                for row in table:
+                                    row_text = " | ".join(
+                                        str(cell) if not isinstance(cell, list) else " ".join(map(str, cell))
+                                        for cell in row
+                                    )
+                                    page_text += "\n" + row_text
+                except Exception as e:
+                    print(f"pdfplumber Error on Page {page_num + 1}: {e}")
+
+                # Step 3: Perform OCR extraction for images
+                try:
+                    for img_index, img in enumerate(page.get_images(full=True)):
+                        xref = img[0]
+                        base_image = doc.extract_image(xref)
+                        image_bytes = base_image["image"]
+                        try:
+                            image = Image.open(io.BytesIO(image_bytes))
+                            ocr_page_text = pytesseract.image_to_string(image)
+                            page_text += "\n" + ocr_page_text  # Add OCR text to the current page
+                            if page_num + 1 not in ocr_text_by_page:
+                                ocr_text_by_page[page_num + 1] = ""
+                            ocr_text_by_page[page_num + 1] += ocr_page_text  # Store OCR text by page
+                        except Exception as e:
+                            print(f"OCR Error on Page {page_num + 1}, Image {img_index + 1}: {e}")
+                except Exception as e:
+                    print(f"OCR Extraction Error on Page {page_num + 1}: {e}")
+
+                # Append the combined content of the current page
+                if page_text.strip():
+                    final_text += f"\n--- Page {page_num + 1} ---\n{page_text}\n"
+
+    except Exception as e:
+        print(f"Error processing the PDF: {e}")
+
+    return final_text, ocr_text_by_page  # Return combined text and OCR-specific text by page
+
+
+
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+
+def process_ocr_with_gpt4(ocr_text_by_page, prompt_template, llm):
+    formatted_ocr_by_page = {}
+
+    # Process each page's OCR text with GPT-4
+    for page_num, ocr_text in ocr_text_by_page.items():
+        if not ocr_text.strip():
+            continue
+
+        # Create the prompt template
+        prompt = PromptTemplate(template=prompt_template, input_variables=["content"])
+
+        # Initialize the LLMChain with the LLM and the prompt
+        llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+        # Use GPT-4 to format the OCR text
+        try:
+            formatted_ocr_text = llm_chain.predict(content=ocr_text)
+            formatted_ocr_by_page[page_num] = formatted_ocr_text
+        except Exception as e:
+            print(f"Error formatting OCR text for Page {page_num} with GPT-4: {e}")
+
+    return formatted_ocr_by_page  # Return formatted OCR text by page
+
+
+
+
+def combine_text_with_formatting(full_text, formatted_ocr_by_page):
+    combined_text = ""  # Start with an empty string
+    pages = full_text.split("\n--- Page ")  # Split full text by pages
+
+    for page in pages:
+        if not page.strip():
+            continue
+
+        # Extract the page number and content
+        header, page_content = page.split("---\n", 1)
+        page_num = int(header.strip())
+
+        # Add the formatted OCR content for the current page
+        if page_num in formatted_ocr_by_page:
+            page_content += f"\n\n--- Formatted OCR Content ---\n{formatted_ocr_by_page[page_num]}"
+
+        # Append the processed page back to the combined text
+        combined_text += f"\n--- Page {page_num} ---\n{page_content}"
+
+    return combined_text
+
+# Define the PDF path
+pdf_path = "path/to/your/pdf/document.pdf"
+
+# Define the GPT-4 prompt template
+prompt_template = """
+You are a document formatter. Your task is to organize the following extracted OCR text into a structured and readable format.
+
+Output the formatted content:
+{content}
+"""
+
+# Initialize the LLM (GPT-4)
+llm = OpenAI(
+    temperature=0.7,
+    api_version="your_api_version",
+    azure_endpoint="your_azure_endpoint"
+)
+
+# Step 1: Extract text
+full_text, ocr_text_by_page = extract_text_from_pdf(pdf_path)
+
+# Step 2: Format OCR text with GPT-4
+formatted_ocr_by_page = process_ocr_with_gpt4(ocr_text_by_page, prompt_template, llm)
+
+# Step 3: Combine all content
+final_output = combine_text_with_formatting(full_text, formatted_ocr_by_page)
+
+
+
+
+
+
+
+
+
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
