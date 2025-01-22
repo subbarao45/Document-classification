@@ -1,4 +1,20 @@
 
+import base64
+
+# Base64 encoded string with incorrect padding
+encoded_text = "SGVsbG8gV29ybGQ"
+
+# Decode the Base64 string with validation
+try:
+    decoded_text = base64.b64decode(encoded_text, validate=True).decode('utf-8')
+    print(decoded_text)
+except base64.binascii.Error as e:
+    print(f"Decoding failed: {e}")
+
+
+
+
+
 import os
 import base64
 import re
