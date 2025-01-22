@@ -1,4 +1,81 @@
 
+
+import fitz  # PyMuPDF
+import pdfplumber
+from PIL import Image
+import pytesseract
+import io
+import sys
+
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+def extract_text_from_pdf(pdf_path):
+    pymupdf_text = ""
+    pdfplumber_text = ""
+    ocr_text = ""
+
+    # 1. Extract text using PyMuPDF
+    print("Starting PyMuPDF extraction...")
+    try:
+        with fitz.open(pdf_path) as doc:
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                page_text = page.get_text("text")
+                pymupdf_text += page_text or ""
+                print(f"PyMuPDF Page {page_num + 1}:\n{page_text}")
+    except Exception as e:
+        print(f"PyMuPDF Error: {e}")
+
+    # 2. Extract text using pdfplumber
+    print("Starting pdfplumber extraction...")
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            for page_num, page in enumerate(pdf.pages):
+                page_text = page.extract_text()
+                pdfplumber_text += page_text or ""
+                print(f"pdfplumber Page {page_num + 1}:\n{page_text}")
+    except Exception as e:
+        print(f"pdfplumber Error: {e}")
+
+    # 3. Perform OCR extraction
+    print("Starting OCR extraction...")
+    try:
+        with fitz.open(pdf_path) as doc:
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                for img_index, img in enumerate(page.get_images(full=True)):
+                    xref = img[0]
+                    base_image = doc.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    try:
+                        image = Image.open(io.BytesIO(image_bytes))
+                        extracted_text = pytesseract.image_to_string(image)
+                        ocr_text += extracted_text or ""
+                        print(f"OCR Page {page_num + 1}, Image {img_index + 1}:\n{extracted_text}")
+                    except Exception as e:
+                        print(f"OCR Error: {e}")
+    except Exception as e:
+        print(f"OCR Extraction Error: {e}")
+
+    return pymupdf_text + pdfplumber_text + ocr_text
+
+# Usage
+pdf_path = "path_to_pdf.pdf"  # Update with your file path
+result = extract_text_from_pdf(pdf_path)
+print("Final Extracted Text:\n", result)
+
+
+
+
+
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import pdfplumber
 from PIL import Image
