@@ -1,3 +1,143 @@
+import fitz  # PyMuPDF
+import pdfplumber
+from PIL import Image
+import pytesseract
+import io
+import openai
+
+# Azure OpenAI credentials
+AZURE_OPENAI_API_KEY = "your_azure_openai_api_key"  # Replace with your Azure API key
+AZURE_OPENAI_ENDPOINT = "your_azure_endpoint"       # Replace with your Azure endpoint
+AZURE_OPENAI_DEPLOYMENT_ID = "gpt4-deployment-id"   # Replace with your GPT-4 deployment ID
+
+# Set the path to Tesseract executable
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # Adjust for your setup
+
+
+def extract_text_from_pdf(pdf_path):
+    """
+    Extract text, tables, and images from a PDF file.
+    
+    Args:
+        pdf_path (str): Path to the PDF file.
+    
+    Returns:
+        str: Extracted content from the PDF.
+    """
+    final_text = ""
+
+    print("Starting extraction...")
+    try:
+        with fitz.open(pdf_path) as doc:
+            for page_num in range(len(doc)):
+                print(f"Processing Page {page_num + 1}...")
+                page_text = ""
+
+                # 1. Extract text using PyMuPDF
+                try:
+                    page = doc.load_page(page_num)
+                    pymupdf_text = page.get_text("text")
+                    page_text += pymupdf_text or ""
+                except Exception as e:
+                    print(f"PyMuPDF Error on Page {page_num + 1}: {e}")
+
+                # 2. Extract text using pdfplumber
+                try:
+                    with pdfplumber.open(pdf_path) as pdf:
+                        page_plumber = pdf.pages[page_num]
+                        pdfplumber_text = page_plumber.extract_text()
+                        page_text += pdfplumber_text or ""
+
+                        # Extract table data if available
+                        table = page_plumber.extract_tables()
+                        if table:
+                            for row in table:
+                                row_text = " | ".join(
+                                    str(cell) if not isinstance(cell, list) else " ".join(map(str, cell))
+                                    for cell in row
+                                )
+                                page_text += "\n" + row_text
+                except Exception as e:
+                    print(f"pdfplumber Error on Page {page_num + 1}: {e}")
+
+                # 3. Perform OCR extraction from images
+                try:
+                    for img_index, img in enumerate(page.get_images(full=True)):
+                        xref = img[0]
+                        base_image = doc.extract_image(xref)
+                        image_bytes = base_image["image"]
+                        try:
+                            image = Image.open(io.BytesIO(image_bytes))
+                            ocr_text = pytesseract.image_to_string(image)
+                            page_text += "\n" + ocr_text
+                        except Exception as e:
+                            print(f"OCR Error on Page {page_num + 1}, Image {img_index + 1}: {e}")
+                except Exception as e:
+                    print(f"OCR Extraction Error on Page {page_num + 1}: {e}")
+
+                # Append the page content to the final output
+                if page_text.strip():
+                    final_text += f"\n--- Page {page_num + 1} ---\n{page_text}\n"
+                else:
+                    print(f"No content found on Page {page_num + 1}")
+
+    except Exception as e:
+        print(f"Error processing the PDF: {e}")
+
+    return final_text
+
+
+def format_with_gpt4(content):
+    """
+    Format extracted content using GPT-4.
+    
+    Args:
+        content (str): The raw text content to format.
+    
+    Returns:
+        str: The formatted content.
+    """
+    openai.api_key = AZURE_OPENAI_API_KEY
+    openai.api_type = "azure"
+    openai.api_base = AZURE_OPENAI_ENDPOINT
+    openai.api_version = "2023-03-15-preview"  # Use the appropriate version for your setup
+
+    # GPT-4 prompt to format content
+    prompt = f"""
+    You are a document formatter. Your task is to organize the following extracted OCR text into a structured and readable format with proper headings, sections, and tables if applicable:
+
+    {content}
+
+    Output the formatted content:
+    """
+
+    try:
+        response = openai.ChatCompletion.create(
+            engine=AZURE_OPENAI_DEPLOYMENT_ID,
+            messages=[
+                {"role": "system", "content": "You are an expert formatter."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=3000,
+            temperature=0.3
+        )
+        return response['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"Error formatting with GPT-4: {e}")
+        return None
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 import fitz  # PyMuPDF
