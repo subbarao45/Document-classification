@@ -1,4 +1,24 @@
 
+
+import fitz
+
+pdf_path = "example.pdf"  # Replace with your PDF path
+doc = fitz.open(pdf_path)
+for page_number in range(len(doc)):
+    page = doc.load_page(page_number)
+    pix = page.get_pixmap()
+    print(f"Page {page_number + 1}: Width={pix.width}, Height={pix.height}")
+
+
+
+
+
+
+
+
+
+
+
 from PIL import Image
 import pytesseract
 import fitz  # PyMuPDF
