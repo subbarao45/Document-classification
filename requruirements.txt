@@ -1,4 +1,24 @@
 
+import base64
+
+# Example of decoding binary content
+encoded_text = "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
+
+# Decode without converting to UTF-8
+binary_data = base64.b64decode(encoded_text)
+
+# Save to a file if needed
+with open("output_file", "wb") as file:
+    file.write(binary_data)
+
+print("Binary data successfully decoded and saved.")
+
+
+
+
+
+
+
 
 import base64
 
