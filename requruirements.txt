@@ -1,3 +1,54 @@
+
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.llms import OpenAI
+
+# Initialize the OpenAI model (GPT-4) with appropriate parameters
+llm = OpenAI(temperature=0.7, api_version="your_api_version", azure_endpoint="your_azure_endpoint")
+
+# Define the prompt template
+prompt_template = """
+You are a document formatter. Your task is to organize the following extracted OCR text into a structured and readable format.
+
+Output the formatted content:
+{content}
+"""
+
+# Define the function to generate questions or organize content
+def generate_questions(content, prompt_template):
+    # Check if the content is a string
+    if not isinstance(content, str):
+        raise ValueError("The content should be a string.")
+
+    # Create the prompt template using LangChain's PromptTemplate
+    prompt = PromptTemplate(template=prompt_template, input_variables=["content"])
+
+    # Initialize the LLMChain with the LLM and the prompt
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        # Ensure that the content is passed correctly
+        response = llm_chain.predict(content=content)
+        return response  # return the formatted content or response
+    except Exception as e:
+        print(f"Error formatting with GPT-4: {e}")
+        return None
+
+# Example usage
+content = "This is the OCR-extracted content from your document."
+formatted_content = generate_questions(content, prompt_template)
+print(formatted_content)
+
+
+
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import pdfplumber
 from PIL import Image
