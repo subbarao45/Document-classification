@@ -15,6 +15,98 @@ def extract_text_from_pdf(pdf_path):
 
     print("Starting extraction...")
     try:
+        with fitz.open(pdf_path) as doc:
+            for page_num in range(len(doc)):
+                print(f"Processing Page {page_num + 1}...")
+                page_text = ""
+                
+                # 1. Extract text using PyMuPDF
+                try:
+                    page = doc.load_page(page_num)
+                    pymupdf_text = page.get_text("text")
+                    page_text += pymupdf_text or ""
+                except Exception as e:
+                    print(f"PyMuPDF Error on Page {page_num + 1}: {e}")
+
+                # 2. Extract text using pdfplumber
+                try:
+                    with pdfplumber.open(pdf_path) as pdf:
+                        page_plumber = pdf.pages[page_num]
+                        pdfplumber_text = page_plumber.extract_text()
+                        page_text += pdfplumber_text or ""
+
+                        # Extract table data if available
+                        table = page_plumber.extract_tables()
+                        if table:
+                            for row in table:
+                                # Convert each cell in the row to string and join with " | "
+                                row_text = " | ".join(
+                                    str(cell) if not isinstance(cell, list) else " ".join(map(str, cell))
+                                    for cell in row
+                                )
+                                page_text += "\n" + row_text
+                except Exception as e:
+                    print(f"pdfplumber Error on Page {page_num + 1}: {e}")
+
+                # 3. Perform OCR extraction from images
+                try:
+                    for img_index, img in enumerate(page.get_images(full=True)):
+                        xref = img[0]
+                        base_image = doc.extract_image(xref)
+                        image_bytes = base_image["image"]
+                        try:
+                            image = Image.open(io.BytesIO(image_bytes))
+                            ocr_text = pytesseract.image_to_string(image)
+                            page_text += "\n" + ocr_text
+                        except Exception as e:
+                            print(f"OCR Error on Page {page_num + 1}, Image {img_index + 1}: {e}")
+                except Exception as e:
+                    print(f"OCR Extraction Error on Page {page_num + 1}: {e}")
+
+                # Append the page content to the final output
+                if page_text.strip():
+                    final_text += f"\n--- Page {page_num + 1} ---\n{page_text}\n"
+                else:
+                    print(f"No content found on Page {page_num + 1}")
+
+    except Exception as e:
+        print(f"Error processing the PDF: {e}")
+
+    return final_text
+
+# Usage
+pdf_path = "path_to_pdf.pdf"  # Replace with the path to your PDF
+pdf_text = extract_text_from_pdf(pdf_path)
+print("\nFinal Extracted Text:\n", pdf_text)
+
+# Optionally, save to a file
+with open("extracted_text.txt", "w", encoding="utf-8") as f:
+    f.write(pdf_text)
+
+
+
+
+
+
+
+
+
+
+import fitz  # PyMuPDF
+import pdfplumber
+from PIL import Image
+import pytesseract
+import io
+import sys
+
+# Set the path to the Tesseract executable
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+def extract_text_from_pdf(pdf_path):
+    final_text = ""
+
+    print("Starting extraction...")
+    try:
         with fitz.open(pdf_path) as doc, pdfplumber.open(pdf_path) as pdf_plumber:
             for page_num in range(len(doc)):
                 print(f"Processing Page {page_num + 1}...")
