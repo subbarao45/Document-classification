@@ -1,4 +1,94 @@
 
+import os
+import base64
+import json
+import fitz  # PyMuPDF
+from azure.ai.openai import ChatGPT
+
+# Function to extract images from PDF
+def extract_images_with_pymupdf(pdf_path, output_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    doc = fitz.open(pdf_path)
+    for page_number in range(len(doc)):
+        page = doc[page_number]
+        images = page.get_images(full=True)
+        if not images:
+            print(f"No images found on page {page_number + 1}")
+            continue
+
+        for img_index, img in enumerate(images):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            image_ext = base_image["ext"]
+            image_filename = os.path.join(
+                output_folder, f"page_{page_number + 1}_{img_index + 1}.{image_ext}"
+            )
+            with open(image_filename, "wb") as image_file:
+                image_file.write(image_bytes)
+            print(f"Saved image: {image_filename}")
+
+# Function to convert images to Base64
+def images_to_base64(folder_path):
+    base64_images = {}
+    for image_file in os.listdir(folder_path):
+        if image_file.endswith((".png", ".jpg", ".jpeg")):
+            image_path = os.path.join(folder_path, image_file)
+            with open(image_path, "rb") as file:
+                encoded_string = base64.b64encode(file.read()).decode("utf-8")
+                base64_images[image_file] = encoded_string
+    return base64_images
+
+# Function to prepare JSON payload
+def generate_json_payload(base64_images):
+    """
+    Generates a JSON payload containing image names and base64-encoded data.
+    """
+    images_payload = {
+        "images": [{"name": image_name, "data": image_data} for image_name, image_data in base64_images.items()]
+    }
+    return json.dumps(images_payload)
+
+# Function to call LLM with Base64-encoded images
+def call_llm_with_json_payload(json_payload, llm_endpoint):
+    """
+    Sends the JSON payload to the LLM API and retrieves responses.
+    """
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(llm_endpoint, headers=headers, data=json_payload)
+    return response.json()
+
+# Main Workflow
+pdf_path = r"h:\Question and answer\Fund accounting (Resubmit_1025)36. VFMC AAS25 SOP 5.8.pdf"  # Replace with your PDF file
+output_folder = r"h:\Question and answer Fund accounting\pdf_images"
+llm_endpoint = "http://your-llm-api-endpoint"  # Replace with your LLM API endpoint
+
+# Step 1: Extract images from the PDF
+extract_images_with_pymupdf(pdf_path, output_folder)
+
+# Step 2: Convert extracted images to Base64
+base64_images = images_to_base64(output_folder)
+print("Base64 Encoded Images:", base64_images)
+
+# Step 3: Generate JSON payload
+json_payload = generate_json_payload(base64_images)
+print("Generated JSON Payload:", json_payload)
+
+# Step 4: Send JSON payload to LLM and retrieve responses
+responses = call_llm_with_json_payload(json_payload, llm_endpoint)
+print("LLM Responses:", responses)
+
+
+
+
+
+
+
+
+
+
 
 
 import re
