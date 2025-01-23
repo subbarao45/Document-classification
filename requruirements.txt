@@ -1,4 +1,134 @@
 
+import fitz  # PyMuPDF
+import os
+import base64
+import re
+from langchain.chat_models import AzureChatOpenAI  # Import the correct AzureChatOpenAI class
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage
+
+# Extract images from PDF
+def extract_images_with_pymupdf(pdf_path, output_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    doc = fitz.open(pdf_path)
+
+    for page_number in range(len(doc)):
+        page = doc.load_page(page_number)
+        images = page.get_images(full=True)
+
+        if not images:
+            print(f"No images found on page {page_number + 1}")
+            continue
+
+        for img_index, img in enumerate(images):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            image_ext = base_image["ext"]
+
+            image_filename = os.path.join(
+                output_folder, f"page_{page_number + 1}_{img_index + 1}.{image_ext}"
+            )
+
+            with open(image_filename, "wb") as image_file:
+                image_file.write(image_bytes)
+
+            print(f"Saved image: {image_filename}")
+
+# Sort files numerically
+def sort_numerically(file_list):
+    """Sort files numerically by extracting numbers from filenames."""
+    def extract_numbers(file_name):
+        return [int(num) for num in re.findall(r'\d+', file_name)]
+
+    return sorted(file_list, key=extract_numbers)
+
+# Convert images to Base64
+def images_to_base64(folder_path):
+    base64_images = {}
+
+    # Get all files and sort them numerically
+    file_list = sort_numerically(os.listdir(folder_path))
+
+    for image_file in file_list:
+        if image_file.endswith((".png", ".jpg", ".jpeg")):
+            image_path = os.path.join(folder_path, image_file)
+
+            with open(image_path, "rb") as file:
+                encoded_string = base64.b64encode(file.read()).decode("utf-8")
+            
+            base64_images[image_file] = encoded_string
+
+    return base64_images
+
+# Send images and text to Azure OpenAI using AzureChatOpenAI (LangChain)
+def generate_text_with_images(base64_images, text_input, azure_openai_endpoint, azure_api_key, azure_openai_api_version):
+    # Construct the list of messages
+    messages = [
+        HumanMessage(content=text_input)  # Start with the text input as the initial user message
+    ]
+
+    # Add images as base64 data to the messages
+    for image_name, base64_image in base64_images.items():
+        image_message = HumanMessage(content=f"data:image/jpeg;base64,{base64_image}")
+        messages.append(image_message)
+
+    # Initialize the AzureChatOpenAI instance
+    chat_openai = AzureChatOpenAI(
+        openai_api_key=azure_api_key,
+        openai_api_base=azure_openai_endpoint,
+        openai_api_version=azure_openai_api_version,
+        deployment_name="ssgpt-40",  # Use the correct deployment name for your model
+        temperature=0  # Adjust the temperature as per your needs
+    )
+
+    # Call the AzureChatOpenAI with the constructed messages
+    try:
+        response = chat_openai.completion_with_retry(messages)  # Call the method for response
+
+        # Return the response content
+        return response['text']  # Ensure you are extracting the correct part of the response
+
+    except Exception as e:
+        print(f"Error calling LLM: {e}")
+        return None
+
+# Example usage
+pdf_path = "h:\\Question and answer Fund accounting (Resubmit_1025)36. VFMC AAS25 SOP 5.0.pdf"  # Replace with your PDF file
+output_folder = "h:\\Question and answer\\Fund accounting\\pdf_images"
+
+# Extract images from the PDF
+extract_images_with_pymupdf(pdf_path, output_folder)
+
+# Convert images to Base64
+base64_images = images_to_base64(output_folder)
+
+# Provide the text input for the LLM
+text_input = "Here is some text that goes along with the images."
+
+# Azure-specific settings (ensure you have the correct values)
+azure_openai_endpoint = "https://your-azure-endpoint"  # Replace with your Azure endpoint
+azure_api_key = "your-azure-api-key"  # Replace with your Azure API key
+azure_openai_api_version = "2023-05-15"  # Replace with the correct API version for your Azure model
+
+# Generate response with both text and images using Azure OpenAI
+response_text = generate_text_with_images(base64_images, text_input, azure_openai_endpoint, azure_api_key, azure_openai_api_version)
+
+print(response_text)
+
+
+
+
+
+
+
+
+
+
+
+
 
 import fitz  # PyMuPDF
 import os
