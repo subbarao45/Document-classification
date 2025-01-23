@@ -1,4 +1,85 @@
 
+from azure.ai.openai import ChatGPT
+import json
+
+
+def generate_questions(paragraph, question_type, num_questions, prompt_template, base64_images=None):
+    """
+    Generate questions using Azure LLM based on a paragraph, question type, prompt template, and Base64 images.
+
+    Args:
+        paragraph (str): The input text for generating questions.
+        question_type (str): The type of questions to generate (e.g., "Factual", "Procedural").
+        num_questions (int): Number of questions to generate.
+        prompt_template (str): Template for the LLM prompt.
+        base64_images (dict): Optional dictionary of image names and their Base64 representations.
+
+    Returns:
+        list: A list of generated questions and answers, or an empty list in case of errors.
+    """
+    # Initialize the Azure OpenAI ChatGPT
+    llm = ChatGPT(
+        temperature=0,
+        api_version="<azure_openai_api_version>",
+        azure_endpoint="<azure_openai_endpoint>",
+        deployment_name="ssgpt-40"
+    )
+
+    # Construct the prompt dynamically based on inputs
+    prompt = prompt_template.format(paragraph=paragraph, num_questions=num_questions, question_type=question_type)
+
+    # Add Base64 images to the payload if provided
+    images_payload = [{"name": name, "base64": image} for name, image in base64_images.items()] if base64_images else []
+
+    try:
+        # Call the LLM with text and Base64 images
+        response = llm.invoke([
+            {
+                "role": "user",
+                "content": {
+                    "type": "structured",
+                    "inputs": {
+                        "text": prompt,
+                        "images": images_payload
+                    },
+                    "instruction": f"Generate {num_questions} {question_type} questions and answers based on the provided text and images. Provide the output in JSON format."
+                }
+            }
+        ])
+
+        # Parse and return JSON response
+        return extract_valid_json(response.content)
+
+    except Exception as e:
+        print(f"Error generating {question_type} questions: {e}")
+        return []
+
+
+# Helper function to extract valid JSON from LLM response
+def extract_valid_json(response):
+    """
+    Extract valid JSON from the LLM response.
+
+    Args:
+        response (str): The response string from the LLM.
+
+    Returns:
+        list: Parsed JSON list of questions and answers, or an empty list if parsing fails.
+    """
+    try:
+        # Parse the response as JSON
+        return json.loads(response)
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON detected in LLM response.")
+        return []
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import os
 import base64
