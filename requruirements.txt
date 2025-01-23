@@ -1,4 +1,47 @@
 
+def call_1lm_with_images(base64_images):
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": f"This is the Base64 content of an image file name {{image_name}}. Please read the text or contents this image might contain:\n\n{base64_images}"
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_images}"
+                    }
+                }
+            ]
+        }
+    ]
+    
+    # Configure the LLM
+    llm = AzureChatOpenAI(
+        temperature=0.7,
+        api_version=azure_openai_api_version,
+        azure_endpoint=azure_openai_endpoint,
+        deployment_name="ssgpt-40"
+    )
+
+    try:
+        response = llm.invoke(messages)
+        return response
+    except Exception as e:
+        print(f"Error calling LLM: {e}")
+        return None
+
+
+
+
+
+
+
+
+
+
 "messages": [
       {
         "role": "user",
