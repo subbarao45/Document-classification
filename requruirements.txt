@@ -1,4 +1,46 @@
 
+import openai
+from google.cloud import vision
+
+# Step 1: Use Google Vision API to Extract Text
+def extract_text_from_image(image_path):
+    client = vision.ImageAnnotatorClient()
+    with open(image_path, "rb") as image_file:
+        content = image_file.read()
+    image = vision.Image(content=content)
+    response = client.text_detection(image=image)
+    if response.text_annotations:
+        return response.text_annotations[0].description
+    return "No text detected"
+
+# Step 2: Use OpenAI LLM to Process the Extracted Text
+def process_text_with_llm(text):
+    openai.api_key = "your_openai_api_key"
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": f"Please analyze the following text:\n{text}"},
+        ],
+    )
+    return response['choices'][0]['message']['content']
+
+# Main Execution
+image_path = "path_to_your_image.jpg"
+extracted_text = extract_text_from_image(image_path)
+llm_response = process_text_with_llm(extracted_text)
+
+print("Extracted Text:", extracted_text)
+print("LLM Response:", llm_response)
+
+
+
+
+
+
+
+
+
 def call_1lm_with_images(base64_images):
     messages = [
         {
