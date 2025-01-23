@@ -1,4 +1,130 @@
 
+
+import fitz  # PyMuPDF
+import os
+import base64
+import re
+import openai
+
+# Extract images from PDF
+def extract_images_with_pymupdf(pdf_path, output_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    doc = fitz.open(pdf_path)
+
+    for page_number in range(len(doc)):
+        page = doc.load_page(page_number)
+        images = page.get_images(full=True)
+
+        if not images:
+            print(f"No images found on page {page_number + 1}")
+            continue
+
+        for img_index, img in enumerate(images):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            image_ext = base_image["ext"]
+
+            image_filename = os.path.join(
+                output_folder, f"page_{page_number + 1}_{img_index + 1}.{image_ext}"
+            )
+
+            with open(image_filename, "wb") as image_file:
+                image_file.write(image_bytes)
+
+            print(f"Saved image: {image_filename}")
+
+# Sort files numerically
+def sort_numerically(file_list):
+    """Sort files numerically by extracting numbers from filenames."""
+    def extract_numbers(file_name):
+        return [int(num) for num in re.findall(r'\d+', file_name)]
+
+    return sorted(file_list, key=extract_numbers)
+
+# Convert images to Base64
+def images_to_base64(folder_path):
+    base64_images = {}
+
+    # Get all files and sort them numerically
+    file_list = sort_numerically(os.listdir(folder_path))
+
+    for image_file in file_list:
+        if image_file.endswith((".png", ".jpg", ".jpeg")):
+            image_path = os.path.join(folder_path, image_file)
+
+            with open(image_path, "rb") as file:
+                encoded_string = base64.b64encode(file.read()).decode("utf-8")
+            
+            base64_images[image_file] = encoded_string
+
+    return base64_images
+
+# Send images and text to OpenAI's GPT-3 (or other models) for processing
+def generate_text_with_images(base64_images, text_input):
+    messages = [
+        {
+            "role": "user",
+            "content": text_input
+        },
+        {
+            "role": "user",
+            "content": {
+                "type": "text",
+                "text": "Extract the text from the image"
+            }
+        }
+    ]
+
+    for image_name, base64_image in base64_images.items():
+        image_message = {
+            "role": "user",
+            "content": {
+                "type": "image_url",
+                "image_url": f"data:image/jpeg;base64,{base64_image}"
+            }
+        }
+        messages.append(image_message)
+
+    # Call OpenAI API with the messages payload
+    response = openai.ChatCompletion.create(
+        model="gpt-4",  # or another model as required
+        messages=messages
+    )
+
+    return response['choices'][0]['message']['content']
+
+# Example usage
+pdf_path = "path/to/your/file.pdf"
+output_folder = "output_images_folder"
+
+# Extract images from the PDF
+extract_images_with_pymupdf(pdf_path, output_folder)
+
+# Convert images to Base64
+base64_images = images_to_base64(output_folder)
+
+# Provide the text input for the LLM
+text_input = "Here is some text that goes along with the images."
+
+# Generate response with both text and images
+response_text = generate_text_with_images(base64_images, text_input)
+
+print(response_text)
+
+
+
+
+
+
+
+
+
+
+
+
 import openai
 from google.cloud import vision
 
