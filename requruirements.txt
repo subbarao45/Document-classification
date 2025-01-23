@@ -1,3 +1,69 @@
+import re
+
+def clean_response(response_content):
+    """
+    Cleans the noisy text content by removing unwanted characters, extra spaces, 
+    and irrelevant lines.
+    """
+    if not response_content:
+        return "No meaningful text found."
+
+    # Remove metadata lines (e.g., 'response_metadata', etc.)
+    cleaned_text = re.sub(r'response_metadata.*', '', response_content, flags=re.DOTALL)
+
+    # Remove extra whitespace, blank lines, and non-alphanumeric characters
+    cleaned_text = re.sub(r'[^a-zA-Z0-9\s:/,.()-]+', '', cleaned_text)
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+
+    return cleaned_text
+
+# Clean all responses
+def process_responses(responses):
+    """
+    Iterates through the responses and cleans up the content for each image.
+    """
+    cleaned_responses = {}
+    for image_name, response in responses.items():
+        if response:
+            # Extract the content from the LLM response
+            content = response.get('content', '')
+            cleaned_responses[image_name] = clean_response(content)
+        else:
+            cleaned_responses[image_name] = "No response from LLM."
+
+    return cleaned_responses
+
+
+# Example usage with the noisy responses
+noisy_responses = {
+    "page_3_1.png": {
+        "content": "STATE STREET response_metadata={'token_usage': {'completion_tokens': 2, 'prompt_tokens': 373}}"
+    },
+    "page_3_2.png": {
+        "content": "I'm sorry, but I can't extract text from images."
+    },
+    "page_4_1.png": {
+        "content": "Navigation\nApplications\nAAS25 Report\nClient: VFMC\nChristian Super\nING"
+    },
+    # Add more sample noisy responses here...
+}
+
+# Process and clean the responses
+cleaned_responses = process_responses(noisy_responses)
+
+# Print cleaned responses
+for image_name, cleaned_text in cleaned_responses.items():
+    print(f"Image: {image_name}")
+    print(f"Cleaned Content: {cleaned_text}\n")
+
+
+
+
+
+
+
+
+
 
 import fitz  # PyMuPDF
 import os
