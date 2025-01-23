@@ -86,6 +86,141 @@ def call_llm_with_images(base64_images):
             messages = messages_template.copy()
             messages[0]["content"][1]["image_url"]["url"] = f"data:image/jpeg;base64,{base64_image}"
             response = llm.invoke(messages)
+            responses.append({
+                "image_name": image_name,
+                "base64": base64_image,
+                "response": response.content
+            })
+        except Exception as e:
+            print(f"Error calling LLM for {image_name}: {e}")
+            responses.append({
+                "image_name": image_name,
+                "base64": base64_image,
+                "response": f"Error: {e}"
+            })
+    return responses
+
+# Main Workflow
+pdf_path = r"h:\Question and answer\Fund accounting (Resubmit_1025)36. VFMC AAS25 SOP 5.8.pdf"  # Replace with your PDF file
+output_folder = r"h:\Question and answer Fund accounting\pdf_images"
+
+# Step 1: Extract images from the PDF
+extract_images_with_pymupdf(pdf_path, output_folder)
+
+# Step 2: Convert extracted images to Base64
+base64_images = images_to_base64(output_folder)
+
+# Step 3: Call LLM with Base64-encoded images and get JSON response
+responses = call_llm_with_images(base64_images)
+
+# Step 4: Generate JSON output with Base64 and LLM responses
+output_json = {"responses": responses}
+
+# Save JSON to a file
+json_output_file = "output_responses_with_base64.json"
+with open(json_output_file, "w") as json_file:
+    json.dump(output_json, json_file, indent=4)
+
+# Print JSON output
+print("Generated JSON Object:")
+print(json.dumps(output_json, indent=4))
+
+
+
+
+
+
+
+
+
+
+import fitz  # PyMuPDF
+import os
+import base64
+import re
+import json
+from azure.ai.openai import ChatGPT
+
+# Extract images from PDF
+def extract_images_with_pymupdf(pdf_path, output_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    doc = fitz.open(pdf_path)
+    for page_number in range(len(doc)):
+        page = doc[page_number]
+        images = page.get_images(full=True)
+        if not images:
+            print(f"No images found on page {page_number + 1}")
+            continue
+
+        for img_index, img in enumerate(images):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            image_ext = base_image["ext"]
+            image_filename = os.path.join(
+                output_folder, f"page_{page_number + 1}_{img_index + 1}.{image_ext}"
+            )
+            with open(image_filename, "wb") as image_file:
+                image_file.write(image_bytes)
+            print(f"Saved image: {image_filename}")
+
+# Sort files numerically
+def sort_numerically(file_list):
+    """Sort files numerically by extracting numbers from filenames."""
+    def extract_numbers(file_name):
+        return [int(num) for num in re.findall(r'\d+', file_name)]
+    return sorted(file_list, key=extract_numbers)
+
+# Convert images to Base64
+def images_to_base64(folder_path):
+    base64_images = {}
+    # Get all files and sort them numerically
+    file_list = sort_numerically(os.listdir(folder_path))
+    for image_file in file_list:
+        if image_file.endswith((".png", ".jpg", ".jpeg")):
+            image_path = os.path.join(folder_path, image_file)
+            with open(image_path, "rb") as file:
+                encoded_string = base64.b64encode(file.read()).decode("utf-8")
+                base64_images[image_file] = encoded_string
+    return base64_images
+
+# Call Azure OpenAI LLM with images
+def call_llm_with_images(base64_images):
+    responses = []
+    messages_template = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Extract the text from the image"
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": ""  # Placeholder, updated in loop
+                    }
+                }
+            ]
+        }
+    ]
+
+    # Configure AzureChatOpenAI
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version="<azure_openai_api_version>",
+        azure_endpoint="<azure_openai_endpoint>",
+        deployment_name="ssgpt-40",
+        seed=1
+    )
+
+    for image_name, base64_image in base64_images.items():
+        try:
+            messages = messages_template.copy()
+            messages[0]["content"][1]["image_url"]["url"] = f"data:image/jpeg;base64,{base64_image}"
+            response = llm.invoke(messages)
             responses.append({"image_name": image_name, "response": response.content})
         except Exception as e:
             print(f"Error calling LLM for {image_name}: {e}")
