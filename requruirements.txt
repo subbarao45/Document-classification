@@ -1,4 +1,77 @@
 
+
+
+import re
+
+def organize_content_page_wise(responses):
+    """
+    Organizes AIMessage content into a dictionary grouped by page.
+    """
+    page_wise_content = {}
+
+    for image_name, response in responses.items():
+        # Extract page number from the image name (e.g., "page_3_1.png")
+        match = re.search(r'page_(\d+)_\d+', image_name)
+        if match:
+            page_number = f"Page {match.group(1)}"
+        else:
+            continue  # Skip if page number is not found
+
+        # Extract content from the AIMessage object
+        content = response.content if hasattr(response, 'content') else "No content available"
+
+        # Group content by page
+        if page_number not in page_wise_content:
+            page_wise_content[page_number] = []
+        page_wise_content[page_number].append(content)
+
+    return page_wise_content
+
+
+# Example Usage
+responses = {
+    'page_1_1.png': AIMessage(content='STATE STREET'),
+    'page_3_1.png': AIMessage(content='DATE: 190822\nTIME: 05:54\n\nSTATE STREET CORPORATION'),
+    'page_3_2.png': AIMessage(content="I'm sorry, but I can't extract text from images."),
+    'page_4_1.png': AIMessage(content='Navigation\nApplications\nAAS25 Report\nClient:\niVFMC\nChristian Super\nING'),
+    'page_4_2.png': AIMessage(content='Job Monitor\n\nJob Status\n\nRefresh Manual Start\n\nJob Code'),
+    'page_5_1.png': AIMessage(content='AAS25 Report\n\nNavigation\nApplications AAS25 Report'),
+    'page_5_2.png': AIMessage(content='Job Monitor\n\nJob Status\n\nRefresh Manual Start\n\nJob Code: AAS_INB_DATA_VFMC'),
+    'page_6_1.png': AIMessage(content='Job Status\n\nJob Code: AAS_INB_DATA_VFMC\nJob Name: Get Pos/Txn/Trial data and generate'),
+    'page_6_2.png': AIMessage(content='Navigation\nApplications: AAS325 Report\nClient: VFMC'),
+    'page_7_1.png': AIMessage(content='Navigation\nApplications: AAS25 Report\nClient: VFMC'),
+    'page_7_2.jpeg': AIMessage(content='Navigation\nApplications: AAS25 Report\nClient: VFMC'),
+    'page_8_1.jpeg': AIMessage(content='Navigation\nApplications: AAS25 Report\nClient: VFMC'),
+    'page_8_2.png': AIMessage(content='Navigation\nApplications\nAAS25 Report\nClient:\nVFMC'),
+    'page_9_1.png': AIMessage(content='Applications: AAS25 Report\nClient: VFMC\n\nNormalized Table'),
+    'page_9_2.jpeg': AIMessage(content='Navigation\nApplications: AAS25 Report\nClient: VFMC'),
+    'page_10_1.png': AIMessage(content='Navigation\nApplications: AAS25 Report\nClient: VFMC'),
+    'page_10_2.png': AIMessage(content='Job Status\n\nApp Code | Report Id | Title | Report Text'),
+    'page_11_1.png': AIMessage(content='VFMC June 2019\n\nReport\tColumn\tField\tPROD total\tDUMMY'),
+    'page_11_2.png': AIMessage(content='Sort A to Z\nSort Z to A\nSort by Color\nClear Filter'),
+    'page_113.png': AIMessage(content="I'm sorry, but I can't extract text from the image you provided."),
+}
+
+# Group responses by page
+page_wise_content = organize_content_page_wise(responses)
+
+# Print organized content
+for page, content_list in page_wise_content.items():
+    print(f"{page}:")
+    for content in content_list:
+        print(content)
+    print("\n")
+
+
+
+
+
+
+
+
+
+
+
 import re
 
 # Function to clean noisy responses
