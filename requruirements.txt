@@ -1,4 +1,27 @@
 
+
+
+"Describe an image of a formal bank document in detail, including its overall structure, such as headers, footers, and sections, along with the placement of the bank’s logo, name, address, and contact information. Include background features like watermarks, barcodes, or security marks. Focus on tables within the document that display account details, transaction records, dates, descriptions, debit/credit amounts, and balances, specifying the number of rows and columns, headers, borders, alignment, and any highlights like bold totals or shaded cells. Mention account details such as the account holder’s name, account number, branch name, and IFSC code, along with details about account types or interest rates. Provide information on transaction lists or tables, including details like dates, descriptions, transaction types (credit/debit), amounts, and balances, highlighting any significant entries. Include additional elements like handwritten notes, signatures (manual or digital), stamps, or seals for authentication, as well as reference numbers, document IDs, or case numbers for tracking. Describe the formatting, including font styles, alignment, and the use of bold or italicized text for emphasis. Mention any legal or formal information, such as disclaimers, terms, and conditions, or privacy policies, often found at the bottom of the document, and note the use of formal language and financial terminology. Finally, describe the professional appearance of the document, including the use of colors (e.g., black-and-white or highlights) and whether it appears printed or scanned."
+
+
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. Check important info.
+
+
+
+
+
+
 from azure.ai.openai import ChatGPT
 import json
 
