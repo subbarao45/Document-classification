@@ -1,4 +1,102 @@
 
+import multiprocessing as mp
+
+
+def generate_questions_for_type(paragraph, image_data, question_type, num_questions, prompt):
+    """
+    Generates questions for a single question type.
+    """
+    questions = generate_questions_in_chunks(
+        paragraph,
+        image_data,
+        question_type,
+        num_questions,
+        prompt,
+        chunk_size=10  # Customize chunk size if necessary
+    )
+    return remove_duplicates(questions)
+
+
+def worker_task(args):
+    """
+    Worker task for multiprocessing. Accepts arguments as a tuple.
+    """
+    paragraph, image_data, question_type, num_questions, prompt = args
+    try:
+        questions = generate_questions_for_type(paragraph, image_data, question_type, num_questions, prompt)
+        return {
+            "question_type": question_type,
+            "questions": questions
+        }
+    except Exception as e:
+        print(f"Error processing {question_type}: {e}")
+        return {
+            "question_type": question_type,
+            "questions": []
+        }
+
+
+def generate_questions_by_all_types_multiprocessing(paragraph, image_data, total_questions):
+    """
+    Generates questions of all types using multiprocessing.
+    """
+    # Define question types and corresponding prompts
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    # Divide total questions among question types
+    num_types = len(question_types_and_prompts)
+    questions_per_type = total_questions // num_types
+    remaining_questions = total_questions % num_types
+
+    # Prepare arguments for each process
+    tasks = [
+        (
+            paragraph,
+            image_data,
+            question_type,
+            questions_per_type + (1 if i < remaining_questions else 0),  # Distribute leftovers
+            prompt
+        )
+        for i, (question_type, prompt) in enumerate(question_types_and_prompts.items())
+    ]
+
+    # Use multiprocessing Pool to parallelize tasks
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        results = pool.map(worker_task, tasks)
+
+    # Combine results from all processes
+    all_questions = []
+    for result in results:
+        question_type = result["question_type"]
+        for qa in result["questions"]:
+            all_questions.append({
+                "Question Type": question_type,
+                "Question": qa["question"],
+                "Answer": qa["answer"],
+                "Question Length (Chars)": len(qa["question"]),
+                "Answer Length (Chars)": len(str(qa["answer"])) if isinstance(qa["answer"], str) else sum(len(str(a)) for a in qa["answer"]),
+                "Question Tokens": calculate_tokens(qa["question"]),
+                "Answer Tokens": calculate_tokens(qa["answer"] if isinstance(qa["answer"], str) else "".join(qa["answer"]))
+            })
+
+    # Return the top N unique questions
+    return all_questions[:total_questions]
+
+
+
+
+
+
+
+
+
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def generate_questions_by_type(paragraph, image_data, question_type, prompt, chunk_size, token_limit):
