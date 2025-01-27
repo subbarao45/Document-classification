@@ -1,3 +1,122 @@
+import os
+import fitz  # PyMuPDF
+import base64
+import json
+from concurrent.futures import ThreadPoolExecutor
+
+# Ensure the output directory exists
+def ensure_output_dir(output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+# Generate a description for an image
+def img_description(image_data, api_endpoint, api_key):
+    """Describe an image using the Azure ChatGPT model."""
+    import requests
+
+    # API request payload
+    message = {
+        "messages": [
+            {
+                "role": "user",
+                "content": f"Describe this image in detail: data:image/jpeg;base64,{image_data}"
+            }
+        ],
+        "temperature": 0.5,
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    response = requests.post(api_endpoint, json=message, headers=headers)
+
+    if response.status_code == 200:
+        return response.json()["choices"][0]["message"]["content"]
+    else:
+        raise Exception(f"API Request Failed: {response.status_code}, {response.text}")
+
+# Save the JSON file
+def save_json(output_dir, image_descriptions):
+    json_file_path = os.path.join(output_dir, "image_data.json")
+    with open(json_file_path, "w") as json_file:
+        json.dump(image_descriptions, json_file, indent=4)
+
+# Process a single image
+def process_image(image, page_index, image_index, pdf_file, output_dir, api_endpoint, api_key):
+    xref = image[0]
+    base_image = pdf_file.extract_image(xref)
+    image_bytes = base_image["image"]
+    image_ext = base_image["ext"]
+
+    # Save the image locally
+    image_name = f"image{page_index+1}_{image_index}.{image_ext}"
+    image_path = os.path.join(output_dir, image_name)
+
+    with open(image_path, "wb") as image_file:
+        image_file.write(image_bytes)
+
+    # Convert to Base64
+    image_data = base64.b64encode(image_bytes).decode("utf-8")
+    
+    # Get the description
+    description = img_description(image_data, api_endpoint, api_key)
+
+    return {"image_name": image_name, "description": description}
+
+# Extract text from PDF images
+def extract_text_from_pdf_images(file, output_dir="outputs_sop", api_endpoint="", api_key=""):
+    ensure_output_dir(output_dir)
+
+    pdf_file = fitz.open(file)
+    image_descriptions = []
+
+    def process_page(page_index):
+        page = pdf_file.load_page(page_index)
+        image_list = page.get_images(full=True)
+
+        if not image_list:
+            return []
+
+        results = []
+        for image_index, img in enumerate(image_list, start=1):
+            result = process_image(img, page_index, image_index, pdf_file, output_dir, api_endpoint, api_key)
+            results.append(result)
+        return results
+
+    # Use threading for parallel processing
+    with ThreadPoolExecutor() as executor:
+        all_results = executor.map(process_page, range(len(pdf_file)))
+
+    # Flatten the results
+    for page_results in all_results:
+        image_descriptions.extend(page_results)
+
+    # Save to JSON
+    save_json(output_dir, image_descriptions)
+
+    return image_descriptions
+
+# Usage Example
+file = r"path_to_pdf.pdf"
+api_endpoint = "https://your_azure_openai_endpoint/v1/chat/completions"
+api_key = "your_api_key"
+
+try:
+    image_text = extract_text_from_pdf_images(file, output_dir="outputs_sop", api_endpoint=api_endpoint, api_key=api_key)
+    print(image_text)
+except Exception as e:
+    print(f"Error: {e}")
+
+
+
+
+
+
+
+
+
 
 import os
 import fitz  # PyMuPDF
