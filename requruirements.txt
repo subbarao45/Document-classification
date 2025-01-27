@@ -1,3 +1,34 @@
+import tiktoken
+
+def calculate_tokens(text, model="gpt-3.5-turbo"):
+    """
+    Calculate the number of tokens in a given text using tiktoken.
+
+    Args:
+        text (str): Input text.
+        model (str): Model name to determine the encoding (default: "gpt-3.5-turbo").
+
+    Returns:
+        int: Number of tokens in the text.
+    """
+    try:
+        # Preload the encoding locally to avoid HTTPS timeouts
+        if model in ["gpt-3.5-turbo", "gpt-4"]:
+            encoding_name = "cl100k_base"
+        elif model == "text-davinci-003":
+            encoding_name = "p50k_base"
+        else:
+            raise ValueError(f"Unsupported model: {model}")
+
+        # Load the encoding
+        encoding = tiktoken.encoding_for_model(model) if tiktoken.encoding_for_model else tiktoken.get_encoding(encoding_name)
+        
+        # Return the number of tokens
+        return len(encoding.encode(text))
+
+    except Exception as e:
+        print(f"Error calculating tokens: {e}")
+        return None
 
 
 
