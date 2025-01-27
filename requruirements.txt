@@ -1,4 +1,93 @@
 
+import os
+import fitz  # PyMuPDF
+import base64
+import json
+from concurrent.futures import ThreadPoolExecutor
+
+def ensure_output_dir(output_dir):
+    """Ensure the outputs directory exists."""
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+def img_description(image_data):
+    """Mockup for describing an image in detail."""
+    # Replace this with actual logic if necessary (e.g., using an AI model).
+    return f"Description of image with data size: {len(image_data)} bytes"
+
+def save_json(output_dir, image_descriptions):
+    """Save image descriptions to a JSON file."""
+    json_file_path = os.path.join(output_dir, "image_data.json")
+    with open(json_file_path, "w") as json_file:
+        json.dump(image_descriptions, json_file, indent=4)
+
+def process_image(image, page_index, image_index, pdf_file, output_dir):
+    """Process a single image: save and describe it."""
+    xref = image[0]
+    base_image = pdf_file.extract_image(xref)
+    image_bytes = base_image["image"]
+    image_ext = base_image["ext"]
+
+    image_name = f"image{page_index+1}_{image_index}.{image_ext}"
+    image_path = os.path.join(output_dir, image_name)
+
+    # Save the image
+    with open(image_path, "wb") as image_file:
+        image_file.write(image_bytes)
+
+    # Convert to Base64
+    image_data = base64.b64encode(image_bytes).decode("utf-8")
+    description = img_description(image_data)
+
+    return {"image_name": image_name, "description": description}
+
+def extract_text_from_pdf_images(file, output_dir="outputs_sop"):
+    """Extract text and descriptions from PDF images."""
+    ensure_output_dir(output_dir)
+
+    pdf_file = fitz.open(file)
+    image_descriptions = []
+
+    def process_page(page_index):
+        """Process all images on a single page."""
+        page = pdf_file.load_page(page_index)
+        image_list = page.get_images(full=True)
+
+        if not image_list:
+            return []
+
+        results = []
+        for image_index, img in enumerate(image_list, start=1):
+            result = process_image(img, page_index, image_index, pdf_file, output_dir)
+            results.append(result)
+        return results
+
+    # Use threading for processing pages in parallel
+    with ThreadPoolExecutor() as executor:
+        all_results = executor.map(process_page, range(len(pdf_file)))
+
+    # Flatten results from all pages
+    for page_results in all_results:
+        image_descriptions.extend(page_results)
+
+    # Save descriptions to JSON
+    save_json(output_dir, image_descriptions)
+
+    return image_descriptions
+
+# Usage
+# file = r"path/to/your/document.pdf"
+# image_text = extract_text_from_pdf_images(file)
+
+
+
+
+
+
+
+
+
+
 from concurrent.futures import ThreadPoolExecutor
 import math
 
