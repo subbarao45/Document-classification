@@ -1,3 +1,93 @@
+def extract_text_from_pdf_images(file, output_dir="outputs_sop"):
+    # Ensure the outputs directory exists
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Function to process a single page
+    def process_page(page_index):
+        page = pdf_file.load_page(page_index)  # Load the page
+        image_list = page.get_images(full=True)  # Get images on the page
+        
+        # Check if images are found
+        if not image_list:
+            print(f"[!] No images found on page {page_index}")
+            return {"page_index": page_index, "descriptions": []}
+
+        print(f"[+] Found a total of {len(image_list)} images on page {page_index}")
+        page_descriptions = []
+
+        for image_index, img in enumerate(image_list, start=1):
+            # Get the XREF of the image
+            xref = img[0]
+            
+            # Extract the image bytes
+            base_image = pdf_file.extract_image(xref)
+            image_bytes = base_image["image"]
+            image_ext = base_image["ext"]  # Get the image extension
+            
+            # Save the image to the outputs folder
+            image_name = f"image_{page_index + 1}_{image_index}.{image_ext}"
+            image_path = os.path.join(output_dir, image_name)
+            with open(image_path, "wb") as image_file:
+                image_file.write(image_bytes)
+            print(f"[+] Image saved as {image_path}")
+            
+            # Convert the image to Base64
+            image_data = base64.b64encode(image_bytes).decode("utf-8")
+            
+            # Append image description
+            page_descriptions.append({
+                "image_name": image_name,
+                "description": img_description(image_data)
+            })
+        
+        return {"page_index": page_index, "descriptions": page_descriptions}
+
+    # Function to describe the image
+    def img_description(image_data):
+        # Simulated description (replace with actual API call if needed)
+        return f"Simulated description for image data: {image_data[:30]}..."
+
+    # Save JSON data
+    def save_json(output_dir, image_descriptions):
+        json_file_path = os.path.join(output_dir, "image_data_isvc.json")
+        with open(json_file_path, "w") as json_file:
+            json.dump(image_descriptions, json_file, indent=4)
+
+    # Open the PDF file
+    pdf_file = fitz.open(file)
+    image_descriptions = []
+
+    # Process pages in parallel
+    with ThreadPoolExecutor() as executor:
+        results = list(executor.map(process_page, range(len(pdf_file))))
+
+    # Sort results by page index to maintain sequence
+    results.sort(key=lambda x: x["page_index"])
+
+    # Collect sorted descriptions
+    for result in results:
+        image_descriptions.extend(result["descriptions"])
+
+    # Save the combined descriptions to JSON
+    save_json(output_dir, image_descriptions)
+    return image_descriptions
+
+# Usage example
+# file = r"h:\Question and answer\Fund accounting (Resubmit_1025)36. VFMC AAS25 SOP 5.0.pdf"
+# image_text = extract_text_from_pdf_images(file)
+
+
+
+
+
+
+
+
+
+
+
+
 
 import os
 import fitz  # PyMuPDF
