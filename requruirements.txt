@@ -1,4 +1,86 @@
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+def generate_questions_for_type(paragraph, image_data, question_type, prompt, remaining_questions, chunk_size):
+    """
+    Generate questions for a specific question type.
+    """
+    questions = generate_questions_in_chunks(
+        paragraph,
+        image_data,
+        question_type,
+        remaining_questions,
+        prompt,
+        chunk_size
+    )
+    return {
+        "question_type": question_type,
+        "questions": remove_duplicates(questions)
+    }
+
+def generate_questions_parallel(paragraph, image_data, total_questions, chunk_size=10):
+    # Define question types and corresponding prompts
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    # Remaining questions to generate
+    remaining_questions = total_questions
+    all_questions = []
+
+    # Use ThreadPoolExecutor for parallel processing
+    with ThreadPoolExecutor(max_workers=len(question_types_and_prompts)) as executor:
+        futures = []
+        for question_type, prompt in question_types_and_prompts.items():
+            futures.append(executor.submit(
+                generate_questions_for_type,
+                paragraph,
+                image_data,
+                question_type,
+                prompt,
+                remaining_questions,
+                chunk_size
+            ))
+
+        # Collect results as they complete
+        for future in as_completed(futures):
+            result = future.result()
+            question_type = result["question_type"]
+            questions = result["questions"]
+
+            # Add questions to the main list
+            for qa in questions:
+                question_text = qa["question"]
+                answer_text = qa["answer"]
+                all_questions.append({
+                    "Question Type": question_type,
+                    "Question": question_text,
+                    "Answer": answer_text,
+                    "Question Length (Chars)": len(question_text),
+                    "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else sum(len(str(a)) for a in answer_text),
+                    "Question Tokens": calculate_tokens(question_text),
+                    "Answer Tokens": calculate_tokens(answer_text if isinstance(answer_text, str) else "".join(answer_text))
+                })
+
+            # Update remaining questions
+            remaining_questions -= len(questions)
+
+    # Return the top N unique questions
+    return all_questions[:total_questions]
+
+
+
+
+
+
+
+
+
+
 
 def generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10):
     # Define question types and corresponding prompts
