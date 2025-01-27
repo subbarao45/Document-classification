@@ -1,6 +1,105 @@
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+def generate_questions_by_type(paragraph, image_data, question_type, prompt, chunk_size, token_limit):
+    """
+    Generate questions for a specific type with token limit handling.
+    """
+    questions = []
+    total_tokens_used = 0
+    while True:
+        # Generate questions in chunks
+        chunk_questions = generate_questions_in_chunks(
+            paragraph, image_data, question_type, chunk_size, prompt, chunk_size
+        )
+        
+        # Break if no more questions are generated
+        if not chunk_questions:
+            break
+
+        # Calculate tokens for generated questions
+        for qa in chunk_questions:
+            question_text = qa["question"]
+            answer_text = qa["answer"]
+            question_tokens = calculate_tokens(question_text)
+            answer_tokens = calculate_tokens(answer_text if isinstance(answer_text, str) else "".join(answer_text))
+            total_tokens = question_tokens + answer_tokens
+
+            # Stop processing if token limit is reached
+            if total_tokens_used + total_tokens > token_limit:
+                return questions  # Return all questions generated so far
+
+            # Append the question and update token usage
+            questions.append({
+                "Question Type": question_type,
+                "Question": question_text,
+                "Answer": answer_text,
+                "Question Length (Chars)": len(question_text),
+                "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else sum(len(str(a)) for a in answer_text),
+                "Question Tokens": question_tokens,
+                "Answer Tokens": answer_tokens
+            })
+            total_tokens_used += total_tokens
+
+    return questions
+
+
+def generate_questions_parallel(paragraph, image_data, total_questions, chunk_size, token_limit):
+    """
+    Generate questions across all types in parallel while respecting token limits.
+    """
+    # Define question types and corresponding prompts
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    # Use ThreadPoolExecutor for parallel processing
+    all_questions = []
+    with ThreadPoolExecutor() as executor:
+        # Submit tasks for parallel processing
+        futures = {
+            executor.submit(
+                generate_questions_by_type,
+                paragraph,
+                image_data,
+                question_type,
+                prompt,
+                chunk_size,
+                token_limit
+            ): question_type
+            for question_type, prompt in question_types_and_prompts.items()
+        }
+
+        # Collect results as they complete
+        for future in as_completed(futures):
+            try:
+                questions = future.result()  # Get questions from completed thread
+                all_questions.extend(questions)  # Append results to all_questions
+                if len(all_questions) >= total_questions:
+                    break  # Stop if total question limit is reached
+            except Exception as e:
+                print(f"Error generating {futures[future]} questions: {e}")
+
+    # Ensure the final output is exactly `total_questions`
+    return all_questions[:total_questions]
+
+
+
+
+
+
+
+
+
+
+
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 def generate_questions_for_type(paragraph, image_data, question_type, prompt, remaining_questions, chunk_size):
     """
     Generate questions for a specific question type.
