@@ -1,3 +1,71 @@
+
+
+def generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10):
+    # Define question types and corresponding prompts
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    # Initialize variables
+    all_questions = []
+    types_covered = set()  # Track covered types
+    remaining_questions = total_questions  # Track remaining questions to generate
+
+    # Iterate over question types in a loop until all are covered
+    while remaining_questions > 0 and len(types_covered) < len(question_types_and_prompts):
+        for question_type, prompt in question_types_and_prompts.items():
+            if question_type in types_covered:
+                continue  # Skip already fully covered types
+            
+            # Generate questions for the current type
+            questions = generate_questions_in_chunks(
+                paragraph,
+                image_data,
+                question_type,
+                remaining_questions,  # Remaining slots for questions
+                prompt,
+                chunk_size
+            )
+            
+            # Remove duplicates
+            questions = remove_duplicates(questions)
+
+            # Add metadata and append to all_questions
+            for qa in questions:
+                question_text = qa["question"]
+                answer_text = qa["answer"]
+                all_questions.append({
+                    "Question Type": question_type,
+                    "Question": question_text,
+                    "Answer": answer_text,
+                    "Question Length (Chars)": len(question_text),
+                    "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else sum(len(str(a)) for a in answer_text),
+                    "Question Tokens": calculate_tokens(question_text),
+                    "Answer Tokens": calculate_tokens(answer_text if isinstance(answer_text, str) else "".join(answer_text))
+                })
+
+            # Update remaining questions and track completed types
+            remaining_questions -= len(questions)
+            if len(questions) == 0:
+                types_covered.add(question_type)  # Mark this type as fully generated
+
+            # Break the loop if enough questions are generated
+            if len(all_questions) >= total_questions:
+                break
+
+    # Return the top N unique questions
+    return all_questions[:total_questions]
+
+
+
+
+
+
+
 import tiktoken
 
 def calculate_tokens(text, model="gpt-3.5-turbo"):
