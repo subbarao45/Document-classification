@@ -1,3 +1,41 @@
+
+This project focuses on automating the analysis of financial and legal documents by leveraging Azure and AI technologies. It securely retrieves documents from Azure Blob Storage, organizes and structures their content, and uses Azure Document Intelligence to parse key elements. Regex filtering and Azure OpenAI models are employed to extract, refine, and interpret critical information like management fees and key terms. The workflow ensures accurate, context-specific insights and simplified interpretations for informed decision-making. By combining secure access, advanced AI, and structured processing, the system delivers a comprehensive and efficient document analysis solution.
+
+
+
+
+
+You said:
+project name
+ChatGPT said:
+ChatGPT
+IntelliDoc Analyzer
+
+
+
+
+
+You said:
+give me a cutting edge like
+ChatGPT said:
+ChatGPT
+NeuralEdge Document Intelligence
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def extract_text_from_pdf_images(file, output_dir="outputs_sop"):
     # Ensure the outputs directory exists
     if not os.path.exists(output_dir):
