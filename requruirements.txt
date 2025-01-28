@@ -1,3 +1,96 @@
+import os
+import fitz
+import base64
+import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Function to describe an image
+def img_description(image_data):
+    message = [
+        {
+            "type": "text",
+            "text": "Describe an image in detail, including its overall structure, such as headers, footers, and sections, along with the placement of the logo, name, address, and contact information. Include background features like watermarks, barcodes, or security marks. Focus on tables within the document that display account details, transaction records, dates, descriptions, debit/credit amounts, and balances, specifying the number of rows and columns, headers, borders, alignment, and any highlights like bold totals or shaded cells. Mention account details such as the account holder's name, account number, branch name, and IFSC code, along with details about account types or interest rates. Provide information on transaction lists or tables, including details like dates, descriptions, transaction types (credit/debit), amounts, and balances, highlighting any significant entries. Include additional elements like handwritten notes, signatures (manual or digital), stamps, or seals for authentication, as well as reference numbers, document IDs, or case numbers for tracking. Describe the formatting, including font styles, alignment, and the use of bold or italicized text for emphasis. Mention any legal or formal information, such as disclaimers, terms, and conditions, or privacy policies, often found at the bottom of the document, and note the use of formal language and financial terminology. Finally, describe the professional appearance of the document, including the use of colors (e.g., black-and-white or highlights) and whether it appears printed or scanned."
+        },
+        {
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},
+        },
+    ]
+    response = "AzureChatOpenAI"  # Placeholder for Azure OpenAI function call
+    return response  # Replace with actual function call logic
+
+# Function to save JSON data
+def save_json(output_dir, image_descriptions):
+    json_file_path = os.path.join(output_dir, "image_data_isvc.json")
+    with open(json_file_path, "w") as json_file:
+        json.dump(image_descriptions, json_file, indent=4)
+
+# Function to process a single image
+def process_image(pdf_file, page_index, image_index, img, output_dir):
+    xref = img[0]
+    base_image = pdf_file.extract_image(xref)
+    image_bytes = base_image["image"]
+    image_ext = base_image["ext"]
+
+    # Save the image to the outputs folder
+    image_name = f"image{page_index+1}_{image_index}.{image_ext}"
+    image_path = os.path.join(output_dir, image_name)
+    with open(image_path, "wb") as image_file:
+        image_file.write(image_bytes)
+
+    # Convert the image to Base64
+    image_data = base64.b64encode(image_bytes).decode("utf-8")
+
+    # Get image description
+    description = img_description(image_data)
+
+    return {"image_name": image_name, "description": description}
+
+# Main function for processing PDF
+def extract_text_from_pdf_images(file, output_dir="outputs_sop"):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    pdf_file = fitz.open(file)
+    image_descriptions = []
+
+    # Using ThreadPoolExecutor for parallel processing
+    with ThreadPoolExecutor() as executor:
+        futures = []
+
+        for page_index in range(len(pdf_file)):
+            page = pdf_file.load_page(page_index)
+            image_list = page.get_images(full=True)
+
+            if image_list:
+                print(f"[+] Found a total of {len(image_list)} images on page {page_index}")
+                for image_index, img in enumerate(image_list, start=1):
+                    futures.append(executor.submit(process_image, pdf_file, page_index, image_index, img, output_dir))
+            else:
+                print(f"[1] No images found on page {page_index}")
+
+        # Collect results from parallel tasks
+        for future in as_completed(futures):
+            image_descriptions.append(future.result())
+
+    save_json(output_dir, image_descriptions)
+    return image_descriptions
+
+# Usage
+file = r"h:\Question and answer\Fund accounting\(Resubmit_1025)36. VFMC AAS25 SOP 5.0.pdf"
+image_text = extract_text_from_pdf_images(file)
+print(image_text)
+
+
+
+
+
+
+
+
+
+
+
 import tiktoken
 
 def calculate_tokens(text, model="gpt-3.5-turbo"):
