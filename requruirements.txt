@@ -1,4 +1,95 @@
 
+def generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10):
+    """
+    Generate questions of all types in parallel.
+    """
+    # Define question types and their corresponding prompt templates
+    question_types_and_prompts = {
+        "Factual": "Generate factual questions from the given text.",
+        "Procedural": "Generate procedural questions from the given text.",
+        "Conceptual": "Generate conceptual questions from the given text.",
+        "Inferential": "Generate inferential questions from the given text.",
+        "Reasoning-based": "Generate reasoning-based questions from the given text.",
+    }
+
+    all_questions = []
+    question_counts = {q_type: 0 for q_type in question_types_and_prompts}
+
+    # Ensure paragraph has sufficient content
+    if not paragraph or len(paragraph.split()) < total_questions:
+        print("Warning: The input paragraph may not have enough content to generate the requested number of questions.")
+
+    # Adjust chunk size dynamically
+    chunk_size = min(chunk_size, max(1, total_questions // len(paragraph.split("."))))
+
+    # Helper function to generate questions for a single type
+    def generate_questions_for_type(question_type, prompt, questions_to_generate):
+        try:
+            # Generate questions for the current type
+            questions = generate_questions_in_chunks(
+                paragraph,
+                image_data,
+                question_type,
+                questions_to_generate,
+                prompt,
+                chunk_size
+            )
+            # Remove duplicates
+            questions = remove_duplicates(questions)
+            print(f"Generated {len(questions)} questions for {question_type}")
+            return question_type, questions
+        except Exception as e:
+            print(f"Error generating questions for {question_type}: {e}")
+            return question_type, []
+
+    # Divide the total questions equally among question types
+    questions_per_type = max(1, math.ceil(total_questions / len(question_types_and_prompts)))
+
+    remaining_questions = total_questions
+
+    with ThreadPoolExecutor() as executor:
+        # Submit tasks to generate questions for each type
+        futures = {
+            executor.submit(
+                generate_questions_for_type,
+                question_type,
+                prompt,
+                questions_per_type
+            ): question_type
+            for question_type, prompt in question_types_and_prompts.items()
+        }
+
+        # Collect results from the executor
+        for future in futures:
+            try:
+                question_type, questions = future.result()
+                if not questions:
+                    print(f"No questions generated for {question_type}")
+                    continue
+                all_questions.extend(questions)
+                question_counts[question_type] += len(questions)
+                remaining_questions -= len(questions)
+            except Exception as e:
+                print(f"Error processing {futures[future]}: {e}")
+
+    # Log question counts
+    for q_type, count in question_counts.items():
+        print(f"{q_type} questions: {count}")
+
+    # Warn if the total is less than requested
+    if len(all_questions) < total_questions:
+        print(f"Warning: Only {len(all_questions)} questions generated out of the requested {total_questions}.")
+
+    # Ensure the total number of questions matches the requested amount
+    return all_questions[:total_questions]
+
+
+
+
+
+
+
+
 
 def generate_questions_in_chunks(paragraph, image_data, question_type, total_questions, prompt_template, chunk_size=10):
     """
