@@ -1,3 +1,49 @@
+import tiktoken
+
+def calculate_tokens(text, model="gpt-3.5-turbo", encoding_path=None):
+    """
+    Calculate the number of tokens in a given text using tiktoken.
+
+    Args:
+        text (str): Input text.
+        model (str): Model name to determine the encoding (default: "gpt-3.5-turbo").
+        encoding_path (str): Optional path to a manually downloaded encoding file.
+
+    Returns:
+        int: Number of tokens in the text.
+    """
+    try:
+        # Load encoding from a manually downloaded file if specified
+        if encoding_path:
+            with open(encoding_path, "r") as f:
+                encoding = tiktoken.load(f.read())
+        else:
+            # Use predefined encodings based on the model
+            if model in ["gpt-3.5-turbo", "gpt-4"]:
+                encoding = tiktoken.get_encoding("cl100k_base")
+            elif model == "text-davinci-003":
+                encoding = tiktoken.get_encoding("p50k_base")
+            elif model == "text-davinci-002":
+                encoding = tiktoken.get_encoding("r50k_base")
+            else:
+                raise ValueError(f"Unsupported model: {model}")
+        
+        # Calculate token count
+        return len(encoding.encode(text))
+    
+    except Exception as e:
+        print(f"Error calculating tokens: {e}")
+        return None
+
+# Example usage with a manually downloaded encoding file
+manual_path = r"c:\Users\P872643\Downloads\cl100k_base.tiktoken"  # Update this path as needed
+t = calculate_tokens("hi", encoding_path=manual_path)
+print(t)
+
+
+
+
+
 
 This project focuses on automating the analysis of financial and legal documents by leveraging Azure and AI technologies. It securely retrieves documents from Azure Blob Storage, organizes and structures their content, and uses Azure Document Intelligence to parse key elements. Regex filtering and Azure OpenAI models are employed to extract, refine, and interpret critical information like management fees and key terms. The workflow ensures accurate, context-specific insights and simplified interpretations for informed decision-making. By combining secure access, advanced AI, and structured processing, the system delivers a comprehensive and efficient document analysis solution.
 
