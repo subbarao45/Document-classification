@@ -1,3 +1,45 @@
+
+def generate_questions_in_chunks(paragraph, image_data, question_type, total_questions, prompt_template, chunk_size=10):
+    """
+    Generate questions in chunks to avoid exceeding token limits.
+
+    Args:
+        paragraph (str): Input paragraph for question generation.
+        image_data (any): Image data for context (if required).
+        question_type (str): Type of question to generate (e.g., "Factual", "Inferential").
+        total_questions (int): Total number of questions to generate.
+        prompt_template (str): Template or prompt for generating questions.
+        chunk_size (int): Number of questions to generate per chunk.
+
+    Returns:
+        list: A list of generated questions.
+    """
+    all_questions = []
+
+    for start in range(0, total_questions, chunk_size):
+        try:
+            # Generate questions for the current chunk
+            chunk_questions = generate_questions(
+                paragraph=paragraph,
+                image_data=image_data,
+                question_type=question_type,
+                total_questions=min(chunk_size, total_questions - start),
+                prompt_template=prompt_template
+            )
+            # Add the questions to the overall list
+            all_questions.extend(chunk_questions)
+        except Exception as e:
+            # Handle errors during chunk generation
+            print(f"Error generating chunk for {question_type}: {e}")
+            continue
+
+    return all_questions
+
+
+
+
+
+
 from concurrent.futures import ThreadPoolExecutor
 import math
 
