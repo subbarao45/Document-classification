@@ -1,3 +1,43 @@
+import os
+import pandas as pd
+
+def consolidate_excel_files(base_folder, output_file):
+    # Create an empty DataFrame to store consolidated data
+    consolidated_data = pd.DataFrame()
+
+    # Walk through the base folder and its subfolders
+    for root, dirs, files in os.walk(base_folder):
+        for file in files:
+            if file.endswith('.xlsx') or file.endswith('.xls'):  # Check for Excel files
+                file_path = os.path.join(root, file)
+                print(f"Processing file: {file_path}")
+                try:
+                    # Read the Excel file into a DataFrame
+                    df = pd.read_excel(file_path)
+                    # Add a column to track the file name (optional)
+                    df['Source_File'] = file
+                    # Append the data to the consolidated DataFrame
+                    consolidated_data = pd.concat([consolidated_data, df], ignore_index=True)
+                except Exception as e:
+                    print(f"Error reading {file_path}: {e}")
+
+    # Save the consolidated data to an output Excel file
+    consolidated_data.to_excel(output_file, index=False)
+    print(f"Consolidated data saved to {output_file}")
+
+# Specify the base folder and output file path
+base_folder = r"path_to_your_folders"  # Replace with the folder containing Excel files
+output_file = r"path_to_output_file/consolidated.xlsx"  # Replace with the output file path
+
+# Call the function to consolidate Excel files
+consolidate_excel_files(base_folder, output_file)
+
+
+
+
+
+
+
 
 def generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10):
     """
