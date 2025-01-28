@@ -1,3 +1,169 @@
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
+
+
+# Utility: Extract valid JSON from response
+def extract_valid_json(response):
+    try:
+        return json.loads(response)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}")
+        return []
+
+
+# Utility: Remove duplicate questions and answers
+def remove_duplicates(questions):
+    """
+    Remove duplicate questions and answers.
+    """
+    seen_questions = set()
+    seen_answers = set()
+    unique_questions = []
+
+    for qa in questions:
+        question_text = qa["question"]
+        answer_text = str(qa["answer"])  # Convert list-type answers to strings for comparison
+
+        if question_text not in seen_questions and answer_text not in seen_answers:
+            seen_questions.add(question_text)
+            seen_answers.add(answer_text)
+            unique_questions.append(qa)
+
+    return unique_questions
+
+
+# Utility: Calculate token count for a text
+def calculate_tokens(text):
+    """
+    Placeholder function for token calculation. Update this with your tokenization logic.
+    """
+    return len(text.split())
+
+
+# Function: Generate questions in chunks
+def generate_questions_in_chunks(paragraph, image_data, question_type, total_questions, prompt_template, chunk_size=10):
+    """
+    Generate questions in chunks to avoid exceeding token limits.
+    """
+    all_questions = []
+
+    for start in range(0, total_questions, chunk_size):
+        try:
+            chunk_questions = generate_questions(
+                paragraph=paragraph,
+                image_content=image_data,
+                question_type=question_type,
+                num_questions=min(chunk_size, total_questions - start),
+                prompt_template=prompt_template
+            )
+            all_questions.extend(chunk_questions)
+        except Exception as e:
+            print(f"Error generating chunk for {question_type}: {e}")
+            continue
+
+    return all_questions
+
+
+# Function: Generate questions using LLM
+def generate_questions(paragraph, image_content, question_type, num_questions, prompt_template):
+    """
+    Generate questions using Azure OpenAI with a structured prompt template.
+    """
+    # Initialize Azure OpenAI LLM
+    llm = AzureChatOpenAI(
+        temperature=0,
+        api_version="azure_openai_api_version",  # Replace with your Azure OpenAI API version
+        azure_endpoint="azure_openai_endpoint",  # Replace with your Azure OpenAI endpoint
+        deployment_name="deployment_name"        # Replace with your deployment name
+    )
+
+    # Create the prompt template
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions", "question_type", "image_content"],
+        template=prompt_template
+    )
+
+    # Create the LLM chain
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        # Generate questions using the LLM chain
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions),
+            question_type=str(question_type),
+            image_content=str(image_content)
+        )
+        # Extract and return valid JSON from the response
+        return extract_valid_json(response)
+    except Exception as e:
+        print(f"Error generating {question_type} questions: {e}")
+        return []
+
+
+# Main Function: Generate questions by all types
+def generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10):
+    """
+    Generate categorized questions and answers for all types, ensuring uniqueness.
+    """
+    question_types_and_prompts = {
+        "Factual": "FACTUAL_PROMPT",
+        "Procedural": "PROCEDURAL_PROMPT",
+        "Conceptual": "CONCEPTUAL_PROMPT",
+        "Inferential": "INFERENTIAL_PROMPT",
+        "Reasoning-based": "REASONING_PROMPT",
+    }
+
+    all_questions = []
+
+    # Parallel processing for question generation
+    def process_question_type(question_type, prompt_template):
+        return question_type, generate_questions_in_chunks(
+            paragraph, image_data, question_type, total_questions, prompt_template, chunk_size
+        )
+
+    with ThreadPoolExecutor() as executor:
+        future_to_question_type = {
+            executor.submit(process_question_type, question_type, prompt): question_type
+            for question_type, prompt in question_types_and_prompts.items()
+        }
+
+        for future in as_completed(future_to_question_type):
+            question_type, questions = future.result()
+            for qa in questions:
+                question_text = qa["question"]
+                answer_text = qa["answer"]
+                all_questions.append({
+                    "Question Type": question_type,
+                    "Question": question_text,
+                    "Answer": answer_text,
+                    "Question Length (Chars)": len(question_text),
+                    "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else sum(len(str(a)) for a in answer_text),
+                    "Question Tokens": calculate_tokens(question_text),
+                    "Answer Tokens": calculate_tokens(answer_text if isinstance(answer_text, str) else "".join(answer_text)),
+                })
+
+            # Stop early if the desired number of questions is reached
+            if len(all_questions) >= total_questions:
+                break
+
+    # Remove duplicates and return the top N unique questions
+    all_questions = remove_duplicates(all_questions)
+    return all_questions[:total_questions]
+
+
+
+
+
+
+
+
+
+
+
 
 def generate_questions_in_chunks(paragraph, image_data, question_type, total_questions, prompt_template, chunk_size=10):
     """
