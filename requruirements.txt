@@ -1,3 +1,144 @@
+
+from concurrent.futures import ThreadPoolExecutor
+import math
+
+# Placeholder functions for prompts and processing
+FACTUAL_PROMPT = "Factual question generation prompt"
+PROCEDURAL_PROMPT = "Procedural question generation prompt"
+CONCEPTUAL_PROMPT = "Conceptual question generation prompt"
+INFERENTIAL_PROMPT = "Inferential question generation prompt"
+REASONING_PROMPT = "Reasoning-based question generation prompt"
+
+def generate_questions_in_chunks(paragraph, image_data, question_type, questions_to_generate, prompt, chunk_size):
+    # Mock implementation for generating questions
+    print(f"Generating questions for {question_type} with {questions_to_generate} questions.")
+    questions = [{"question": f"Sample {question_type} question {i}", "answer": f"Sample {question_type} answer {i}"} for i in range(questions_to_generate)]
+    print(f"Generated {len(questions)} questions for {question_type}.")
+    return questions if questions else []
+
+def remove_duplicates(questions):
+    if not questions:
+        return []  # Return an empty list if input is None or empty
+    print(f"Removing duplicates from {len(questions)} questions.")
+    seen = set()
+    unique_questions = []
+    for question in questions:
+        if question["question"] not in seen:
+            unique_questions.append(question)
+            seen.add(question["question"])
+    print(f"{len(unique_questions)} unique questions remain after deduplication.")
+    return unique_questions
+
+def calculate_tokens(text):
+    # Mock implementation for token calculation
+    return len(text.split())
+
+def generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10):
+    # Define question types and corresponding prompts
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    # Initialize variables
+    all_questions = []
+    question_counts = {q_type: 0 for q_type in question_types_and_prompts}
+
+    # Check if inputs are valid
+    if not paragraph or not image_data:
+        print("Error: Paragraph or image data is empty!")
+        return []
+
+    # Helper function for generating questions for a specific type
+    def generate_questions_for_type(question_type, prompt, questions_to_generate):
+        try:
+            questions = generate_questions_in_chunks(
+                paragraph,
+                image_data,
+                question_type,
+                questions_to_generate,
+                prompt,
+                chunk_size
+            )
+            if questions is None:
+                print(f"Error: generate_questions_in_chunks returned None for {question_type}")
+                questions = []
+            questions = remove_duplicates(questions)
+            if questions is None:
+                print(f"Error: remove_duplicates returned None for {question_type}")
+                questions = []
+            print(f"Generated {len(questions)} questions for {question_type}.")
+            return question_type, questions
+        except Exception as e:
+            print(f"Error generating questions for {question_type}: {e}")
+            return question_type, []
+
+    # Divide the total questions equally among question types
+    questions_per_type = max(1, math.ceil(total_questions / len(question_types_and_prompts)))
+
+    with ThreadPoolExecutor() as executor:
+        # Submit tasks to generate questions for each type
+        futures = {
+            executor.submit(
+                generate_questions_for_type,
+                question_type,
+                prompt,
+                questions_per_type
+            ): question_type
+            for question_type, prompt in question_types_and_prompts.items()
+        }
+
+        # Collect results as they are completed
+        for future in futures:
+            try:
+                question_type, questions = future.result()
+                if not questions:
+                    print(f"No questions generated for {question_type}")
+                # Add metadata and append to all_questions
+                for qa in questions:
+                    question_text = qa["question"]
+                    answer_text = qa["answer"]
+                    all_questions.append({
+                        "Question Type": question_type,
+                        "Question": question_text,
+                        "Answer": answer_text,
+                        "Question Length (Chars)": len(question_text),
+                        "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else sum(len(str(a)) for a in answer_text),
+                        "Question Tokens": calculate_tokens(question_text),
+                        "Answer Tokens": calculate_tokens(answer_text if isinstance(answer_text, str) else "".join(answer_text)),
+                    })
+                    question_counts[question_type] += 1
+            except Exception as e:
+                print(f"Error processing {futures[future]}: {e}")
+
+    # Log final question counts
+    for q_type, count in question_counts.items():
+        print(f"{q_type} questions: {count}")
+
+    # Ensure the final output is exactly total_questions
+    return all_questions[:total_questions]
+
+# Example usage
+paragraph = "This is a sample paragraph for question generation."
+image_data = "Sample image data"  # Replace with actual image data
+total_questions = 50
+result = generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10)
+print("Generated Questions:")
+print(result)
+
+
+
+
+
+
+
+
+
+
+
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.chat_models import AzureChatOpenAI
