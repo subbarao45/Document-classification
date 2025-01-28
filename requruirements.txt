@@ -1,4 +1,40 @@
 
+
+def generate_questions_in_chunks(paragraph, image_data, question_type, total_questions, prompt_template, chunk_size=10):
+    """
+    Generate questions in chunks to avoid exceeding token limits.
+    """
+    all_questions = []
+
+    for i in range(0, total_questions, chunk_size):
+        try:
+            # Generate questions for the current chunk
+            chunk_questions = generate_questions(paragraph, image_data, question_type, chunk_size, prompt_template)
+            
+            # Ensure chunk_questions is a valid list
+            if not chunk_questions or not isinstance(chunk_questions, list):
+                print(f"Warning: No questions generated for {question_type} in chunk {i // chunk_size + 1}")
+                continue
+            
+            # Remove duplicates in the current chunk
+            chunk_questions = remove_duplicates(chunk_questions)
+            
+            # Append unique questions to all_questions
+            all_questions.extend(chunk_questions)
+
+        except Exception as e:
+            print(f"Error generating chunk for {question_type} (chunk {i // chunk_size + 1}): {e}")
+            continue
+
+    # Ensure all_questions is a valid list
+    return all_questions if all_questions else []
+
+
+
+
+
+
+
 from concurrent.futures import ThreadPoolExecutor
 import math
 
