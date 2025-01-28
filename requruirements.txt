@@ -1,3 +1,66 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+def generate_questions_in_chunks(paragraph, image_data, question_type, total_questions, prompt, chunk_size):
+    # Placeholder for your existing function that generates questions in chunks
+    pass
+
+def remove_duplicates(questions):
+    # Placeholder for your duplicate removal logic
+    return list({q['question']: q for q in questions}.values())
+
+def calculate_tokens(text):
+    # Placeholder for your token calculation logic
+    return len(text.split())
+
+def generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10):
+    question_types_and_prompts = {
+        "Factual": "FACTUAL_PROMPT",
+        "Procedural": "PROCEDURAL_PROMPT",
+        "Conceptual": "CONCEPTUAL_PROMPT",
+        "Inferential": "INFERENTIAL_PROMPT",
+        "Reasoning-based": "REASONING_PROMPT",
+    }
+
+    all_questions = []
+
+    def process_question_type(question_type, prompt):
+        questions = generate_questions_in_chunks(paragraph, image_data, question_type, total_questions, prompt, chunk_size)
+        return question_type, questions
+
+    with ThreadPoolExecutor() as executor:
+        future_to_question_type = {
+            executor.submit(process_question_type, question_type, prompt): question_type
+            for question_type, prompt in question_types_and_prompts.items()
+        }
+
+        for future in as_completed(future_to_question_type):
+            question_type, questions = future.result()
+            for qa in questions:
+                question_text = qa["question"]
+                answer_text = qa["answer"]
+                all_questions.append({
+                    "Question Type": question_type,
+                    "Question": question_text,
+                    "Answer": answer_text,
+                    "Question Length (Chars)": len(question_text),
+                    "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else sum(len(str(a)) for a in answer_text),
+                    "Question Tokens": calculate_tokens(question_text),
+                    "Answer Tokens": calculate_tokens(answer_text if isinstance(answer_text, str) else "".join(answer_text)),
+                })
+            
+            # Break if the desired number of questions is reached
+            if len(all_questions) >= total_questions:
+                break
+
+    # Remove duplicates and return the top N questions
+    all_questions = remove_duplicates(all_questions)
+    return all_questions[:total_questions]
+
+
+
+
+
+
 
 
 from concurrent.futures import ThreadPoolExecutor
