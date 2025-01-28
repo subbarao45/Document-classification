@@ -1,3 +1,85 @@
+
+
+from concurrent.futures import ThreadPoolExecutor
+import math
+
+def generate_questions_by_all_types(paragraph, image_data, total_questions, chunk_size=10):
+    # Define question types and corresponding prompts
+    question_types_and_prompts = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Reasoning-based": REASONING_PROMPT,
+    }
+
+    # Initialize variables
+    all_questions = []
+    question_counts = {q_type: 0 for q_type in question_types_and_prompts}  # Track questions per type
+
+    # Define a helper function for parallel processing
+    def generate_questions_for_type(question_type, prompt, questions_to_generate):
+        questions = generate_questions_in_chunks(
+            paragraph,
+            image_data,
+            question_type,
+            questions_to_generate,
+            prompt,
+            chunk_size
+        )
+        questions = remove_duplicates(questions)
+        print(f"{question_type} questions generated: {len(questions)}")  # Debug log
+        return question_type, questions
+
+    # Divide the total questions equally among question types
+    questions_per_type = math.ceil(total_questions / len(question_types_and_prompts))
+
+    with ThreadPoolExecutor() as executor:
+        # Submit tasks to generate questions for each type in parallel
+        futures = {
+            executor.submit(
+                generate_questions_for_type,
+                question_type,
+                prompt,
+                questions_per_type
+            ): question_type
+            for question_type, prompt in question_types_and_prompts.items()
+        }
+
+        # Collect results as they are completed
+        for future in futures:
+            question_type, questions = future.result()
+            # Add metadata and append to all_questions
+            for qa in questions:
+                question_text = qa["question"]
+                answer_text = qa["answer"]
+                all_questions.append({
+                    "Question Type": question_type,
+                    "Question": question_text,
+                    "Answer": answer_text,
+                    "Question Length (Chars)": len(question_text),
+                    "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else sum(len(str(a)) for a in answer_text),
+                    "Question Tokens": calculate_tokens(question_text),
+                    "Answer Tokens": calculate_tokens(answer_text if isinstance(answer_text, str) else "".join(answer_text)),
+                })
+                # Update counters
+                question_counts[question_type] += 1
+
+    # Log final question counts per type
+    for q_type, count in question_counts.items():
+        print(f"{q_type} questions: {count}")
+
+    # Ensure the final output is exactly total_questions
+    return all_questions[:total_questions]
+
+
+
+
+
+
+
+
+
 import os
 import fitz
 import base64
