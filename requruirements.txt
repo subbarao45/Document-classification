@@ -1,3 +1,61 @@
+
+Ensure:
+Questions focus on processes, methods, or sequences of steps.
+Answers provide detailed, step-by-step instructions with clear descriptions for each step, ensuring no step is missed.
+Each question and answer must be unique and should not repeat previous questions.
+If fewer distinct questions are possible, return only the available ones.
+Analyze both the text and images together to generate procedural questions.
+Include unrelated procedural questions (e.g., unrelated topics like cooking, weather) if the input contains off-topic content.
+Do not generate questions for strikethrough text.
+Ensure that when an address, portal, or URL is relevant to a step, it is included directly in that step rather than listed separately.
+Input:
+json
+Copy code
+{
+    "text": "{paragraph}",
+    "image_description_data": "{image_content}",
+    "portal": "{portal_name}",
+    "url": "{data_access_url}",
+    "storage_address": "{storage_location}",
+    "database_name": "{database_name}",
+    "access_credentials": "{authentication_details}",
+    "strikethrough_content": "{strikethrough_text}"
+}
+Output Format (Valid JSON Array):
+json
+Copy code
+[
+    {
+        "question": "What are the steps to achieve or complete this process?",
+        "answer": [
+            "Step 1: Access the data via {portal_name} at {data_access_url}. Ensure you have the correct credentials: {authentication_details}.",
+            "Step 2: Retrieve the relevant files stored at {storage_location} within {database_name}.",
+            "Step 3: Process the data according to the required methodology."
+        ]
+    }
+]
+
+
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. Check important
+
+
+
+
+
+
+
+
 import os
 import pandas as pd
 
