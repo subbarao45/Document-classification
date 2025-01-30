@@ -1,4 +1,47 @@
+Key Instructions:
+Do not treat the text and image descriptions as separate inputs. They are to be processed together as a single source of information to ensure no detail is missed.
+Ensure that each step clearly describes how to use the combined input, referencing any tables, columns, data points, conditions, or decision-making steps.
+If specific details (e.g., columns, SWIFT codes, fund codes, case IDs, or tabs) are provided in either the image or text, they should be included directly in the appropriate steps.
+Use branching logic or conditions when necessary (e.g., what to do if a fund code is missing or labeled as 'CHECK FUND').
+INPUT FORMAT:
+Combined Input: (Provide the combined content from text and images here.)
+OUTPUT FORMAT:
+json
+Copy code
+[
+    {
+        "question": "What are the steps to process unadvised cash items and allocate them correctly?",
+        "answer": [
+            "Step 1: Identify unadvised cash items using the combined data from the table (refer to the 'Fund Code', 'Case ID', and 'Purchase Amount' columns as described in the input). Copy the identified items into the 'PD' tab.",
+            "Step 2: Check the status of the cash items and update comments where necessary. Use data from both text and image descriptions (e.g., transaction details, SWIFT codes, and amounts).",
+            "Step 3: Copy all the downloaded data to the 'globaluaxl' tab, covering columns C through T. Include references to transaction-specific columns (e.g., 'Fund Code', 'Case ID', and 'Branch').",
+            "Step 4: In the 'globaluaxl' tab, perform a vlookup on column A to identify entries labeled 'CHECK FUND'. Cross-reference this with details from both the image and text input (e.g., 'MT2322000067 SYD', 'AUD', or 'SWIFT codes').",
+            "Step 5: For entries labeled 'CHECK FUND', raise an IMT log for the GCO investigation team to allocate the cash to funds or match with non-receipt cash.",
+            "Step 6: If a fund code is not identifiable, search for the corresponding SWIFT reference in IBS using combined details (e.g., from the table and additional fields).",
+            "Step 7: Send an email to the related team for clarification, providing any missing fund codes or transaction details extracted from the combined input (e.g., 'SWIFT code AU1230804075552', 'Case ID').",
+            "Step 8: Request the GCO investigation team to allocate the cash based on further investigation or follow up as needed."
+        ]
+    }
+]
+Clarified Instructions:
+Treat the text and image content as a single unified input.
+Preserve and reference any tables, column names, or transaction details mentioned in either input.
+Ensure the final output includes all necessary steps, decisions, and checks while providing clear references to data extracted from the combined source.
+Would this approach meet your requirements perfectly?
 
+
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. 
 Key Requirements:
 Incorporate both the text and image information into the procedural steps. If specific data, columns, tables, or conditions are mentioned in the image description, they must be directly included in the answer.
 Ensure that each step clearly describes how the data is used, any conditions (e.g., vlookup), and branching decisions such as what to do when specific values (e.
