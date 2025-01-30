@@ -1,3 +1,58 @@
+Requirements:
+Each step should logically follow the process of identifying, copying, checking, updating, and escalating tasks.
+Preserve any references to columns (A, B, C, etc.), tabs (PD, globaluaxl), tables, fields, and codes exactly as provided in the input.
+If the process involves conditions (e.g., vlookup, identifying missing information), clearly describe the check and the corresponding next step.
+If decisions or branching logic exists, include clear instructions on what to do in each case.
+Use exact terminology provided in the input, and don’t generalize steps unnecessarily.
+If any portal, link, or storage location is mentioned, directly include it in the appropriate step.
+INPUT FORMAT:
+Image Description: {image_content}
+Text: {paragraph}
+OUTPUT FORMAT:
+json
+Copy code
+[
+    {
+        "question": "What are the steps to process unadvised cash items and allocate them to funds?",
+        "answer": [
+            "Step 1: Identify unadvised cash items based on fund codes and copy the data into the 'PD' tab.",
+            "Step 2: Check the status of the cash items and update the comments where necessary.",
+            "Step 3: Copy all the downloaded data to the 'globaluaxl' tab, covering columns C to T.",
+            "Step 4: In the 'globaluaxl' tab, use vlookup to check column A for entries labeled 'CHECK FUND'.",
+            "Step 5: For entries where 'CHECK FUND' is identified, raise an IMT log for the GCO investigation team to allocate the cash to funds, if possible, or match with non-receipt cash.",
+            "Step 6: If a fund code is not identifiable, search for the corresponding SWIFT reference in IBS, review the additional columns for transaction details, and contact the related team via email for clarification on the fund code.",
+            "Step 7: Request the GCO investigation team to allocate the cash after further investigation, if necessary."
+        ]
+    }
+]
+Example Breakdown of Table References (Preserve table-like formatting where necessary):
+Fund Code Check Example:
+Column A: 'CHECK FUND' (Use vlookup to identify)
+Relevant transaction data spans from columns C to T, ensure the appropriate checks are made.
+Cross-check cases like AU1230804075552 (or similar) using both SWIFT and fund identifiers as indicated in the table.
+This version will guarantee table-specific instructions, checks, and decision points are retained without losing any of the context.
+
+
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. Check important info.
+
+
+
+
+
+
+
+
 
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
 
