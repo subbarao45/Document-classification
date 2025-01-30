@@ -1,3 +1,15 @@
+
+Key Requirements:
+Incorporate both the text and image information into the procedural steps. If specific data, columns, tables, or conditions are mentioned in the image description, they must be directly included in the answer.
+Ensure that each step clearly describes how the data is used, any conditions (e.g., vlookup), and branching decisions such as what to do when specific values (e.
+CHECK FUND') are encountered.
+Preserve data references, column labels (A, C, etc.), tabs, SWIFT codes, fund codes, and case IDs exactly as they appear in the input.
+If portals, URLs, or specific tools are mentioned in the process, include them directly in the relevant steps.
+
+
+
+
+
 Requirements:
 Each step should logically follow the process of identifying, copying, checking, updating, and escalating tasks.
 Preserve any references to columns (A, B, C, etc.), tabs (PD, globaluaxl), tables, fields, and codes exactly as provided in the input.
