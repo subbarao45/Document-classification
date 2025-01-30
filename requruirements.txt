@@ -1,4 +1,52 @@
 
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+
+Generate distinct procedural question-answer pairs from the provided input text and image descriptions.
+
+Requirements:
+Questions must focus on the process, methods, or logical sequences.
+Answers should break down the entire process step-by-step, ensuring each step is complete and does not miss critical details.
+Steps should clearly explain tasks like copying data, verifying conditions, or taking decisions, with clear references to any columns, fields, or data points mentioned.
+Specific Instructions:
+Ensure that any tables, specific data references, or fields mentioned in the input (e.g., column names, codes, identifiers, etc.) are preserved directly in the relevant steps.
+If the input includes details about portals, storage, or tools, embed them directly into the steps.
+Avoid redundancy or step repetition.
+INPUT:
+Image Description: {image_content}
+Text: {paragraph}
+OUTPUT FORMAT:
+json
+Copy code
+[
+    {
+        "question": "What are the steps to complete this process?",
+        "answer": [
+            "Step 1: Identify unadvised cash items by referencing fund codes and copying the data into the 'PD' tab.",
+            "Step 2: Check the status and update any relevant comments. Copy all downloaded data to the 'globaluaxl' tab, covering columns C through T.",
+            "Step 3: In the 'globaluaxl' tab, review column A to identify any instances labeled 'CHECK FUND' via vlookup.",
+            "Step 4: Raise an IMT log for the GCO investigation team if identifiable cash can be allocated to specific funds or matched with non-receipt cash.",
+            "Step 5: If the fund code is not identifiable, search for the corresponding SWIFT code in IBS, review the additional columns for details about the transaction nature, and notify the relevant team via email.",
+            "Step 6: Request the GCO investigation team to allocate the cash based on further investigation if necessary."
+        ]
+    }
+]
+By rephrasing the prompt with the above structure, this should meet your expected step-wise breakdown seamlessly.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Ensure:
 Questions focus on processes, methods, or sequences of steps.
 Answers provide detailed, step-by-step instructions with clear descriptions for each step, ensuring no step is missed.
