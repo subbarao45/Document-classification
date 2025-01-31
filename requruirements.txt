@@ -1,3 +1,15 @@
+
+**Instructions for Process Description:**  
+- Replace **"[specific process/task derived from the input]"** with a task-specific description. For example:  
+  - If the task involves updating transaction records, use "the transaction update process."  
+  - If related to SWIFT codes, use "the SWIFT code validation process."  
+
+
+
+
+
+
+
 prompt_template = (
         "You are provided with descriptions of financial documents that may contain details such as company "
         "names, dates, transaction codes, tables, levels, cycle dates, and other structured information. "
