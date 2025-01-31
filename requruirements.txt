@@ -1,3 +1,19 @@
+prompt_template = (
+        "You are provided with descriptions of financial documents that may contain details such as company "
+        "names, dates, transaction codes, tables, levels, cycle dates, and other structured information. "
+        "Your task is to generate a comprehensive summary that highlights the following:\n"
+        "- Key entities such as company names, transaction codes, and funds.\n"
+        "- Important dates and timelines (start dates, end dates, cycle dates).\n"
+        "- Any detailed levels and their corresponding statuses (BL, S1, S2, etc.).\n"
+        "- Calculations, tables, or formulas related to financial transactions.\n"
+        "- Additional metadata or structured information present in the descriptions.\n\n"
+        "Descriptions:\n{descriptions}\n\n"
+        "Summarize this information comprehensively while ensuring no key structured details are missed."
+    )
+
+
+
+
 
 import json
 from langchain.prompts import PromptTemplate
