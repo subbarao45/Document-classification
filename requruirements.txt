@@ -1,3 +1,21 @@
+import json
+
+def extract_and_reorder(image_text):
+    # Sort the list to ensure "image1_1.png" appears first
+    sorted_images = sorted(image_text, key=lambda x: (x['image_name'] != 'image1_1.png', x['image_name']))
+
+    # Convert to JSON for output
+    return json.dumps(sorted_images, indent=4)
+
+# Simulating the result from the function and reordering
+print(extract_and_reorder(image_text))
+
+
+
+
+
+
+
 
 import re
 import json
