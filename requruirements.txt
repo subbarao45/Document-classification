@@ -12,6 +12,48 @@ def extract_and_reorder(image_text):
     # Sort based on the extracted numeric keys
     sorted_images = sorted(image_text, key=extract_numeric_key)
 
+    return sorted_images
+
+# Example input
+image_text = [
+    {"image_name": "image1_1.png", "description": "The document in question appears to be a professional financial statement."},
+    {"image_name": "image10_1.png", "description": "The image depicts a software interface, likely a dashboard for managing."},
+    {"image_name": "image2_1.png", "description": "The image depicts a financial document, likely a report for review."},
+    {"image_name": "image3_2.png", "description": "The image shows a detailed document section, likely for transaction records."},
+    {"image_name": "image2_2.png", "description": "The image is a continuation of the financial report, showing structured data."},
+    {"image_name": "image1_2.png", "description": "The second section of the financial statement."},
+    {"image_name": "image2_3.png", "description": "The image contains a summary table for year-end financial data."},
+    {"image_name": "image3_1.png", "description": "The image shows a summary of account activities for the previous quarter."}
+]
+
+# Reorder the images
+sorted_output = extract_and_reorder(image_text)
+
+# Specify the file location where the JSON will be saved
+file_location = "/path/to/your/output/sorted_images.json"
+
+# Save the sorted output to a JSON file
+with open(file_location, "w") as outfile:
+    json.dump(sorted_output, outfile, indent=4)
+
+print(f"Sorted output saved to: {file_location}")
+
+
+
+
+import json
+import re
+
+def extract_and_reorder(image_text):
+    # Custom sorting function to extract and sort by primary and secondary numbers
+    def extract_numeric_key(entry):
+        # Extract primary and secondary numbers (e.g., "image2_3.png" -> [2, 3])
+        match = re.findall(r'\d+', entry['image_name'])
+        return [int(num) for num in match] if match else [float('inf')]  # Handle cases where no digits are found
+
+    # Sort based on the extracted numeric keys
+    sorted_images = sorted(image_text, key=extract_numeric_key)
+
     # Convert to JSON for output
     return json.dumps(sorted_images, indent=4)
 
