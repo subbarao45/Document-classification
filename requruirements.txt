@@ -1,3 +1,59 @@
+
+
+PROCEDURAL PROMPT = """
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+
+Generate up to (num_questions) distinct procedural question-answer pairs using the **combined context of text and image descriptions** provided below.
+
+Treat the input as one unified source of information, not as separate components. Ensure no detail is missed from either the text or image description.  
+
+Use the following format:
+
+"question": "What are the steps to achieve or complete this process?",
+
+"answer": [
+    "Step 1: [Detailed step referencing relevant text/image data]",
+    "Step 2: [Detailed step using text/image data with conditions or decisions]",
+    "...",
+    "Final step: Ensure outputs meet requirements by checking [text/image details]."
+]
+
+**Input Context:**  
+- **Text Content:** {paragraph}  
+- **Image Description:** {image_content}
+
+Key Instructions:  
+1. Incorporate both the text and image content directly into procedural steps.  
+2. Reference specific details from columns, tables, or fields mentioned in either input.  
+3. If data references are found only in the image (e.g., fund codes, column labels), ensure they are used exactly in the corresponding steps.  
+4. Use branching logic when needed (e.g., checks for missing values, special conditions).  
+5. Clearly describe how data is retrieved, processed, checked, updated, or escalated.  
+6. Avoid any repetition of steps and provide concise procedural instructions.  
+
+Ensure your output adheres to this format with unified text/image references.
+
+Example Output:
+
+"question": "What are the steps to process missing SWIFT codes in a transaction report?",
+
+"answer": [
+    "Step 1: Access the transaction report in Tab 'globaluaxl' under the SWIFT_Transactions sheet.",
+    "Step 2: Identify missing SWIFT codes using Column A, which lists case IDs requiring validation.",
+    "Step 3: Cross-check the case IDs against the provided fund codes listed in {image_content}. If 'CHECK FUND' is displayed, escalate to supervisor.",
+    "Final Step: Ensure all updates are reflected in Tab PD under column C before final submission."
+]
+
+**Extracted Context:** "{paragraph, image_content}"
+"""
+
+
+
+
+
+
+
+
+
 Key Instructions:
 Do not treat the text and image descriptions as separate inputs. They are to be processed together as a single source of information to ensure no detail is missed.
 Ensure that each step clearly describes how to use the combined input, referencing any tables, columns, data points, conditions, or decision-making steps.
