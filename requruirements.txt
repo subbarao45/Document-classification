@@ -1,3 +1,220 @@
+ChatGPT 4o
+
+You said:
+PROCEDURAL PROMPT
+
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting. Questions and answers must be distinct and should not repeat.
+
+Ensure that answers reference or describe relevant images within the image description. If an image contains text, diagrams or key visual elements, include a description of those elements in the answer. If an image supports the context of the answer,summarize its contents concisely and explain how it relates to the question.
+
+Maintain clarity and completeness in response. Generate up to (num_questions) distinct procedural question-answer pairs based on the input text and image description data.
+
+Key Instructions:
+
+Do not treat as the image description data and text as separate, please be treated as a single input.
+
+The image description data (provided as a dictionary) must be summarized,nd relevant details must be incorporated into the process steps where necessary.
+
+Summarize and extracted necessary columns, tables, or data fields from the image content and integrate them naturally into the steps.
+
+Maintain step-wise logical flow, including conditions vlookup check, status updates, missing fun codes, or investigation logs etc. Ensure that each step clearly describes how to use the combined input, referencing any tables, columns, data points, conditions, or
+
+decision-making steps.
+
+If specific details (e.g., columns, SWIFT codes, fund codes, case IDs, or tabs) are provided in either the image or text, they should be included directly in the appropriate steps. I
+
+Use branching logic or conditions when necessary (e.g., what to do if a fund code is missing or labeled as 'CHECK FUND").
+
+Instructions for Process Description:**
+
+Replace "[specific process/task derived from the input]" with a task-specific description.
+
+For example:
+
+If the task involves updating transaction records, use "the transaction update process."
+
+If related to SWIFT codes, use "the SWIFT code validation process."
+
+Requirements:
+
+Incorporate both the text and image content into the procedural steps. If specific data, columns, tables, or conditions are mentioned in the image description, they must be directly included in the answer.
+
+Ensure that each step clearly describes how the data is used, any conditions (e.g., vlookup), and branching
+decisions such as what to do when specific values (e..
+
+CHECK FUND) are encountered. Give me the a complete answer which combined both text image summarization.
+
+Preserve data references, column labels (A, C, etc.), tabs, SWIFT codes, fund codes, and case IDs exactly as they appear in the input.
+
+portals, URLs, or specific tools are mentioned in the process, include them directly in the relevant steps. If Each step should logically follow the process of identifying, copying, checking, updating, and escalating tasks.
+
+Preserve any references to columns (A, B, C, etc.), tabs (PD, globaluaxl), tables, fields, and codes exactly as provided in the input.
+
+the process involves conditions (e.g., vlookup, identifying missing information), clearly describe the check and the corresponding next step.
+
+If If decisions or branching logic exists, include clear instructions on what to do in each cases.
+
+Use exact terminology provided in the input, and don't generalize steps unnecessarily.
+
+Specific Instructions:
+
+-Ensure that any tables, specific data references, or fields mentioned in the input (e.g., column names, codes, identifiers, etc.)
+
+are preserved directly in the relevant steps.
+
+-If the input includes details about portals, storage, or tools, embed them directly into the steps.
+
+-Avoid redundancy or step repetition.
+
+Input:
+
+-Text: (paragraph)
+
+-Image description data: The following images are provided in image description: {image_content)
+
+Output format:
+
+[
+
+{{ "question": "What are the steps to achieve or complete this process?",
+
+"answer": [
+
+"Step 1: Access the data via portal_name at data_access_url. Ensure you have the correct credentials: authentication_details.",
+
+"Step 2: Retrieve the relevant files stored at storage_location within database_name.",
+
+"Step n: Process the data according to the required methodology."
+]
+"extracted":"paragraph, image_content or paragraph/image_content"
+
+]
+
+}},
+
+Ensure the response is a valid JSON array.
+"""
+" you can instruct the prompt prepare the question combinedly both text and image content treated as single input file and also while preapring the question that corresponding answer if it available or not in image deacription u can check that image include in the answer also 
+ChatGPT said:
+ChatGPT
+Understood! Here's a structured JSON output combining the procedural prompt's requirements with an integrated question-answer approach, derived from both the provided text and image descriptions:
+
+[
+    {
+        "question": "What are the steps to validate and update SWIFT transactions with missing or incorrect codes?",
+        "answer": [
+            "Step 1: Access the portal at 'portal_name' using the provided link 'data_access_url' and ensure you have the necessary credentials.",
+            "Step 2: Navigate to the 'Pending SWIFT Validation' tab, and retrieve the transaction file stored in 'Global_SWIFT_Transactions.xls'.",
+            "Step 3: Open the file, and cross-check Column A (Transaction ID) and Column C (Fund Code) against the external master reference file using a VLOOKUP function.",
+            "Step 4: If Column C displays 'CHECK FUND', escalate the record by logging it into the 'Error Log' sheet within the same file and tag it with the current date in Column D (Escalation Date).",
+            "Step 5: For transactions with valid SWIFT codes, mark them as 'VALIDATED' in Column E, and save the changes.",
+            "Step 6: Upload the updated file to the designated portal location 'Updated_SWIFT_Records'. Confirm successful upload by checking the system-generated status message.",
+            "Step 7: Notify the respective team via email, including the updated SWIFT file and the logged error cases."
+        ],
+        "extracted": "Combined content from paragraph and image description."
+    },
+    {
+        "question": "How should missing fund codes (displaying 'CHECK FUND') be handled within the validation process?",
+        "answer": [
+            "Step 1: Identify rows with 'CHECK FUND' in Column C of the transaction data.",
+            "Step 2: Document these cases in the 'Error Log' tab, specifying the corresponding Transaction ID, Fund Code, and validation date.",
+            "Step 3: Investigate the missing fund code using the 'Fund Reference Database', located in the 'globaluaxl' tab.",
+            "Step 4: If the correct code is found, update the original SWIFT record and revalidate using VLOOKUP.",
+            "Step 5: For unresolved cases, escalate by creating a case ID in the 'Fund Investigation Portal' and assign it to the Fund Review Team.",
+            "Step 6: Monitor for status updates within the investigation log and ensure that any corrected cases are reprocessed promptly."
+        ],
+        "extracted": "Integrated from both input text and image description."
+    },
+    {
+        "question": "What is the branching logic if errors are encountered during the SWIFT validation process?",
+        "answer": [
+            "Branch 1: If VLOOKUP identifies no errors, proceed to Step 6 and mark the record as 'VALIDATED'.",
+            "Branch 2: If Column C indicates 'CHECK FUND', document the case in the 'Error Log' and follow the fund investigation steps.",
+            "Branch 3: If a missing or mismatched SWIFT code is found, escalate it to the SWIFT Review Team using 'Case Tracker.xls'.",
+            "Branch 4: For system-related upload errors, retry the upload using the backup file from 'Backup_SWIFT_Records'. If the issue persists, escalate to IT Support."
+        ],
+        "extracted": "Branching derived from both text and image references."
+    }
+]
+This JSON ensures the integration of procedural steps, conditions, branching logic, and the necessary data extraction from both the text and image content as specified.
+
+
+
+
+
+
+You said:
+U can give me the prompt according to my requirements 
+ChatGPT said:
+ChatGPT
+Here’s the prompt tailored to meet your requirements perfectly:
+
+Prompt:
+
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting. Questions and answers must be distinct and should not repeat.
+
+Ensure that answers reference or describe relevant images within the image description. If an image contains text, diagrams, or key visual elements, include a description of those elements in the answer. If an image supports the context of the answer, summarize its contents concisely and explain how it relates to the question.
+
+Maintain clarity and completeness in the response. Generate up to (num_questions) distinct procedural question-answer pairs based on the input text and image description data.
+
+Key Instructions:
+
+Treat the text and image description as a single input. Do not separate them during question-answer creation.
+Summarize and extract necessary columns, tables, or data fields from the image content and integrate them naturally into the steps.
+Maintain a logical, step-wise flow, including VLOOKUP checks, status updates, missing fund codes, or investigation logs. Ensure that each step clearly describes how to use the combined input, referencing any tables, columns, data points, conditions, or decision-making steps.
+If specific details (e.g., columns, SWIFT codes, fund codes, case IDs, or tabs) are provided in either the text or image, they should be included directly in the steps.
+Use branching logic or conditions when necessary (e.g., what to do if a fund code is missing or labeled as ‘CHECK FUND’).
+Replace [specific process/task derived from the input] with task-specific descriptions:
+For example:
+
+If the task involves updating transaction records, use "the transaction update process."
+If related to SWIFT codes, use "the SWIFT code validation process."
+Procedural Steps Format:
+
+Ensure data references (columns, tabs, codes) are preserved exactly as provided in the input.
+If the process involves conditions (e.g., VLOOKUP, identifying missing information), describe checks and corresponding next steps clearly.
+If decisions or branching logic exist, include detailed instructions on handling each case.
+Embed any portals, URLs, or tools mentioned in the input directly into the steps.
+Input Format:
+
+Text: (paragraph)
+Image description data: {image_content}
+Output Format (JSON):
+
+[
+    {
+        "question": "What are the steps to achieve or complete this process?",
+        "answer": [
+            "Step 1: [Access the relevant portal and navigate to specified location.]",
+            "Step 2: [Retrieve files as indicated and perform validation checks using provided conditions.]",
+            "Step n: [Document errors, update cases, and escalate issues when required.]"
+        ],
+        "extracted": "[paragraph, image_content, or paragraph/image_content]"
+    }
+]
+Additional Notes:
+
+Ensure that tables, fields, columns, and portals mentioned in the input are preserved exactly in the output.
+Handle any specific conditions or missing values as described in the input text and image.
+Provide distinct, non-repetitive questions with clear answers for every generated pair.
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. Check important 
+
+
+
+
+
+
 
 **Instructions for Process Description:**  
 - Replace **"[specific process/task derived from the input]"** with a task-specific description. For example:  
