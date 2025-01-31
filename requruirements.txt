@@ -1,4 +1,47 @@
 
+import re
+import json
+
+# Input data (cleaned version)
+input_data = '''{
+"image_name": "image4_2.png",
+"description": "The image depicts a section of a financial report interface, likely from a banking or investment document."
+
+"image_name": "image1_1.png",
+"description": "The document in question appears to be a professional financial statement or bank statement."
+
+"image_name": "image3_1.png",
+"description": "The image depicts a professional financial document, likely a bank statement."
+
+"image_name": "image3_2.png",
+"description": "The image depicts a professional financial document, likely a bank statement."
+
+"image_name": "image4_1.png",
+"description": "The image depicts a professional document titled 'Global Transactions and Controls.'"
+}'''
+
+def extract_and_reorder(input_text):
+    # Regular expression to extract image_name and description pairs
+    pattern = r'"image_name":\s*"([^"]+)",\s*"description":\s*"([^"]+)"'
+    matches = re.findall(pattern, input_text)
+
+    # Sort to place "image1_1.png" first, and maintain the order for others
+    matches.sort(key=lambda x: (x[0] != "image1_1.png", x[0]))
+
+    # Building output with no modification to descriptions
+    output = [{"image_name": image_name, "description": description.strip()} for image_name, description in matches]
+    return json.dumps(output, indent=4)
+
+# Generate the ordered JSON output
+print(extract_and_reorder(input_data))
+
+
+
+
+
+
+
+
 
 PROCEDURAL PROMPT = """
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
