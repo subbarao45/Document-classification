@@ -1,5 +1,67 @@
 
 import json
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+
+def generate_summary_from_json(json_data):
+    # Step 1: Extract and concatenate descriptions
+    descriptions = " ".join([entry["description"] for entry in json_data])
+
+    # Step 2: Configure the Azure OpenAI Chat model
+    llm = AzureChatOpenAI(
+        temperature=0.5,
+        api_version="azure_openai_api_version",  # Replace with your API version
+        azure_openai_api_key="YOUR_AZURE_API_KEY",  # Replace with your API key
+        azure_openai_base="azure_openai_endpoint",  # Replace with your Azure endpoint
+        deployment_name="ssgpt-40"
+    )
+
+    # Step 3: Define the prompt template
+    prompt_template = (
+        "Summarize the following financial document descriptions into a concise summary "
+        "highlighting key themes and recurring information:\n\n{descriptions}"
+    )
+
+    # Create the prompt template
+    prompt = PromptTemplate(
+        input_variables=["descriptions"],
+        template=prompt_template
+    )
+
+    # Step 4: Create the LLM chain
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        # Step 5: Generate the response using the LLM chain
+        response = llm_chain.predict(descriptions=descriptions)
+
+        # If response contains valid JSON, return it; otherwise, return text as is
+        return {"Summary": response.strip()}
+    
+    except Exception as e:
+        print(f"Error generating summary: {e}")
+        return {"Error": str(e)}
+
+# Sample JSON input
+json_data = [
+    {"image_name": "image1_1.png", "description": "The document in question appears to be a professional financial statement or bank statement."},
+    {"image_name": "image3_1.png", "description": "The image depicts a professional financial document, likely a bank statement, with a structured format."},
+    {"image_name": "image3_2.png", "description": "The image depicts a professional financial document, likely a bank statement or account summary."},
+    {"image_name": "image4_1.png", "description": "The image depicts a professional document titled 'Global Transactions and Controls.'"},
+    {"image_name": "image4_2.png", "description": "The image depicts a section of a financial report interface, likely from a banking or investment platform."},
+    {"image_name": "image5_1.png", "description": "The image depicts a detailed table, likely from a financial document or a transaction report."}
+]
+
+# Call the function and display the result
+result = generate_summary_from_json(json_data)
+print(json.dumps(result, indent=4))
+
+
+
+
+
+import json
 import openai
 
 def generate_summary_from_json(json_data, api_key, model="text-davinci-003", max_tokens=150):
