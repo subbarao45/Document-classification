@@ -1,5 +1,68 @@
 
 import json
+import openai
+
+def generate_summary_from_json(json_data, api_key, model="text-davinci-003", max_tokens=150):
+    """
+    Generate a summary from image descriptions in JSON using an LLM API.
+
+    Args:
+    - json_data: List of dictionaries containing 'image_name' and 'description'.
+    - api_key: OpenAI API key as a string.
+    - model: The LLM model to use (default: 'text-davinci-003').
+    - max_tokens: Max tokens for the response (default: 150).
+
+    Returns:
+    - A dictionary containing the summary.
+    """
+    # Step 1: Extract and concatenate all descriptions
+    descriptions = " ".join([entry["description"] for entry in json_data])
+
+    # Step 2: Set OpenAI API key
+    openai.api_key = api_key
+
+    # Step 3: Define the prompt
+    prompt = f"Summarize the following financial document descriptions into a concise summary highlighting key themes and recurring information:\n\n{descriptions}"
+
+    # Step 4: Call the OpenAI GPT model
+    response = openai.Completion.create(
+        engine=model,
+        prompt=prompt,
+        max_tokens=max_tokens,
+        temperature=0.5
+    )
+
+    # Step 5: Extract the summary
+    summary = response['choices'][0]['text'].strip()
+
+    # Return the final summary as JSON
+    return {
+        "Summary": summary
+    }
+
+# Sample JSON input
+json_data = [
+    {"image_name": "image1_1.png", "description": "The document in question appears to be a professional financial statement or bank statement."},
+    {"image_name": "image3_1.png", "description": "The image depicts a professional financial document, likely a bank statement, with a structured format."},
+    {"image_name": "image3_2.png", "description": "The image depicts a professional financial document, likely a bank statement or account summary."},
+    {"image_name": "image4_1.png", "description": "The image depicts a professional document titled 'Global Transactions and Controls.'"},
+    {"image_name": "image4_2.png", "description": "The image depicts a section of a financial report interface, likely from a banking or investment platform."},
+    {"image_name": "image5_1.png", "description": "The image depicts a detailed table, likely from a financial document or a transaction report."}
+]
+
+# Call the function
+api_key = 'YOUR_OPENAI_API_KEY'  # Replace with your API key
+result = generate_summary_from_json(json_data, api_key)
+
+# Display the result
+print(json.dumps(result, indent=4))
+
+
+
+
+
+
+import json
 import re
 
 def extract_and_reorder(image_text):
