@@ -1,3 +1,60 @@
+
+import json
+
+def merge_text_and_description(text_file_path, image_file_path, output_file_path):
+    # Load the text JSON from the file with explicit encoding
+    with open(text_file_path, 'r', encoding='utf-8') as text_file:
+        text_json = json.load(text_file)
+
+    # Load the image JSON from the file with explicit encoding
+    with open(image_file_path, 'r', encoding='utf-8') as image_file:
+        image_json = json.load(image_file)
+
+    # Create a dictionary of images based on page_number for easy lookup
+    image_dict = {image["page_number"]: image for image in image_json}
+
+    # Initialize the merged JSON
+    merged_json = {"metadata": text_json["metadata"], "pages": []}
+
+    # Merge text and images based on page number
+    for text_page in text_json["pages"]:
+        page_number = text_page["page_number"]
+        
+        # Create a new page entry with text and image combined into 'text_and_description'
+        merged_page = {
+            "page_number": page_number,
+            "text_and_description": str(text_page["text"])  # Ensure text is a string
+        }
+        
+        # Add image description to 'text_and_description' if available for that page
+        if page_number in image_dict:
+            # Ensure description is a string
+            merged_page["text_and_description"] += "\n" + str(image_dict[page_number]["description"])  # Concatenate description
+        
+        # Append merged page to the result
+        merged_json["pages"].append(merged_page)
+
+    # Save the merged JSON to the output file with explicit encoding
+    with open(output_file_path, 'w', encoding='utf-8') as output_file:
+        json.dump(merged_json, output_file, indent=2, ensure_ascii=False)
+
+    # Optionally, return the merged JSON or print it
+    return merged_json
+
+# Example usage
+merged_json = merge_text_and_description('text.json', 'images.json', 'merged.json')
+print(json.dumps(merged_json, indent=2, ensure_ascii=False))
+
+
+
+
+
+
+
+
+
+
+
 import json
 
 def merge_text_and_description(text_file_path, image_file_path, output_file_path):
