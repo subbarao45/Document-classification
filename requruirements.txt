@@ -1,4 +1,74 @@
 
+# Procedural Prompt for LLM: Ensure Image Content Is Always Included in the Generated QA Pairs
+
+"""
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting. 
+Generate distinct and meaningful procedural question-answer pairs by combining the provided paragraph text and image descriptions. 
+Questions and answers must be unique, logical, and must always seamlessly include relevant image content in the answer.
+
+---
+
+### Key Instructions:
+
+1. **Combine Text and Image Content:**
+    - For each section of text, identify and merge the corresponding image description if the image belongs to the same or adjacent page.
+    - Always reference key visual details, descriptions of tables, interfaces, or processes from the image description in the answers.
+
+2. **Summarize Relevant Details:**
+    - Extract and summarize necessary tables, data fields, financial documents, or interface instructions from both the text and image descriptions.
+    - Ensure image-based data, such as descriptions of financial tables or software interfaces, are directly integrated into the steps.
+
+3. **Maintain Step-Wise Logical Flow:**
+    - Provide a step-by-step explanation of the task or process, incorporating VLOOKUPs, missing data checks, and decision-making steps.
+    - Where applicable, explain how image-related information guides or supports each step.
+
+4. **Mandatory Image Integration:**
+    - If an image contains tables, fields, or interface actions, describe them explicitly and explain how they influence or support the process.
+    - Avoid generic instructions; each answer must incorporate visual content to enhance or clarify the steps.
+
+5. **Include Branching or Conditional Logic:**
+    - Include conditions (e.g., handling missing fund codes or errors). Reference images that depict relevant screens, documents, or fields for decision-making.
+
+---
+
+### Input Format:
+
+- **Text:** {paragraph}
+- **Image descriptions:** {image_content}
+
+---
+
+### Output Format:
+Generate a JSON array with entries structured as follows:
+
+[
+  {
+    "question": "What are the steps to complete this task involving financial oversight and job monitoring?",
+    "answer": [
+      "Step 1: Review the job monitoring data mentioned in the text and refer to the image description of the job monitoring tool. Double-click the job code 'AAS_MC_UPDATE_CLIENT_VFM' as depicted in the image.",
+      "Step 2: Verify the job status using the Job Monitor interface (refer to the image description showing the monitoring system). If an issue is detected, consult any warnings or messages displayed on the screen.",
+      "Step 3: Perform a VLOOKUP on job codes using the corresponding financial tables shown in the text and the financial statement depicted in the image description. Address any discrepancies, especially those involving missing or invalid fund codes.",
+      "Step 4: Cross-reference the extracted job monitoring logs and ensure completion using the UI shown in the job monitor interface described in the image. If the system raises a flag (e.g., ‘CHECK FUND’), investigate by referring to details in the financial document image."
+    ],
+    "extracted": "Combined content from text and image descriptions for job monitoring, oversight, and financial review."
+  }
+]
+
+---
+
+### Handling Image Content:
+
+- Always include and reference relevant images in each answer step. Ensure that if an image shows a tool, financial document, or process, it is directly linked to the respective instructions.
+- Integrate images logically to provide enhanced clarity or guidance for each procedural step.
+- If an image description contains key tables or financial data, explain their importance in relation to the task.
+
+Ensure the LLM generates comprehensive answers by integrating both textual and image-based information seamlessly.
+"""
+
+
+
+
+
 # Procedural Prompt for LLM: Combining Text and Image Content for QA Generation
 
 """
