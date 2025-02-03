@@ -1,3 +1,140 @@
+
+ChatGPT 4o
+
+You said:
+My prompt
+
+Specific Instructions:
+
+-Ensure that any tables, specific data references, or fields mentioned in the input (e.g., column names, codes, identifiers, etc.) are preserved directly in the relevant steps.
+
+-If the input includes details about portals, storage, or tools, embed them directly into the steps.
+
+-Avoid redundancy or step repetition.
+
+-while answering look for image in the same page or next page from which page the text part is coming. If specific data, columns, tables, or conditions are mentioned in the image description, they must be directly included in the answer.
+
+Replace "[specific process/task derived from the input]" with a task-specific description.
+
+For example:
+
+If the task involves updating transaction records, use "the transaction update process."
+
+If related to SWIFT codes, use "the SWIFT code validation process."
+
+Ensure to match the corresponding image with answer text.
+
+
+
+"""My image input 
+Example
+image_description data
+
+"image_name": "image3_1.png",
+
+Street Corporation, specifically a "Browse Calendar File Detail" s End Date: 20190821, 20190731, 20190630\n **Valuation Status:**
+
+{ "description": "The image appears to be a detailed financial document from State 31, 20200630\n**Prior:***\n -**Start Date: 20190821, 20190701, 20180701\n e disclaimers or terms and conditions at the bottom or in a separate section.\n- **Professional Appearance:** The document has a formal and professional appe
+
+"image_name": "image5_2.png",
+
+<
+
+{ "description": "The image depicts a software interface, specifically a job monitoring system, which is divided into two main sections: "Job Status" E pattern, status, time zone, pool size, updated date, and the user who updated it. In The \"Status\" column shows that all jobs have \"succeeded," and th ed.\n The second row is highlighted with a red border, possibly indicating a selected or important entry.\n Similar to the "Job Status\" table, this t oring or scheduling software. \n- The use of colors is minimal, with light blue for headers and section dividers, and red for highlighting important, elements.
+"" another in put 
+We are providing whole text 
+Can u change the specifuc instruction clearly
+
+ChatGPT said:
+ChatGPT
+Revised Specific Instructions:
+Preserve Critical Data: Maintain any tables, columns, data fields, codes, identifiers, or conditions mentioned in the input as they are. Ensure that all referenced details, such as column names, transaction records, or SWIFT codes, are directly embedded into the answer.
+
+Image-Text Correlation: If the task refers to content from an image, ensure that the description and corresponding text from that image are accurately captured. Always match the image content to the relevant section in the answer.
+
+Context-Specific Descriptions: Replace placeholders like "[specific process/task derived from the input]" with clear task descriptions. For example:
+
+If updating records, mention "the record update process".
+If related to validation, specify "the SWIFT code validation process".
+When managing financial dates or reports, describe "the financial report review process".
+Avoid Redundancy: Ensure the steps or instructions do not repeat unnecessarily unless required for clarity.
+
+Multiple Images: If details are spread across multiple images, cross-reference text from the corresponding images on the same or next page. Ensure that any tables or sections found in images are integrated seamlessly into the explanation.
+
+Professional Tone and Presentation: Maintain formal, clear, and concise writing. Ensure any disclaimers, terms, or descriptions from the input are appropriately included without altering their intended meaning.
+
+Example Clarification:
+If the input includes a table from a financial report or job monitoring interface, integrate details such as job status, start and end dates, or financial valuations in the answer as follows:
+
+"The job status update process ensures that records reflecting jobs with 'succeeded' status are marked for verification before proceeding."
+This should match the relevant image or table content exactly as described.
+
+
+
+
+
+
+You said:
+Give like as my for. At
+ChatGPT said:
+ChatGPT
+Here’s the revised version of the instructions following your preferred format:
+
+Specific Instructions:
+Preserve Critical Data:
+
+Ensure any tables, columns, specific data fields, codes, identifiers, or conditions from the input are directly embedded in the answer without modifications.
+Examples include transaction details, column names, financial dates, SWIFT codes, or valuation statuses.
+Image-Text Matching:
+
+Look for relevant images from the same or next page of the text reference.
+Match and include tables, conditions, or fields from the image description into the answer where applicable.
+Task-Specific Descriptions:
+
+Replace placeholders like "[specific process/task derived from the input]" with clear task-based terms:
+For updating transaction records, use "the transaction update process".
+For validating SWIFT codes, use "the SWIFT code validation process".
+For managing financial data, specify "the financial valuation process".
+Avoid Redundancy:
+
+Do not repeat steps unless necessary. Ensure concise and non-repetitive instructions.
+Multiple Image References:
+
+If the task spans multiple images, ensure proper cross-referencing and integration of data or tables.
+Professional Tone:
+
+Maintain formal and structured language. Include terms, conditions, and disclaimers from the input where necessary, keeping their original intent.
+Example: If provided a table from a financial report or job monitoring system:
+
+"The job status verification process ensures that jobs marked as 'succeeded' are reviewed for compliance, referencing data such as 'Updated Date' and 'User' from the corresponding image tables."
+
+
+
+
+
+
+
+
+
+
+Search
+
+
+ChatGPT can make mistakes. Check important info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ChatGPT 4o
 
 You said:
