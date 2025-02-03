@@ -1,4 +1,46 @@
 
+import json
+import PyPDF2
+
+def extract_text_and_metadata_from_pdf(pdf_path, json_output_path):
+    pdf_text = ""
+    metadata = {}
+
+    # Open the PDF file
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+
+        # Extract text from all pages
+        for page in reader.pages:
+            pdf_text += page.extract_text() if page.extract_text() else ""
+
+        # Extract metadata
+        metadata = reader.metadata
+
+    # Create a dictionary with text and metadata
+    result = {
+        "metadata": {k[1:]: v for k, v in metadata.items()},  # Strip leading '/' from keys
+        "text": pdf_text
+    }
+
+    # Write the result to a JSON file
+    with open(json_output_path, 'w', encoding='utf-8') as json_file:
+        json.dump(result, json_file, indent=4, ensure_ascii=False)
+
+# Example usage:
+pdf_path = "example.pdf"
+json_output_path = "output.json"
+extract_text_and_metadata_from_pdf(pdf_path, json_output_path)
+
+
+
+
+
+
+
+
+
+
 ChatGPT 4o
 
 You said:
