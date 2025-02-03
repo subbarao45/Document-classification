@@ -1,4 +1,60 @@
 
+PROCEDURAL PROMPT
+
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting. Questions and answers must be distinct and should not repeat.
+
+Generate up to (num_questions) distinct procedural question-answer pairs based on the input text and images. Match content from **image descriptions** to the relevant pages using the **page numbers** from both `text.json` and `image.json`. Integrate related text and image content seamlessly into the questions and answers.
+
+Key Instructions:
+
+1. For each page, if an image description is present, combine the textual content with the image description to provide enhanced context.
+2. Summarize and extract necessary columns, tables, or data fields from both the text and image content on the corresponding page.
+3. Maintain step-wise logical flow, including conditions such as VLOOKUP checks, status updates, missing fund codes, or investigation logs.
+4. Ensure that each step clearly describes how to use the combined input, referencing any tables, columns, data points, conditions, or decision-making steps.
+5. Use branching logic or conditions when necessary (e.g., what to do if a fund code is missing or labeled as 'CHECK FUND').
+
+### Requirements:
+
+- If specific details (e.g., columns, SWIFT codes, fund codes, case IDs, tabs) are provided in either the text or image content, include them directly in the appropriate steps.
+- Include tables, columns, and data points exactly as described in the text or image content.
+- Reference portals, URLs, or tools mentioned directly in the process.
+- For each page, append relevant image descriptions to the corresponding text section when summarizing.
+
+### Handling Images:
+- If an image contains tables, tools, or specific fields, mention them explicitly in the relevant steps.
+- Maintain logical flow by placing image-based instructions after their corresponding textual content.
+  
+### Specific Instructions:
+
+1. Summarize the combined content from both the text and images logically.
+2. Avoid redundancy or step repetition, and ensure that each step contributes meaningfully to the overall process.
+3. For conditions such as VLOOKUP or identifying missing values, describe the check and the corresponding next step.
+4. Include relevant tables, field names, column headers, tabs, or codes exactly as described in either input file.
+5. Match image content to its corresponding page in the text and integrate both inputs seamlessly.
+
+### Output Format:
+Generate a JSON array with each entry in the following format:
+```json
+[
+    {
+        "question": "What are the steps to achieve or complete this process?",
+        "answer": [
+            "Step 1: [Description of first step, including text and image content if present].",
+            "Step 2: [Next logical step in the process, referencing any relevant tables, fields, or conditions].",
+            "Step n: [Subsequent steps, incorporating images and text as necessary]."
+        ],
+        "extracted": "Combined content from text and image descriptions on relevant pages"
+    }
+]
+
+
+
+
+
+
+
+
+
 def extract_text_and_metadata_pagewise(file, output_dir="outputs_sdr"):
     pdf_data = {
         "metadata": {},
