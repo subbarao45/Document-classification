@@ -2,6 +2,44 @@
 import json
 import PyPDF2
 
+def extract_text_and_metadata_pagewise(pdf_path, json_output_path):
+    pdf_data = {
+        "metadata": {},
+        "pages": []
+    }
+
+    # Open the PDF file
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+
+        # Extract metadata
+        metadata = reader.metadata
+        pdf_data["metadata"] = {k[1:]: v for k, v in metadata.items()}  # Strip leading '/' from keys
+
+        # Extract text page by page
+        for page_number, page in enumerate(reader.pages):
+            page_text = page.extract_text() if page.extract_text() else ""
+            pdf_data["pages"].append({
+                "page_number": page_number + 1,
+                "text": page_text.strip()
+            })
+
+    # Write the result to a JSON file
+    with open(json_output_path, 'w', encoding='utf-8') as json_file:
+        json.dump(pdf_data, json_file, indent=4, ensure_ascii=False)
+
+# Example usage:
+pdf_path = "example.pdf"
+json_output_path = "output_pagewise.json"
+extract_text_and_metadata_pagewise(pdf_path, json_output_path)
+
+
+
+
+
+import json
+import PyPDF2
+
 def extract_text_and_metadata_from_pdf(pdf_path, json_output_path):
     pdf_text = ""
     metadata = {}
