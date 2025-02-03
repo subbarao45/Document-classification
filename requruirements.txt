@@ -1,3 +1,80 @@
+import json
+
+def generate_procedural_questions(text_json, image_json, num_questions=5):
+    questions = []
+
+    # Load both JSON files
+    with open(text_json, 'r', encoding='utf-8') as f:
+        text_data = json.load(f)
+
+    with open(image_json, 'r', encoding='utf-8') as f:
+        image_data = json.load(f)
+
+    # Organize image descriptions by page number
+    images_by_page = {}
+    for image_entry in image_data:
+        page_number = image_entry["page_number"]
+        if page_number not in images_by_page:
+            images_by_page[page_number] = []
+        images_by_page[page_number].append(image_entry["description"])
+
+    # Generate questions by combining text and images dynamically
+    for page in text_data["pages"]:
+        page_number = page["page_number"]
+        page_text = page["text"].strip()
+
+        # Skip pages with no meaningful text
+        if not page_text or len(page_text) < 50:  # Threshold to ignore headers or empty pages
+            continue
+
+        # Combine with image descriptions if available
+        combined_text = page_text
+        if page_number in images_by_page:
+            combined_text += "\n\n" + "\n".join(images_by_page[page_number])
+
+        # Create the question-answer pair
+        question_answer = {
+            "question": "What are the key procedural steps for page {}?".format(page_number),
+            "answer": generate_steps_from_text(combined_text),
+            "extracted": combined_text
+        }
+
+        questions.append(question_answer)
+        if len(questions) >= num_questions:
+            break
+
+    return questions
+
+def generate_steps_from_text(combined_text):
+    # Splitting the combined content into logical steps
+    steps = []
+    lines = combined_text.split("\n")
+    
+    step_number = 1
+    for line in lines:
+        line = line.strip()
+        if len(line) > 20:  # Ignore short or meaningless lines
+            steps.append(f"Step {step_number}: {line}")
+            step_number += 1
+
+    return steps
+
+# Example usage
+text_json = "path/to/text.json"
+image_json = "path/to/image.json"
+questions = generate_procedural_questions(text_json, image_json, num_questions=5)
+
+# Output the results to a JSON file
+with open("procedural_questions.json", "w", encoding="utf-8") as outfile:
+    json.dump(questions, outfile, indent=4, ensure_ascii=False)
+
+print("Procedural questions generated successfully.")
+
+
+
+
+
+
 
 # Procedural Prompt for LLM: Ensure Image Content Is Always Included in the Generated QA Pairs
 
