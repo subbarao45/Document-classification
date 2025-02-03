@@ -1,3 +1,59 @@
+
+PROCEDURAL PROMPT
+
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting. Questions and answers must be distinct and should not repeat.
+
+Generate up to (num_questions) distinct procedural question-answer pairs by dynamically combining content from **pdf_text** (containing text content) and **image_text** (containing image descriptions). Match image descriptions to the corresponding pages by their **page_number** and integrate them seamlessly into the procedural steps. **Do not specify or mention page numbers in either the questions or the answers.**
+
+---
+
+### Key Instructions:
+1. **Dynamic Linking by Page Number:** For each section of text in `pdf_text`, search for any corresponding images in `image_text` based on **page_number**. If matching images are found, combine the image descriptions with the text content.
+2. **Text and Image Integration:** Integrate image descriptions naturally within the relevant procedural steps, ensuring the instructions remain cohesive and logical.
+3. **Logical Flow and Conditions:** Maintain logical order by including conditions (e.g., VLOOKUP checks, status updates, investigation logs) and instructions for handling issues like missing fund codes or process failures.
+
+---
+
+### Content Requirements:
+- **Combine Text and Image Content:** Seamlessly combine text content from `pdf_text` and relevant image descriptions from `image_text` to create detailed procedural instructions.
+- **Include Specific Data:** Reference any specific tables, columns, portals, or tools directly where applicable.
+- **Branching Logic:** Include instructions for handling errors, conditions, or branching logic as necessary.
+
+---
+
+### Handling Edge Cases:
+- **If an image is found for a section:** Include its description within or after the relevant text-based instructions.
+- **If no image is found for a section:** Base the instructions solely on the text content.
+- **If an image exists without meaningful text:** Create image-based instructions independently.
+
+---
+
+### Output Format:
+Generate a JSON array with each entry in the following format:
+```json
+[
+    {
+        "question": "What are the steps to complete this process?",
+        "answer": [
+            "Step 1: [Step description from the combined content].",
+            "Step 2: [Next logical step, integrating text and images].",
+            "Step n: [Subsequent steps, branching if necessary]."
+        ],
+        "extracted": "Combined content from text and image descriptions"
+    }
+]
+
+
+
+
+
+
+
+
+
+
+
+
 PROCEDURAL PROMPT
 
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting. Questions and answers must be distinct and should not repeat.
