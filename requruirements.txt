@@ -3,6 +3,107 @@ import json
 def generate_procedural_questions(text_json, image_json, num_questions=5):
     questions = []
 
+    # Load and validate JSON files
+    with open(text_json, 'r', encoding='utf-8') as f:
+        text_data = json.load(f)
+
+    with open(image_json, 'r', encoding='utf-8') as f:
+        image_data = json.load(f)
+
+    # Validate JSON structure
+    if not isinstance(text_data, dict) or "pages" not in text_data or not isinstance(text_data["pages"], list):
+        raise ValueError("Invalid structure in text JSON. Expected a dictionary with a 'pages' key containing a list.")
+
+    if not isinstance(image_data, list):
+        raise ValueError("Invalid structure in image JSON. Expected a list of dictionaries.")
+
+    # Organize image descriptions by page number (convert page_number to string consistently)
+    images_by_page = {}
+    for image_entry in image_data:
+        if not isinstance(image_entry, dict) or "page_number" not in image_entry or "description" not in image_entry:
+            raise ValueError(f"Invalid image entry format: {image_entry}")
+        
+        page_number = str(image_entry["page_number"])  # Convert to string
+        if page_number not in images_by_page:
+            images_by_page[page_number] = []
+        images_by_page[page_number].append(image_entry["description"])
+
+    # Generate questions by combining text and images dynamically
+    for page in text_data["pages"]:
+        if not isinstance(page, dict) or "page_number" not in page or "text" not in page:
+            raise ValueError(f"Invalid page entry format: {page}")
+
+        page_number = str(page["page_number"])  # Convert to string
+        page_text = page["text"].strip()
+
+        # Skip pages with no meaningful text
+        if not page_text or len(page_text) < 50:  # Threshold to ignore headers or empty pages
+            continue
+
+        # Combine with image descriptions if available
+        combined_text = page_text
+        if page_number in images_by_page:
+            combined_text += "\n\n" + "\n".join(images_by_page[page_number])
+
+        # Create the question-answer pair
+        question_answer = {
+            "question": "What are the key procedural steps for page {}?".format(page_number),
+            "answer": generate_steps_from_text(combined_text),
+            "extracted": combined_text
+        }
+
+        questions.append(question_answer)
+        if len(questions) >= num_questions:
+            break
+
+    return questions
+
+def generate_steps_from_text(combined_text):
+    # Splitting the combined content into logical steps
+    steps = []
+    lines = combined_text.split("\n")
+    
+    step_number = 1
+    for line in lines:
+        line = line.strip()
+        if len(line) > 20:  # Ignore short or meaningless lines
+            steps.append(f"Step {step_number}: {line}")
+            step_number += 1
+
+    return steps
+
+# Example usage
+text_json = "path/to/text.json"
+image_json = "path/to/image.json"
+try:
+    questions = generate_procedural_questions(text_json, image_json, num_questions=5)
+
+    # Output the results to a JSON file
+    with open("procedural_questions.json", "w", encoding="utf-8") as outfile:
+        json.dump(questions, outfile, indent=4, ensure_ascii=False)
+
+    print("Procedural questions generated successfully.")
+
+except json.JSONDecodeError as e:
+    print(f"JSON decoding error: {e}")
+except FileNotFoundError as e:
+    print(f"File not found: {e}")
+except ValueError as e:
+    print(f"ValueError: {e}")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
+
+
+
+
+
+
+
+import json
+
+def generate_procedural_questions(text_json, image_json, num_questions=5):
+    questions = []
+
     # Load both JSON files
     with open(text_json, 'r', encoding='utf-8') as f:
         text_data = json.load(f)
