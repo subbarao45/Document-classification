@@ -1,3 +1,50 @@
+
+def extract_text_and_metadata_pagewise(file, output_dir="outputs_sdr"):
+    pdf_data = {
+        "metadata": {},
+        "pages": []
+    }
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Open the PDF file and read metadata
+    with open(file, 'rb') as pdf_file:
+        reader = PyPDF2.PdfReader(pdf_file)
+        pdf_data["metadata"] = {k[1:]: v for k, v in reader.metadata.items()} if reader.metadata else {}
+
+        # Extract text page by page
+        for page_index, page in enumerate(reader.pages):
+            page_text = page.extract_text() if page.extract_text() else ""
+            pdf_data["pages"].append({
+                "page_number": page_index + 1,
+                "text": page_text.strip()
+            })
+            print(f"[+] Extracted text from page {page_index + 1}")
+
+    # Save the result to JSON
+    save_json(output_dir, pdf_data)
+
+    return pdf_data
+
+def save_json(output_dir, pdf_data):
+    json_file_path = os.path.join(output_dir, "text.json")
+    with open(json_file_path, "w", encoding="utf-8") as json_file:
+        json.dump(pdf_data, json_file, indent=4, ensure_ascii=False)
+    print(f"[+] JSON saved to: {json_file_path}")
+
+# Example pipeline usage
+pdf_path = r"H:\Question and answer\Fund accounting\example.pdf"
+output_folder = r"H:\Question and answer\Fund accounting"
+
+pdf_text = extract_text_and_metadata_pagewise(pdf_path, output_folder)
+print("Step 1 Extracted text from PDF completed\n")
+
+
+
+
+
+
 # Function to process a single image
 def process_image(pdf_file, page_index, image_index, img, output_dir):
     xref = img[0]
