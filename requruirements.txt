@@ -1,3 +1,57 @@
+PROCEDURAL PROMPT
+
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting. Questions and answers must be distinct and should not repeat.
+
+Generate up to (num_questions) distinct procedural question-answer pairs by dynamically combining content from **pdf_text** (containing text content) and **image_text** (containing image descriptions). Match **image descriptions** to the corresponding pages by their **page_number** and integrate them into the procedural steps naturally.
+
+---
+
+### Key Instructions:
+1. **Dynamic Linking by Page Number:** For each page in `pdf_text`, search for any corresponding images in `image_text` based on **page_number**. If matching images are found, combine the image descriptions with the text to generate comprehensive procedural questions and answers.
+2. **Text and Image Integration:** Integrate image descriptions directly into the relevant text-based instructions. Ensure the image content complements the text logically and flows smoothly.
+3. **Logical Flow and Conditions:** Maintain logical order by including conditions (e.g., VLOOKUP checks, status updates) and instructions for handling issues like missing fund codes, incorrect values, or process failures.
+
+---
+
+### Content Requirements:
+- **Combine Text and Image Content:** Use text content from `pdf_text` and related image descriptions from `image_text` to create rich procedural instructions.
+- **Include Specific Data:** If any specific tables, columns, tools, or portals are mentioned in the text or images, reference them directly.
+- **Branching Logic:** Include instructions for handling issues such as missing or incorrect data when needed.
+
+---
+
+### Handling Cases:
+- **If an image is found for a page:** Include its description after or within the relevant text instructions.
+- **If no image is found for a page:** Base the instructions solely on the text content from that page.
+- **If an image exists without meaningful text:** Create image-based instructions independently.
+
+---
+
+### Output Format:
+Generate a JSON array with each entry in the following format:
+```json
+[
+    {
+        "question": "What are the key procedural steps for page X?",
+        "answer": [
+            "Step 1: [Step description from combined text and images].",
+            "Step 2: [Next step, integrating any conditions or checks].",
+            "Step n: [Subsequent steps]."
+        ],
+        "extracted": "Combined content from text and image descriptions"
+    }
+]
+
+
+
+
+
+
+
+
+
+
+
 
 PROCEDURAL PROMPT
 
