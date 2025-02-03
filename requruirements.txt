@@ -1,4 +1,76 @@
 
+# Procedural Prompt for LLM: Combining Text and Image Content for QA Generation
+
+"""
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting. 
+Generate distinct and meaningful procedural question-answer pairs by combining the provided paragraph text and image descriptions. 
+Questions and answers must be unique, logical, and should seamlessly include relevant image content.
+
+---
+
+Key Instructions:
+
+1. Combine Text and Image Content:
+    - For each section of the text, identify and merge the corresponding image description if the image belongs to the same or adjacent page.  
+    - Integrate relevant image details such as interface descriptions, financial documents, or job-monitoring tools into the question and answer content.
+
+2. Summarize Relevant Details:
+    - Extract tables, data points, financial details, or interface descriptions mentioned in both text and images to provide enhanced answers.  
+    - If a step involves navigating through a tool or UI, use image descriptions to explain the user interaction.
+
+3. Maintain Step-Wise Logical Flow:
+    - Provide a step-wise explanation of the process, incorporating VLOOKUPs, status updates, fund checks, or any missing/invalid codes.  
+    - Use conditions and branching logic (e.g., instructions when a fund code is labeled ‘CHECK FUND’).
+
+4. Include Visual Instructions:
+    - If an image shows a table, field, or action, describe how it relates to the corresponding step in the text.  
+    - Avoid redundancy by merging image content directly into relevant steps.
+
+5. Integrate Tables, Columns, and Conditions:
+    - Reference any specific tables, column headers, job monitors, or data points as described in either the text or image description.  
+    - Ensure each step meaningfully contributes to achieving the overall task.
+
+---
+
+### Input Format:
+
+- Text: {paragraph}
+- Image descriptions: {image_content}
+
+---
+
+### Output Format:
+Generate a JSON array with entries structured as follows:
+
+[
+  {
+    "question": "What are the steps to complete this task involving financial oversight and job monitoring?",
+    "answer": [
+      "Step 1: Review the provided job monitoring data, ensuring that relevant jobs (e.g., 'AAS_MC_UPDATE_CLIENT_VFM') are correctly identified in the Job Monitor interface.",
+      "Step 2: Refer to the interface as depicted in the image description for the job monitoring tool. Double-click the job and verify the status or completion logs.",
+      "Step 3: Use VLOOKUP functions where necessary to match missing or incorrect job codes (cross-referencing image content from the job monitoring tool).",
+      "Step 4: Investigate missing or invalid fund codes using any tables or fields described in the financial document (refer to descriptions from the financial document image)."
+    ],
+    "extracted": "Combined content from text and image descriptions for job monitoring, oversight, and financial review."
+  }
+]
+
+---
+
+### Handling Image Content:
+- Ensure image details (e.g., UI components, financial documents, job monitors) are included as part of relevant procedural steps.
+- Where image descriptions describe actions (e.g., double-clicking a job), place the actions in the respective steps.
+- Use image-based instructions for visual cues to enhance or clarify actions.
+
+Ensure each answer integrates both text and image content logically and provides comprehensive procedural guidance.
+"""
+
+
+
+
+
+
+
 PROCEDURAL PROMPT
 
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting. Questions and answers must be distinct and should not repeat.
