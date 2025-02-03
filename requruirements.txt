@@ -1,3 +1,44 @@
+# Function to process a single image
+def process_image(pdf_file, page_index, image_index, img, output_dir):
+    xref = img[0]
+    base_image = pdf_file.extract_image(xref)
+    image_bytes = base_image["image"]
+    image_ext = base_image["ext"]
+
+    # Save the image to the output directory
+    image_name = f"image_page{page_index+1}_{image_index}.{image_ext}"
+    image_path = os.path.join(output_dir, image_name)
+    with open(image_path, "wb") as image_file:
+        image_file.write(image_bytes)
+
+    # Convert the image to Base64
+    image_data = base64.b64encode(image_bytes).decode("utf-8")
+
+    # Get image description
+    description = img_description(image_data)
+
+    # Return page number along with the image details
+    return {
+        "page_number": page_index + 1,
+        "image_name": image_name,
+        "description": description
+    }
+
+
+
+# Function to extract metadata from PDF
+def extract_metadata(pdf_file):
+    metadata = pdf_file.metadata
+    # Clean up metadata (remove '/' from keys)
+    return {key.strip('/'): value for key, value in metadata.items() if value}
+
+
+
+
+
+
+
+
 
 import json
 import PyPDF2
