@@ -1,4 +1,93 @@
 
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+
+# Initialize Azure OpenAI LLM
+llm = AzureChatOpenAI(
+    temperature=0.7,
+    api_version="azure_openai_api_version",
+    azure_endpoint="azure_openai_endpoint",
+    deployment_name="deployment_name"
+)
+
+def generate_questions(paragraph, question_type, num_questions, prompt_template):
+    # Create the prompt template
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions", "question_type"],
+        template=prompt_template
+    )
+
+    # Fill the prompt using format
+    fill_prompt = prompt.format(
+        paragraph=paragraph, 
+        num_questions=num_questions, 
+        question_type=question_type
+    )
+
+    print(f"Generated the prompt:\n{fill_prompt}")
+
+    # Create the LLM chain
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        # Generate questions using the LLM chain
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions),
+            question_type=str(question_type)
+        )
+
+        # Extract and return valid JSON from the response
+        return extract_valid_json(response)
+    except Exception as e:
+        print(f"Error generating questions: {e}")
+        return []
+
+def generate_questions_in_chunks(paragraph, question_type, total_questions, prompt_template, chunk_size=10):
+    all_questions = []
+
+    for i in range(0, total_questions, chunk_size):
+        try:
+            chunk_questions = generate_questions(
+                paragraph=paragraph, 
+                question_type=question_type, 
+                num_questions=min(chunk_size, total_questions - i), 
+                prompt_template=prompt_template
+            )
+            all_questions.extend(chunk_questions)
+        except Exception as e:
+            print(f"Error generating chunk for {question_type}: {e}")
+            continue
+
+    return all_questions
+
+# Example usage (Replace with actual prompt and API settings)
+paragraph = "Machine learning is a subset of artificial intelligence (AI) focused on building systems that learn from data."
+question_type = "Factual"
+total_questions = 25
+prompt_template = (
+    "Generate {num_questions} {question_type} questions based on the following paragraph:\n"
+    "{paragraph}\n"
+    "Provide the questions in JSON format."
+)
+
+questions = generate_questions_in_chunks(
+    paragraph=paragraph,
+    question_type=question_type,
+    total_questions=total_questions,
+    prompt_template=prompt_template
+)
+
+print("Generated Questions:", questions)
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF for PDF parsing
 import openai
 from PIL import Image
