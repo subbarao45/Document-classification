@@ -4,6 +4,95 @@ import json
 def restructure_json(input_json):
     structured_data = {"pages": []}
 
+    # Check if input is a list of pages
+    if not isinstance(input_json, list):
+        raise ValueError("Expected a list of pages, but got something else.")
+
+    for page in input_json:
+        # Ensure page is a dictionary
+        if not isinstance(page, dict):
+            raise ValueError(f"Expected a dictionary for each page, but got {type(page)}: {page}")
+
+        # Access the 'text' field
+        text = page.get("text", "")
+        if not isinstance(text, str):
+            raise ValueError(f"Expected 'text' to be a string, but got {type(text)}")
+
+        # Start combining content
+        combined_content = text
+
+        # Check and append image descriptions
+        images = page.get("images", [])
+        if not isinstance(images, list):
+            raise ValueError(f"Expected 'images' to be a list, but got {type(images)}")
+
+        for image in images:
+            if not isinstance(image, dict):
+                raise ValueError(f"Expected each image to be a dictionary, but got {type(image)}")
+
+            image_description = image.get("image_description", "")
+            if image_description:
+                combined_content += f" The image shows: {image_description}."
+
+        # Append the structured data for this page
+        structured_data["pages"].append({
+            "page_number": page.get("page_number", 0),
+            "content": combined_content.strip(),
+            "source": "text and image_description"
+        })
+
+    return structured_data
+
+# Example Input JSON
+input_json = [
+    {
+        "page_number": 1,
+        "text": "Information Classification: Limited Access.",
+        "images": [
+            {
+                "image_name": "image_page1_1.png",
+                "image_description": "The document appears to be a professional financial statement."
+            }
+        ]
+    },
+    {
+        "page_number": 2,
+        "text": "Hub Procedure Oversight Owner Names(s): Not Applicable.",
+        "images": []
+    },
+    {
+        "page_number": 3,
+        "text": "1. DMH Data Maintenance - Ensure monthly book in MCH has been released.",
+        "images": [
+            {
+                "image_name": "image_page3_1.png",
+                "image_description": "The image depicts a detailed financial document."
+            }
+        ]
+    }
+]
+
+try:
+    # Restructure the JSON
+    restructured_json = restructure_json(input_json)
+    print(json.dumps(restructured_json, indent=2))
+except ValueError as e:
+    print(f"Error: {e}")
+
+
+
+
+
+
+
+
+
+
+import json
+
+def restructure_json(input_json):
+    structured_data = {"pages": []}
+
     for page in input_json:  # Correct iteration over list of pages
         combined_content = page["text"]
 
