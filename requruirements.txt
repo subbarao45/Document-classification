@@ -1,4 +1,73 @@
 
+import json
+
+def restructure_json(input_json):
+    structured_data = {"pages": []}
+
+    for page in input_json:  # Correct iteration over list of pages
+        combined_content = page["text"]
+
+        # Check and append image descriptions if available
+        if "images" in page and isinstance(page["images"], list):
+            for image in page["images"]:
+                combined_content += f" The image shows: {image['image_description']}."
+
+        # Append structured content for each page
+        structured_data["pages"].append({
+            "page_number": page["page_number"],
+            "content": combined_content.strip(),
+            "source": "text and image_description"
+        })
+
+    return structured_data
+
+# Example Input JSON (list of pages, simplified)
+input_json = [
+    {
+        "page_number": 1,
+        "text": "Information Classification: Limited Access.",
+        "images": [
+            {
+                "image_name": "image_page1_1.png",
+                "image_description": "The document in question appears to be a professional financial statement."
+            }
+        ]
+    },
+    {
+        "page_number": 2,
+        "text": "Hub Procedure Oversight Owner Names(s): Not Applicable.",
+        "images": []
+    },
+    {
+        "page_number": 3,
+        "text": "1. DMH Data Maintenance - Ensure monthly book in MCH has been released.",
+        "images": [
+            {
+                "image_name": "image_page3_1.png",
+                "image_description": "The image depicts a detailed financial document."
+            },
+            {
+                "image_name": "image_page3_2.png",
+                "image_description": "The image depicts a professional financial document."
+            }
+        ]
+    }
+]
+
+# Restructure the JSON
+restructured_json = restructure_json(input_json)
+
+# Print the result
+print(json.dumps(restructured_json, indent=2))
+
+
+
+
+
+
+
+
+
 
 import json
 
