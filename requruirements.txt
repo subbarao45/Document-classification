@@ -16,6 +16,76 @@ def fix_and_load_json(json_file):
         print(f"JSON decoding error in file {json_file}: {e}")
         return None
 
+def merge_json_files(text_json_path, image_json_path, output_dir="outputs_sdr"):
+    # Ensure the output directory exists
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Fix and load JSON data
+    text_data = fix_and_load_json(text_json_path)
+    image_data = fix_and_load_json(image_json_path)
+
+    if text_data is None or image_data is None:
+        print("Error in loading JSON files. Please check their format.")
+        return
+
+    # Convert image JSON to a dictionary for quick lookup by page_number
+    image_dict = {}
+    for image in image_data:
+        page_number = image.get("page_number")
+        if page_number not in image_dict:
+            image_dict[page_number] = []
+        image_dict[page_number].append({
+            "image_name": image.get("image_name"),
+            "description": image.get("description")
+        })
+
+    # Merge text and image data based on page_number
+    for page in text_data["pages"]:
+        page_number = page.get("page_number")
+        if page_number in image_dict:
+            page["images"] = image_dict[page_number]
+
+    # Save the merged data to a new file in the output directory
+    output_file_path = os.path.join(output_dir, "merged_data.json")
+    with open(output_file_path, 'w', encoding='utf-8') as output_file:
+        json.dump(text_data, output_file, indent=4)
+
+    print(f"Merged JSON saved to: {output_file_path}")
+
+# Example usage
+text_json_path = 'path/to/text.json'  # Replace with your actual path
+image_json_path = 'path/to/image.json'  # Replace with your actual path
+
+merge_json_files(text_json_path, image_json_path)
+
+
+
+
+
+
+
+
+
+
+
+import json
+import re
+import os
+
+def fix_and_load_json(json_file):
+    with open(json_file, 'r', encoding='utf-8-sig') as file:
+        json_content = file.read()
+    
+    # Basic fix for trailing commas before closing brackets
+    fixed_json = re.sub(r',\s*([}\]])', r'\1', json_content)
+    
+    try:
+        return json.loads(fixed_json)
+    except json.JSONDecodeError as e:
+        print(f"JSON decoding error in file {json_file}: {e}")
+        return None
+
 def merge_json_files(text_json_path, image_json_path, output_path):
     # Fix and load JSON data
     text_data = fix_and_load_json(text_json_path)
