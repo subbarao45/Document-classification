@@ -1,3 +1,65 @@
+# Prompt for generating step-wise answers combining text and image descriptions with the given output format
+
+"""
+Given a JSON input containing procedural steps with textual content and image descriptions, generate a structured output with step-by-step answers formatted as specified. Each step may reference text, images, or both. Ensure that:
+
+1. Steps should follow the order mentioned in the input (Step 1, Step 2, etc.).
+2. If a step includes both textual and image information, merge them into a single, coherent answer.
+3. Image descriptions should be included where applicable (e.g., Step 3 or Step 5).
+4. All critical details, such as addresses, instructions, and labeled components, should be included without omissions.
+5. Include the source of the extracted content, either from the paragraph or image descriptions.
+
+### **Input Format:**
+- Text: A JSON object with a key "text" containing step-by-step instructions.
+- Image description: A JSON object with keys like "Step 3", "Step 5", etc., containing visual descriptions.
+
+### **Output Format:**
+{
+    "question": "What are the steps to achieve or complete this process?",
+    "answer": [
+        "Step 1: [Description of Step 1, including any textual or image-based content].",
+        "Step 2: [Description of Step 2, with any relevant details from text or images].",
+        "Step n: [Description of Step n, combining textual and image information where needed]."
+    ],
+    "extracted": "paragraph/image_content"
+}
+
+### **Example Input:**
+- Text: 
+{
+    "text": "Step 1: Gather materials. Step 2: Visit 45 Pine Street to collect the tools. Step 3: Assemble the parts using the diagram. Step 4: Install the system. Step 5: Verify the setup visually."
+}
+- Image description: 
+{
+    "description": {
+        "Step 3": "An image showing the components for assembly with labeled parts.",
+        "Step 5": "An image of the fully assembled system."
+    }
+}
+
+### **Expected Output:**
+{
+    "question": "What are the steps to achieve or complete this process?",
+    "answer": [
+        "Step 1: Gather the necessary materials before beginning the process.",
+        "Step 2: Visit 45 Pine Street to collect the required tools.",
+        "Step 3: Assemble the parts using the provided diagram. The image shows the components for assembly with labeled parts.",
+        "Step 4: Install the system as described in the instructions.",
+        "Step 5: Verify the setup visually using the image of the fully assembled system."
+    ],
+    "extracted": "paragraph/image_content"
+}
+
+Generate the output exactly in the structured format specified.
+"""
+
+
+
+
+
+
+
+
 
 import json
 
