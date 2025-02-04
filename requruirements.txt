@@ -1,3 +1,87 @@
+import json
+import os
+import re
+
+def fix_and_load_json(json_file):
+    """Fix any trailing commas and load JSON from a file."""
+    with open(json_file, 'r', encoding="utf-8-sig") as file:
+        json_content = file.read()
+
+    # Basic fix for trailing commas before closing brackets
+    fixed_json = re.sub(r',\s*([\]])', r'\1', json_content)
+
+    try:
+        return json.loads(fixed_json)
+    except json.JSONDecodeError as e:
+        print(f"JSON decoding error in file {json_file}: {e}")
+        return None
+
+
+def merge_json_files(text_json_path, image_json_path, output_dir="outputs_sdr"):
+    """Merge text and image JSON files based on 'page_number'."""
+    # Ensure the output directory exists
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Fix and load JSON data
+    text_data = fix_and_load_json(text_json_path)
+    image_data = fix_and_load_json(image_json_path)
+
+    if text_data is None or image_data is None:
+        print("Error in loading JSON files. Please check their format.")
+        return None
+
+    # Convert image JSON to a dictionary for quick lookup by page_number
+    image_dict = {}
+
+    for image in image_data.get("pages", []):  # Assuming image_data also has a 'pages' key
+        page_number = image.get("page_number")
+        if page_number not in image_dict:
+            image_dict[page_number] = []
+        image_dict[page_number].append({
+            "image_name": image.get("image_name"),
+            "image_description": image.get("image_description")
+        })
+
+    # Merge text and image data based on 'page_number'
+    for page in text_data.get("pages", []):
+        page_number = page.get("page_number")
+        if page_number in image_dict:
+            page["images"] = image_dict[page_number]
+
+    # Save the merged JSON file
+    save_json_image(output_dir, text_data)
+
+    # Return the merged data (or other useful information)
+    return text_data  # Returning the merged data
+
+
+def save_json_image(output_dir, image_descriptions):
+    """Save the merged JSON data to a file."""
+    json_file_path = os.path.join(output_dir, "merged_text_image.json")
+    with open(json_file_path, "w", encoding="utf-8") as json_file:
+        json.dump(image_descriptions, json_file, indent=4)
+
+    print(f"Merged JSON saved to: {json_file_path}")
+
+
+# Example usage
+text_json_path = r'h:\Q & A Note Book\final\outputs_sdr\text.json'
+image_json_path = r'h:\Q & A Note Book\final\outputs_sdr\image.json'
+
+# Now you can use the return value from the merge_json_files function
+merged_data = merge_json_files(text_json_path, image_json_path)
+
+# If you need to do something further with the returned data
+if merged_data:
+    print(f"Merged data: {merged_data}")
+else:
+    print("No merged data to process.")
+
+
+
+
+
 
 import json
 import os
