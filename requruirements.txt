@@ -1,3 +1,131 @@
+
+import fitz  # PyMuPDF for PDF parsing
+import openai
+from PIL import Image
+import io
+import os
+
+# Initialize OpenAI API (replace with your actual API key)
+openai.api_key = "43d6ab1448834574807eff7a195f76f3"
+
+def extract_procedural_steps_with_images(pdf_path):
+    # Open the PDF
+    doc = fitz.open(pdf_path)
+    procedure_steps = []
+
+    # Iterate through the pages and extract relevant text and images
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        text = page.get_text()
+
+        # Identify procedural step headings and related text (using keyword heuristic)
+        lines = text.split('\n')
+        step_content = []
+
+        for i, line in enumerate(lines):
+            if line.lower().startswith("step"):
+                step_content = [line.strip()]
+
+                # Gather subsequent lines related to the step until another step or blank line is encountered
+                for j in range(i + 1, len(lines)):
+                    if lines[j].strip().lower().startswith("step") or lines[j].strip() == "":
+                        break
+                    step_content.append(lines[j].strip())
+
+                step_text = "\n".join(step_content)
+
+                # Check if the page contains any images related to this step
+                images = page.get_images(full=True)
+                image_data = []
+
+                for img_index, img in enumerate(images):
+                    xref = img[0]
+                    base_image = doc.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    image_ext = base_image["ext"]
+                    image = Image.open(io.BytesIO(image_bytes))
+
+                    # Save the image temporarily
+                    image_filename = f"temp_image_{page_num}_{img_index}.{image_ext}"
+                    image.save(image_filename)
+                    image_data.append(image_filename)
+
+                # Add the step and any associated images
+                procedure_steps.append({"text": step_text, "images": image_data})
+
+    return procedure_steps
+
+def generate_procedural_qna_with_images(procedure_steps, prompt_template):
+    qna_pairs = []
+
+    for step_data in procedure_steps:
+        step_text = step_data["text"]
+        prompt = prompt_template.format(procedure_text=step_text)
+
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=300
+        )
+
+        generated_text = response.choices[0].text.strip()
+
+        # Split the generated output into question-answer pairs
+        for line in generated_text.split('\n'):
+            if '|' in line:
+                question, answer = line.split('|', 1)
+                qna_pairs.append({
+                    "question": question.strip(),
+                    "answer": answer.strip(),
+                    "images": step_data["images"]
+                })
+
+    return qna_pairs
+
+def save_qna_to_file(qna_pairs, output_file):
+    with open(output_file, 'w') as f:
+        for pair in qna_pairs:
+            f.write(f"Question: {pair['question']}\nAnswer: {pair['answer']}\n")
+            if pair["images"]:
+                f.write(f"Related Images: {', '.join(pair['images'])}\n\n")
+
+pdf_path = r"h:\Question and answer\Fund accounting (Resubmit_1025)36. VFMC AAS25 SOP 5.0.pdf"
+output_file = r"h:\Question and answer\Fund accounting\procedural_qna_with_images.txt"
+
+# Define a prompt template for procedural Q&A generation
+prompt_template = (
+    "You are an AI assistant tasked with generating procedural questions and answers. "
+    "Given the following procedure step, generate questions that can help clarify the task, "
+    "and provide an answer for each question in the format 'Question | Answer'.\n\n"
+    "Procedure Step:\n{procedure_text}"
+)
+
+# Step 1: Extract procedural steps and associated images from the PDF
+procedure_steps = extract_procedural_steps_with_images(pdf_path)
+print(procedure_steps)
+
+# Step 2: Generate procedural Q&A pairs
+qna_pairs = generate_procedural_qna_with_images(procedure_steps, prompt_template)
+
+# Step 3: Save Q&A pairs to the output file
+save_qna_to_file(qna_pairs, output_file)
+
+print(f"Generated Q&A pairs with images saved to {output_file}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import json
 import os
 import re
