@@ -1,3 +1,67 @@
+import os
+import json
+from collections import defaultdict
+
+def restructure_and_store_json(input_file_path, output_dir="outputs_sdr"):
+    restructured_data = {
+        "metadata": {},
+        "pages": []
+    }
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    with open(input_file_path, "r") as input_file:
+        input_json = json.load(input_file)
+
+    # Ensure input_json is a list
+    if not isinstance(input_json, list):
+        raise ValueError("Expected a list of image entries, but got something else.")
+
+    # Group images by page number
+    page_images = defaultdict(list)
+    for entry in input_json:
+        page_number = entry.get("page_number", None)
+        image_name = entry.get("image_name", entry.get("image name", "")).strip()
+        image_description = entry.get("image_description", entry.get("image description", "")).strip()
+
+        if page_number is not None and image_name:
+            page_images[page_number].append({
+                "image_name": image_name,
+                "image_description": image_description
+            })
+
+    # Create page entries with images
+    for page_number, images in page_images.items():
+        restructured_data["pages"].append({
+            "page_number": page_number,
+            "text": f"Placeholder text for page {page_number}",  # Replace with actual page text if needed
+            "images": images
+        })
+
+    # Define output file path and save JSON
+    output_file_path = os.path.join(output_dir, "restructured_pdf_data.json")
+    with open(output_file_path, "w") as output_file:
+        json.dump(restructured_data, output_file, indent=2)
+    print(f"[+] Restructured data saved to {output_file_path}")
+
+    # Return the restructured data
+    return restructured_data
+
+# Example usage
+input_file = "path/to/your/merged_text_image.json"  # Replace with the correct file path
+restructured_data = restructure_and_store_json(input_file)
+
+# Printing the returned data if needed
+print(json.dumps(restructured_data, indent=2))
+
+
+
+
+
+
+
+
+
 
 import os
 import json
