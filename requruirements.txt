@@ -1,3 +1,58 @@
+import json
+import os
+
+def merge_json_files(text_json_path, image_json_path, output_path):
+    # Load the JSON data from the files
+    with open(text_json_path, 'r') as text_file:
+        text_data = json.load(text_file)
+    
+    with open(image_json_path, 'r') as image_file:
+        image_data = json.load(image_file)
+
+    # Convert image JSON to a dictionary for quick lookup by page_number
+    image_dict = {}
+    for image in image_data:
+        page_number = image.get("page_number")
+        if page_number not in image_dict:
+            image_dict[page_number] = []
+        image_dict[page_number].append({
+            "image_name": image.get("image_name"),
+            "description": image.get("description")
+        })
+
+    # Merge text and image data based on page_number
+    for page in text_data["pages"]:
+        page_number = page.get("page_number")
+        if page_number in image_dict:
+            page["images"] = image_dict[page_number]
+
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_path, exist_ok=True)
+
+    # Save the merged data to a new file
+    output_file_path = os.path.join(output_path, "merged_data.json")
+    with open(output_file_path, 'w') as output_file:
+        json.dump(text_data, output_file, indent=4)
+
+    print(f"Merged JSON saved to: {output_file_path}")
+
+# Example usage
+text_json_path = 'path/to/text.json'  # Replace with actual path
+image_json_path = 'path/to/image.json'  # Replace with actual path
+output_path = 'path/to/output_directory'  # Replace with desired output directory
+
+merge_json_files(text_json_path, image_json_path, output_path)
+
+
+
+
+
+
+
+
+
+
+
 # Prompt for generating step-wise answers combining text and image descriptions with the given output format
 
 """
