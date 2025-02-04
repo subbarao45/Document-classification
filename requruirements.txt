@@ -1,3 +1,52 @@
+import os
+import json
+import PyPDF2
+
+def extract_text_and_metadata_pagewise(file, output_dir="outputs_sdr"):
+    pdf_data = {
+        "metadata": {},
+        "pages": []
+    }
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Open the PDF file and read metadata
+    with open(file, 'rb') as pdf_file:
+        reader = PyPDF2.PdfReader(pdf_file)
+
+        # Extract metadata if available
+        if reader.metadata:
+            pdf_data["metadata"] = {k[1:]: v for k, v in reader.metadata.items()}
+        else:
+            pdf_data["metadata"] = {}
+
+        # Extract text page by page
+        for page_index, page in enumerate(reader.pages):
+            page_text = page.extract_text() if page.extract_text() else ""
+            pdf_data["pages"].append({
+                "page_number": page_index + 1,
+                "text": page_text.strip()
+            })
+            print(f"[+] Extracted text from page {page_index + 1}")
+
+    # Save the result to a JSON file
+    output_file = os.path.join(output_dir, "extracted_pdf_data.json")
+    with open(output_file, "w") as json_file:
+        json.dump(pdf_data, json_file, indent=2)
+    print(f"[+] Data saved to {output_file}")
+
+# Example usage:
+file_path = "path/to/your/input.pdf"  # Replace with your PDF file path
+extract_text_and_metadata_pagewise(file_path)
+
+
+
+
+
+
+
+
 import json
 
 def restructure_json(input_json):
