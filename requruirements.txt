@@ -1,3 +1,47 @@
+import json
+
+def restructure_json(input_file_path):
+    # Read the input JSON from the file
+    with open(input_file_path, "r") as input_file:
+        input_json = json.load(input_file)
+
+    # Ensure input_json is a list
+    if not isinstance(input_json, list):
+        raise ValueError("Expected a list as the root element, but got something else.")
+
+    structured_data = {"pages": []}
+
+    # Process each item in the list
+    for page in input_json:
+        if not isinstance(page, dict):
+            print(f"Skipping invalid page entry: {page}")
+            continue
+
+        # Extract text and page number
+        text = page.get("text", "").strip()
+        page_number = page.get("page_number", 0)
+
+        # Debugging print statement to identify empty or missing text
+        if not text:
+            print(f"[!] Warning: Empty or missing text on page {page_number}")
+
+        structured_data["pages"].append({
+            "page_number": page_number,
+            "content": text if text else "[No content available]"  # Placeholder for empty content
+        })
+
+    return structured_data
+
+# Example usage
+input_file = "path/to/your/extracted_pdf_data.json"  # Replace with your JSON file path
+restructured_data = restructure_json(input_file)
+print(json.dumps(restructured_data, indent=2))
+
+
+
+
+
+
 
 import json
 
