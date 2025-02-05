@@ -1,3 +1,51 @@
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+
+Questions and answers must be distinct and should not repeat.
+
+Your task is to generate up to {num_questions} distinct procedural question-answer pairs based on the given combined input, which includes both textual and image-based content.
+
+Ensure:
+- Summarize key steps, tables, columns, and relevant data points naturally within the procedure.
+- Maintain a logical, step-by-step flow, incorporating conditions (e.g., VLOOKUP, status checks) where needed.
+- Use branching decisions for missing values or exceptions (e.g., handling cases like 'CHECK FUND').
+
+Input:
+Combined content (from text and image description):
+{paragraph}
+
+Requirements:
+1. Each procedural step should clearly describe how to use the data, identify key fields, and execute checks or tasks.
+2. Preserve references to columns, tables, fields, SWIFT codes, fund codes, or case IDs exactly as they appear in the input.
+3. Include specific URLs, portals, or tools directly in the relevant steps if mentioned.
+4. Ensure logical flow between steps (e.g., data access → validation → status updates → escalation).
+5. Avoid redundant or repeated steps.
+
+Output format:
+[
+    {{
+        "question": "What are the steps to complete the financial data validation process?",
+        "answer": [
+            "Step 1: Log in to the data portal (portal_name) using your credentials at the specified URL (data_access_url).",
+            "Step 2: Retrieve data from the financial report, focusing on columns: Column A (Account Number), Column B (Fund Code), and Column C (SWIFT Code).",
+            "Step 3: If any entry in Column B contains the label 'CHECK FUND', initiate an escalation to the compliance team.",
+            "Step 4: Validate all remaining fund codes using a VLOOKUP on the reference table provided (Table_X).",
+            "Step 5: Update the status of validated records and document the outcome in the tracking sheet."
+        ],
+        "extracted": "text, image_description, or both"
+    }}
+]
+
+Guidelines:
+- Analyze both the text and image content for any relevant details (e.g., columns, tables, tools).
+- If specific image-based information supports or clarifies a step, include it in the answer.
+- Return only the available steps if fewer than {num_questions} steps are possible.
+- Ensure the response is a valid JSON array.
+
+
+
+
+
+
 
 You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
 
