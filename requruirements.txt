@@ -1,3 +1,55 @@
+
+
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+
+Your task is to generate up to {num_questions} distinct procedural question-answer pairs by analyzing the combined input, which includes both textual content and image descriptions.
+
+Ensure:
+- Steps must be precise, detailed, and formatted correctly (e.g., column names, tables, and field names preserved).
+- Include relevant information from both text and image descriptions.
+- If image descriptions provide supporting tables, fields, or explanations, integrate them directly into the corresponding steps.
+
+Input:
+Combined content (from text and image description):
+{paragraph}
+
+Requirements:
+1. Ensure each step is clearly defined and logically flows from the previous one.
+2. If image descriptions contain critical values (e.g., field names, table data, or formulas), include them directly in the appropriate step.
+3. Preserve key references like column names (e.g., Col E), table labels, and formulas exactly as stated in the input.
+4. Ensure the output is formatted with numbered steps and explanations (no redundant or missing information).
+5. Return a well-formatted response that captures both the procedural logic and any image-related clarifications.
+
+Output format:
+[
+    {{
+        "question": "What are the steps to complete the financial reconciliation process?",
+        "answer": [
+            "Step 1: Copy the NRM SIT RTS recon file of the previous month, rename it, and save it in the applicable working folder for the current month.",
+            "Step 2: Update the date in the report to reflect the required period.",
+            "Step 3: Ensure the formulas in Column E are correct as shown below.\n\nColumn E: MCH YTD realised G/L = 12,175,017.91\nColumn N: AAS25 YTD realised G/L = -1,067,845.97\nFormula: D35 + D34 - D36",
+            "Step 4: Analyze and validate the following adjustments from the image description:\n\n- Column J (SEC G/L) = 11,818,266.28\n- Column N (AAS 25 adjustment-ccy) = 0\n- Column H (MCH Unrealised G/L) = -251,439,912.92\n- Columns E + H (MCH Total) = -239,264,895.01",
+            "Step 5: Perform reasonability checks and validate cusips with AAS25 adjustments.\nExample: 'AAS25 adjustment-sec = -13,242,863.88'",
+            "Step 6: Insert Part1 and Part2 tables from the SIT Rec file and ensure no differences exist between the totals and DMH data."
+        ],
+        "extracted": "text, image_description, or both"
+    }}
+]
+
+Guidelines:
+- Ensure that each step integrates all relevant details from text and images.
+- When image descriptions provide additional data or tables, they must be referenced directly within the corresponding steps.
+- Ensure the response is a valid JSON array.
+
+
+
+
+
+
+
+
+
+
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
 
 Questions and answers must be distinct and should not repeat.
