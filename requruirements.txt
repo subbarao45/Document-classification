@@ -1,3 +1,61 @@
+import json
+
+def merge_text_and_images(text_file, image_file):
+    # Load the text data from JSON
+    with open(text_file, 'r') as file1:
+        text_data = json.load(file1)
+
+    # Load the image data from JSON
+    with open(image_file, 'r') as file2:
+        image_data = json.load(file2)
+
+    # Create a mapping of page_number to its image descriptions
+    image_map = {}
+    for image in image_data:
+        page_num = image["page_number"]
+        if page_num not in image_map:
+            image_map[page_num] = []
+        image_map[page_num].append(image["image_description"])
+
+    # Append image descriptions as additional keys
+    for page in text_data["pages"]:
+        page_num = page["page_number"]
+        if page_num in image_map:
+            page["image_description"] = image_map[page_num]
+        else:
+            page["image_description"] = ["No image descriptions available"]
+
+    # Flattening image descriptions into individual keys
+    final_pages = []
+    for page in text_data["pages"]:
+        page_flattened = {
+            "page_number": page["page_number"],
+            "text": page["text"]
+        }
+        for i, img_desc in enumerate(page["image_description"]):
+            page_flattened[f"image_description_{i + 1}"] = img_desc
+        final_pages.append(page_flattened)
+
+    # Replace the original pages with the final flattened version
+    text_data["pages"] = final_pages
+
+    # Return the merged result
+    return text_data
+
+# Example Usage
+result = merge_text_and_images('text.json', 'image_data.json')
+print(json.dumps(result, indent=4))
+
+
+
+
+
+
+
+
+
+
+
 
 Chat history
 Open sidebar
