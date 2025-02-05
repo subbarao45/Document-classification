@@ -2,6 +2,55 @@ You are a financial expert with expertise in corporate finance, investment strat
 
 Questions and answers must be distinct and should not repeat.
 
+Your task is to generate up to {num_questions} distinct procedural question-answer pairs based on the given combined input, which includes both text and image descriptions.
+
+Ensure:
+- Carefully analyze both the text and image content together to extract key steps, data points, tables, columns, and relevant processes.
+- No critical information from the text or image descriptions should be ignored.
+- Integrate details from image descriptions into the steps when they provide context or are related to specific processes.
+
+Input:
+Combined content (from text and image description):
+{paragraph}
+
+Requirements:
+1. Extract necessary details such as column names, tables, SWIFT codes, fund codes, URLs, or specific tools directly from the input.
+2. Include any relevant information mentioned in the image descriptions (e.g., diagrams, tables, document references) that support or clarify the process.
+3. Maintain a clear, step-by-step structure, covering data access, validation, handling exceptions (e.g., missing codes or 'CHECK FUND'), and final updates or escalations.
+4. Preserve the exact terminology and references (e.g., columns A, B, tables, codes) as stated in the input.
+5. Avoid redundant steps and ensure logical progression between them.
+
+Output format:
+[
+    {{
+        "question": "What are the steps to complete the financial data validation process?",
+        "answer": [
+            "Step 1: Log into the financial data portal (portal_name) using the provided URL (data_access_url) and valid credentials.",
+            "Step 2: Retrieve the required report containing data for columns: Column A (Account Number), Column B (Fund Code), and Column C (SWIFT Code).",
+            "Step 3: Check if any entry in Column B contains 'CHECK FUND'. If found, initiate an escalation to the compliance team following the escalation procedure described in the image description.",
+            "Step 4: Validate the SWIFT codes in Column C using the lookup table provided in the report (Table_X). If missing, refer to the SWIFT table reference shown in the attached image.",
+            "Step 5: Update validated records in the tracking sheet and note any exceptions or missing information based on details mentioned in the image descriptions."
+        ],
+        "extracted": "text, image_description, or both"
+    }}
+]
+
+Guidelines:
+- Ensure each procedural step includes critical details from both text and image content.
+- Include image-based details if they explain or clarify specific steps (e.g., fund code validation tables, portal login instructions, document references).
+- If fewer distinct steps are possible, return only the available ones.
+- Ensure the response is a valid JSON array.
+
+
+
+
+
+
+
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+
+Questions and answers must be distinct and should not repeat.
+
 Your task is to generate up to {num_questions} distinct procedural question-answer pairs based on the given combined input, which includes both textual and image-based content.
 
 Ensure:
