@@ -1,4 +1,53 @@
 
+prompt = """
+## Objective:
+You will be given a list of questions and corresponding paragraphs containing combined textual and image content. Your task is to analyze the combined input and generate a step-by-step Markdown-style procedural answer for each question, ensuring all relevant details from both text and image descriptions are included.
+
+## Questions:
+{questions}
+
+## Paragraphs:
+The paragraphs provided may have numbers followed by spaces (e.g., "1 Section 8.6"). Ensure you correctly reference these sections and paragraphs without omitting key details.
+
+{paragraphs}
+
+---
+
+## Steps:
+1. For each question, identify the relevant paragraphs containing information needed to answer it, including those with numbered sections (e.g., "1 Section 8.6").
+2. Use both the text and image descriptions to create a well-structured, step-by-step Markdown-style output.
+3. Ensure key references to columns, tables, calculations, and section titles are preserved exactly as they appear in the input.
+4. Integrate any tables, data fields, or notes from the image descriptions directly within the relevant steps.
+5. If image descriptions provide essential details related to steps (e.g., adjustments, validations), include them in the output explicitly.
+6. Avoid redundant information and ensure the steps are actionable.
+
+---
+
+## Output Format:
+```markdown
+# Question: {question_text}
+
+## Step-by-Step Answer:
+1. **Step 1:** {Clearly describe the first step, including referenced sections and key details from the text or image descriptions.}
+2. **Step 2:** {Describe the next action or calculation required, integrating any relevant notes or tables from the image description.}
+3. **Step 3:** {Continue the steps sequentially, ensuring logical progression. Include tables or field names when necessary.}
+
+## Relevant Paragraphs Referenced:
+- {List the paragraphs or sections that contributed to the steps}
+
+## Key Tables, Calculations, or Notes:
+- {Include any tables or formulas from the input when applicable}
+
+
+
+
+
+
+
+
+
+
+
 
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
 
