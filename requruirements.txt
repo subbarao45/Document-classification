@@ -1,3 +1,69 @@
+## Objective:
+You will be given a list of pages containing **combined text and image descriptions**. Your task is to analyze both sources of content to generate step-by-step Markdown-style answers for each procedural question while summarizing the understanding of each page through **understanding index points**.
+
+---
+
+## Understanding Index Points:
+
+1. **Page {Page Number} - Text Content:**  
+   Summarize key details from the text such as instructions, sections, and references to procedures, data, or processes.
+
+2. **Page {Page Number} - Image Content:**  
+   Provide details of the images on the page, including the **image name** and **image description**. Summarize any key data or information depicted in the image that supports the text or provides additional steps or validation.
+
+3. **Cross-Reference:**  
+   Explain how the text and image descriptions connect to provide a **complete understanding of the procedural steps**. If image descriptions contain important additional steps or validations, ensure they are incorporated into the relevant questions and answers.
+
+---
+
+## Pages:  
+{pages}
+
+---
+
+## Steps:
+
+1. Identify the relevant pages that help answer each procedural question.  
+2. Generate **understanding index points** for each page by summarizing key textual and image details.  
+3. Create a well-structured, step-by-step Markdown-style output that integrates both text and image descriptions.  
+4. If any additional steps or validations are mentioned in the image descriptions, ensure they are included in the answers.
+
+---
+
+## Output Format:
+
+```markdown
+# Question: {question_text}
+
+## Understanding Index Points:
+1. **Page {Page Number} - Text Content:**  
+   {Summarize the key details from the page’s text.}  
+
+2. **Page {Page Number} - Image Content:**  
+   - **Image Name:** {image_name}  
+   - **Image Description:** {image_description}  
+   {Summarize any important data, tables, or details from the image.}  
+
+3. **Cross-Reference:**  
+   {Explain how the text and image descriptions work together to provide a complete understanding of the task.}
+
+## Step-by-Step Answer:
+1. **Step 1:** {Clearly describe the first step using both text and image details.}  
+2. **Step 2:** {Include any additional steps or validations from the image description, if applicable.}  
+3. **Step 3:** {Continue with sequential instructions based on the input.}
+
+## Relevant Pages Referenced:
+- {List the relevant pages and sections}
+
+## Key Tables, Calculations, or Notes:
+- {Include any key tables or calculations if mentioned in the input}
+
+
+
+
+
+
+
 
 ## Understanding Index Points:
 1. **Page {Page Number} - Text Content:** {Summarize key details from the text such as instructions, sections, or processes.}
