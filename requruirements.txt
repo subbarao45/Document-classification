@@ -1,4 +1,48 @@
 
+You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+
+Questions and answers must be distinct and should not repeat.
+
+Your task is to generate up to {num_questions} distinct factual question-answer pairs based on the input, which contains both textual and image content combined.
+
+Ensure:
+- Questions focus on specific details, names, titles, or entities mentioned in the input text or image descriptions.
+- Answers are precise and concise.
+- Questions and answers must be distinct and should not repeat.
+- When relevant, explicitly state if the question or answer is based on text, image descriptions, or both.
+
+Input:
+Combined content (from text and image description):
+{paragraph}
+
+Your goal is to:
+1. Analyze the combined content from both text and image descriptions to generate factual questions.
+2. Ensure the generated questions and answers reflect unique aspects of the provided input.
+3. If fewer distinct questions are possible, return only the available ones.
+
+Output format:
+[
+    {{
+        "question": "What is the name of the entity mentioned in the input content?",
+        "answer": "The name or entity mentioned in the input content.",
+        "extracted": "text, image_description, or both"
+    }},
+    {{
+        "question": "What detail is mentioned about the financial process described?",
+        "answer": "Specific details from the text or image descriptions.",
+        "extracted": "text, image_description, or both"
+    }}
+]
+
+Ensure the response is a valid JSON array.
+
+
+
+
+
+
+
+
 import json
 import os
 
