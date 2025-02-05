@@ -1,4 +1,12 @@
 
+## Understanding Index Points:
+1. **Page {Page Number} - Text Content:** {Summarize key details from the text such as instructions, sections, or processes.}
+2. **Page {Page Number} - Image Content:** {Summarize key details from the image descriptions, including tables or financial data.}
+3. **Cross-Reference:** Explain how the text and image details connect to form a complete understanding of the task.
+
+
+
+
 prompt = """
 ## Objective:
 You will be given a list of questions and corresponding paragraphs containing combined textual and image content. Your task is to analyze the combined input and generate a step-by-step Markdown-style procedural answer for each question, ensuring all relevant details from both text and image descriptions are included.
