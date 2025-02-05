@@ -2,6 +2,55 @@
 import json
 
 def merge_text_and_images(text_file, image_file):
+    # Load the text data from JSON without worrying about metadata
+    with open(text_file, 'r', encoding='utf-8') as file1:
+        text_data = json.load(file1)
+
+    # Load the image data from JSON
+    with open(image_file, 'r', encoding='utf-8') as file2:
+        image_data = json.load(file2)
+
+    # Create a mapping of page_number to its image descriptions
+    image_map = {}
+    for image in image_data:
+        page_num = image["page_number"]
+        if page_num not in image_map:
+            image_map[page_num] = []
+        image_map[page_num].append(image["image_description"])
+
+    # Append image descriptions as additional keys
+    final_pages = []
+    for page in text_data["pages"]:
+        page_num = page["page_number"]
+        page_flattened = {
+            "page_number": page_num,
+            "text": page["text"]
+        }
+
+        # Add image descriptions
+        if page_num in image_map:
+            for i, img_desc in enumerate(image_map[page_num]):
+                page_flattened[f"image_description_{i + 1}"] = img_desc
+        else:
+            page_flattened["image_description_1"] = "No image descriptions available"
+
+        final_pages.append(page_flattened)
+
+    # Return the final pages section only
+    return {"pages": final_pages}
+
+# Example Usage
+result = merge_text_and_images('text.json', 'image_data.json')
+print(json.dumps(result, indent=4))
+
+
+
+
+
+
+import json
+
+def merge_text_and_images(text_file, image_file):
     # Load the text data from JSON with encoding to avoid decoding errors
     with open(text_file, 'r', encoding='utf-8') as file1:
         text_data = json.load(file1)
