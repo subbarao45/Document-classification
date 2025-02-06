@@ -1,4 +1,127 @@
 
+import PyPDF2
+import base64
+import fitz  # PyMuPDF for image extraction
+from langchain.chat_models import AzureChatOpenAI
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path: str) -> str:
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text() or ""  # Ensure to handle pages with None
+    return text
+
+# Function to encode images from a PDF
+def extract_images_from_pdf(pdf_path: str):
+    doc = fitz.open(pdf_path)
+    encoded_images = []
+
+    for page_number in range(len(doc)):
+        for img_index, img in enumerate(doc[page_number].get_images(full=True)):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_data = base_image["image"]
+            # Convert image data to base64 and store it
+            encoded_images.append(base64.b64encode(image_data).decode('utf-8'))
+
+    return encoded_images
+
+# Function to generate questions and answers using AzureChatOpenAI
+def generate_questions_and_answers(text: str) -> list:
+    azure_openai = AzureChatOpenAI(
+        temperature=0.7,
+        api_version="2023-06-01-preview",  # Replace with your Azure API version if needed
+        azure_openai_api_key="YOUR_AZURE_OPENAI_API_KEY",  # Replace with your Azure API key
+        azure_openai_base_url="YOUR_AZURE_ENDPOINT",  # Replace with your Azure endpoint
+        deployment_name="ssgpt-40"
+    )
+
+    # Construct the prompt for generating Q&A
+    prompt = f"""
+    Based on the following text, generate 5 questions and their corresponding answers:
+
+    {text}
+
+    Format the output as a list of dictionaries, each containing:
+    - "question": The question text
+    - "answer": The answer text
+    """
+
+    response = azure_openai.predict_messages([{"role": "user", "content": prompt}])
+    
+    try:
+        # Parse the response and return as a list
+        q_and_a_list = eval(response.content.strip())
+        return q_and_a_list
+    except Exception as e:
+        print("Error parsing Azure OpenAI response:", e)
+        return []
+
+# Function to generate a message with text, images, and questions/answers
+def create_message_with_qa(pdf_path: str, prompt_template: str, instructions: str) -> list:
+    # Step 1: Extract text from PDF
+    extracted_text = extract_text_from_pdf(pdf_path)
+    # Step 2: Extract and encode images
+    encoded_images = extract_images_from_pdf(pdf_path)
+    # Step 3: Generate questions and answers from the text
+    questions_and_answers = generate_questions_and_answers(extracted_text)
+
+    # Step 4: Format the message
+    message_content = [
+        {
+            "type": "text",
+            "text": prompt_template.format(
+                listIgnore=["Line number", "MSH Item", "SKU number"],
+                priority_instructions=instructions,
+                format_instructions="Extract in JSON format with sections and subsections."
+            ) + "\n\nExtracted Text:\n" + extracted_text
+        }
+    ] + [
+        {
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{img_data}"}
+        } for img_data in encoded_images
+    ] + [
+        {
+            "type": "qa",
+            "question": qa["question"],
+            "answer": qa["answer"]
+        } for qa in questions_and_answers
+    ]
+
+    return message_content
+
+# Example usage of the functions
+if __name__ == "__main__":
+    pdf_path = "path/to/your/pdf_file.pdf"
+
+    # Define the prompt template and instructions
+    prompt_template = """
+    Please extract text and provide it in the specified format.
+    Ignore: {listIgnore}
+    Priority Instructions: {priority_instructions}
+    Format Instructions: {format_instructions}
+    """
+
+    instructions = "Extract key points, maintain structure, and include images if available."
+
+    # Generate the message content
+    message = create_message_with_qa(pdf_path, prompt_template, instructions)
+
+    # Output the content
+    for item in message:
+        print(item)
+
+
+
+
+
+
+
+
+
 import json
 
 def merge_text_and_images(text_file, image_file):
