@@ -1,4 +1,61 @@
 
+import json
+
+# Sample JSON Data (Replace this with actual JSON file reading if needed)
+json_data = [
+    {
+        "page_number": 9,
+        "text": "2.5 Download and save NRM as CSV format.\n\n2.6 Report Dashboard \na) =",
+        "image_description_1": "Here is the extracted text from the image:\n\nNavigation\nAp",
+        "image_description_2": "Sure, here is the extracted text from the image:\n\n**Naviga"
+    },
+    {
+        "page_number": 10,
+        "text": "• In the second tile ‘Job History of AAS_OUB_ESP_VFMC’, sele",
+        "image_description_1": "**Navigation**\nApplications: AAS25 Report\nClient: VFMC\n\n-",
+        "image_description_2": "Sure, here is the extracted text from the image:\n\n\nNorr"
+    }
+]
+
+# Function to convert JSON to Markdown
+def json_to_markdown(data):
+    markdown_text = ""
+    for item in data:
+        page_number = item.get("page_number", "N/A")
+        text = item.get("text", "").strip()
+        
+        # Add header for each page
+        markdown_text += f"# Page {page_number}\n\n"
+        
+        # Add text section
+        if text:
+            markdown_text += f"**Text:**\n{text}\n\n"
+        
+        # Add image descriptions
+        image_descriptions = [key for key in item.keys() if key.startswith("image_description")]
+        for desc_key in image_descriptions:
+            markdown_text += f"**{desc_key.replace('_', ' ').capitalize()}:**\n{item[desc_key]}\n\n"
+    
+    return markdown_text
+
+# Convert JSON to Markdown
+markdown_content = json_to_markdown(json_data)
+
+# Save to markdown file
+output_file_path = "output.md"
+with open(output_file_path, "w") as file:
+    file.write(markdown_content)
+
+print(f"Markdown content saved to {output_file_path}")
+
+
+
+
+
+
+
+
+
 import os
 import base64
 import PyPDF2
