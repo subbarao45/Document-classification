@@ -1,3 +1,85 @@
+
+Key Points to Understand the JSON Structure:
+Page Number:
+
+Represents the page number of the document, allowing you to track the sequence of content.
+This helps in navigation or retrieval of specific pages.
+Text:
+
+Refers to the textual content of the page (paragraphs, headings, or other important content).
+Each page may have one or more lines of text, which could include titles, instructions, or other relevant details.
+Image Descriptions:
+
+Describes the images present on each page of the document.
+The description provides context for the image, explaining what the image represents.
+Each image has a corresponding description and can be referenced in the following ways:
+Image Description 1: Refers to the first image.
+Image Description 2: Refers to the second image.
+Image Description 3: Refers to the third image.
+If there are no images on a page, this field is an empty array.
+Multiple Image Descriptions:
+
+A page can contain multiple images, and each image is described separately in the image_description array.
+If a page has multiple images, they are listed sequentially as "Image Description 1", "Image Description 2", etc.
+JSON Format:
+
+The structure of the JSON input ensures data organization with clear references for page numbers, text, and images.
+Pages are represented as objects within an array, making it easy to represent documents with multiple pages.
+Example JSON Format Recap:
+json
+Copy code
+[
+  {
+    "page_number": 1,
+    "text": "Information Classification: Limited Access\nGlobal Delivery Standard Operating Procedure (SOP) Template",
+    "image_description": [
+      "STATE STREET Logo",
+      "Graph showing global delivery flow",
+      "Schematic diagram of SOP process"
+    ]
+  },
+  {
+    "page_number": 2,
+    "text": "Hub Procedure Oversight Owner",
+    "image_description": [
+      "Flowchart of oversight roles"
+    ]
+  },
+  {
+    "page_number": 3,
+    "text": "1. DMH Data Maintenance\nEnsure monthly book in MCH have been released\nIn may take omin s for MCH accounting data flow to FOR platform and DMH will ge",
+    "image_description": []
+  }
+]
+Summary of Key Points:
+Page Number: A reference to each page in the document.
+Text: Contains textual content (e.g., paragraphs, headings).
+Image Descriptions: Describes images found on the page (could be one or more).
+Each image is listed sequentially (Image Description 1, Image Description 2, etc.).
+If no images are present, the array remains empty.
+Structured Format: Easy to parse and understand, especially for documents with multiple pages.
+This breakdown covers all the essential points for understanding how to interpret and structure the JSON input effectively. Let me know if you'd like any additional information!
+
+
+
+
+
+
+
+
+
+
+Search
+
+
+
+
+
+
+
+
+
+
 output_file_path = 'output.md'
 
 # Open file in UTF-8 mode to support special characters
