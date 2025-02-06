@@ -1,3 +1,149 @@
+
+import PyPDF2
+import fitz  # PyMuPDF
+import base64
+import os
+import time
+import math
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# PDF Text Extraction Function
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            page_text = page.extract_text() or ""
+            text += page_text.strip() + "\n"
+    return text.strip()
+
+# PDF Image Extraction Function
+def extract_images_from_pdf(pdf_path: str):
+    doc = fitz.open(pdf_path)
+    encoded_images = []
+    for page_number in range(len(doc)):
+        for img_index, img in enumerate(doc[page_number].get_images(full=True)):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_data = base_image["image"]
+            # Convert image data to base64 and store it
+            encoded_images.append(base64.b64encode(image_data).decode('utf-8'))
+    return encoded_images
+
+# Retry logic to handle rate limits
+def retry_with_exponential_backoff(func, *args, max_retries=5):
+    delay = 1
+    for attempt in range(max_retries):
+        try:
+            return func(*args)
+        except Exception as e:
+            if "429" in str(e):  # Handle rate limit
+                print(f"Rate limit hit. Retrying after {delay} seconds...")
+                time.sleep(delay)
+                delay *= 2  # Exponential backoff
+            else:
+                print(f"Error: {e}")
+                break
+    raise RuntimeError("Max retries exceeded.")
+
+# Function to generate questions for all types
+def generate_questions(paragraph, question_type, num_questions, prompt_template):
+    fill_prompt = prompt_template.format(paragraph=paragraph, question_type=question_type, num_questions=num_questions)
+    print(f"Generated prompt:\n{fill_prompt}")
+
+    # Assuming LLMChain or equivalent call here
+    llm_chain = LLMChain(llm=llm, prompt=fill_prompt)
+    response = retry_with_exponential_backoff(llm_chain.predict, paragraph, str(num_questions), question_type)
+    return extract_valid_json(response)
+
+def generate_questions_in_chunks(paragraph, question_type, total_questions, prompt_template, chunk_size=10):
+    all_questions = []
+    for i in range(0, total_questions, chunk_size):
+        try:
+            chunk_questions = generate_questions(paragraph, question_type, min(chunk_size, total_questions - i), prompt_template)
+            all_questions.extend(chunk_questions)
+        except Exception as e:
+            print(f"Error generating chunk for {question_type}: {e}")
+            continue
+    return all_questions
+
+# Main question generation logic
+def generate_questions_by_all_types(paragraph, total_questions, chunk_size=10):
+    question_types_and_prompts = {
+        "Factual": "FACTUAL PROMPT",
+        "Procedural": "PROCEDURAL PROMPT",
+        "Conceptual": "CONCEPTUAL PROMPT",
+        "Inferential": "INFERENTIAL PROMPT",
+        "Reasoning-based": "REASONING PROMPT"
+    }
+
+    all_questions = []
+    questions_per_type = max(1, math.ceil(total_questions / len(question_types_and_prompts)))
+
+    with ThreadPoolExecutor() as executor:
+        futures = {
+            executor.submit(generate_questions_in_chunks, paragraph, question_type, questions_per_type, prompt): question_type
+            for question_type, prompt in question_types_and_prompts.items()
+        }
+
+        for future in as_completed(futures):
+            question_type = futures[future]
+            try:
+                questions = future.result()
+                if not questions:
+                    print(f"No questions generated for {question_type}")
+                for qa in questions:
+                    all_questions.append({
+                        "Question Type": question_type,
+                        "Question": qa["question"],
+                        "Answer": qa["answer"],
+                        "Extracted From": qa["extracted"]
+                    })
+            except Exception as e:
+                print(f"Error processing {question_type}: {e}")
+
+    return all_questions[:total_questions]
+
+def process_pdfs_in_subdirectories(root_directory, total_questions=10, chunk_size=10, output_folder="output"):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for dirpath, _, filenames in os.walk(root_directory):
+        for filename in filenames:
+            if filename.endswith(".pdf"):
+                pdf_path = os.path.join(dirpath, filename)
+                try:
+                    print(f"Processing: {pdf_path}")
+
+                    # Extract text and images
+                    pdf_text = extract_text_from_pdf(pdf_path)
+                    image_data = extract_images_from_pdf(pdf_path)
+
+                    message_content = [{"type": "text", "text": pdf_text}] + [
+                        {"type": "image_url", "image_url": f"data:image/jpeg;base64,{img_data}"}
+                        for img_data in image_data
+                    ]
+
+                    # Generate questions
+                    questions_and_answers = generate_questions_by_all_types(message_content, total_questions, chunk_size)
+
+                    # Save results to Excel (assuming save_to_excel function)
+                    relative_path = os.path.relpath(pdf_path, root_directory)
+                    output_file = os.path.join(output_folder, relative_path.replace(".pdf", "_questions.xlsx"))
+                    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                    save_to_excel(questions_and_answers, output_file)
+
+                except Exception as e:
+                    print(f"Error processing {pdf_path}: {e}")
+
+
+
+
+
+
+
+
+
 import pandas as pd
 import PyPDF2
 import base64
