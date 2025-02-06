@@ -1,4 +1,92 @@
 
+import pandas as pd
+import PyPDF2
+from langchain.chat_models import AzureChatOpenAI
+from langchain.schema import HumanMessage
+import json
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path: str) -> str:
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text() or ""  # Handle pages with None
+    return text.strip()
+
+# Function to generate questions and answers using Azure OpenAI
+def generate_questions_and_answers(text: str, prompt: str, num_questions: int, azure_api_key: str, azure_endpoint: str, deployment_name: str) -> list:
+    azure_openai = AzureChatOpenAI(
+        temperature=0.7,
+        api_version="2023-06-01-preview",
+        azure_openai_api_key=azure_api_key,
+        azure_openai_base_url=azure_endpoint,
+        deployment_name=deployment_name
+    )
+
+    # Format the prompt with the text and number of questions
+    formatted_prompt = prompt.format(text=text, num_questions=num_questions)
+
+    # Send the request to Azure OpenAI
+    response = azure_openai([HumanMessage(content=formatted_prompt)])
+
+    try:
+        # Parse as JSON
+        q_and_a_list = json.loads(response.content.strip())
+        return q_and_a_list
+    except Exception as e:
+        print("Error parsing Azure OpenAI response:", e)
+        return []
+
+# Function to save questions and answers to an Excel file
+def save_questions_and_answers_to_excel(q_and_a_list, output_file: str):
+    # Create a DataFrame
+    df = pd.DataFrame(q_and_a_list)
+    # Save to Excel
+    df.to_excel(output_file, index=False)
+
+# User inputs
+pdf_path = "path/to/your/pdf_file.pdf"  # Replace with your actual PDF path
+output_file = "questions_and_answers.xlsx"
+
+prompt = """
+Based on the following text, generate {num_questions} questions and their corresponding answers:
+
+{text}
+
+Format the output as a list of dictionaries, each containing:
+- "question": The question text
+- "answer": The answer text
+"""
+
+# Azure OpenAI API configuration (replace with your actual details)
+azure_api_key = "YOUR_AZURE_OPENAI_API_KEY"  # Replace with your API key
+azure_endpoint = "YOUR_AZURE_ENDPOINT"  # Replace with your Azure OpenAI endpoint
+deployment_name = "ssgpt-40"  # Replace with your deployment name if different
+num_questions = 5  # Number of questions to generate
+
+# Step 1: Extract text from the PDF
+pdf_text = extract_text_from_pdf(pdf_path)
+
+# Step 2: Generate questions and answers
+if pdf_text:
+    questions_and_answers = generate_questions_and_answers(pdf_text, prompt, num_questions, azure_api_key, azure_endpoint, deployment_name)
+
+    # Step 3: Save the questions and answers to an Excel file
+    if questions_and_answers:
+        save_questions_and_answers_to_excel(questions_and_answers, output_file)
+        print(f"Questions and answers saved to {output_file}.")
+    else:
+        print("No questions and answers were generated.")
+else:
+    print("The PDF did not contain any extractable text.")
+
+
+
+
+
+
+
 pdf_path = "path/to/your/pdf_file.pdf"
 
 # Define the prompt template and instructions
