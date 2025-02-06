@@ -1,6 +1,68 @@
 
 import json
 
+# Load the JSON content (you can replace this with file reading if necessary)
+json_data = {
+    "pages": [
+        {
+            "page_number": 1,
+            "text": "Information Classification: Limited Access \nPage 1",
+            "image_description_1": "STATE STREET"
+        },
+        {
+            "page_number": 2,
+            "text": "Hub Procedure Oversight Owner \nNames(s): Not Applicable",
+            "image_description_1": "No image descriptions available"
+        },
+        {
+            "page_number": 3,
+            "text": "1. DMH Data Maintenance \n1.1 Ensure monthly book in MCH",
+            "image_description_1": "It looks like you've uploaded an icon of an Excel file",
+            "image_description_2": "DATE: 190822\nTIME: 05:54\nSTATE STREET CORP"
+        }
+    ]
+}
+
+# Function to convert JSON to Markdown
+def json_to_markdown(data):
+    markdown_text = ""
+    for page in data.get("pages", []):
+        page_number = page.get("page_number", "N/A")
+        text = page.get("text", "").strip()
+        
+        # Add page header
+        markdown_text += f"# Page {page_number}\n\n"
+        
+        # Add text section
+        if text:
+            markdown_text += f"**Text:**\n{text}\n\n"
+        
+        # Add image descriptions
+        for key, value in page.items():
+            if key.startswith("image_description"):
+                markdown_text += f"**{key.replace('_', ' ').capitalize()}:**\n{value}\n\n"
+
+    return markdown_text
+
+# Convert JSON to Markdown
+markdown_content = json_to_markdown(json_data)
+
+# Save to markdown file
+output_file_path = '/mnt/data/output.md'
+with open(output_file_path, "w") as file:
+    file.write(markdown_content)
+
+output_file_path
+
+
+
+
+
+
+
+
+import json
+
 # Sample JSON Data (Replace this with actual JSON file reading if needed)
 json_data = [
     {
