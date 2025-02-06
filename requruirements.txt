@@ -1,4 +1,49 @@
 
+pdf_path = "path/to/your/pdf_file.pdf"
+
+# Define the prompt template and instructions
+prompt_template = """
+Please extract text and provide it in the specified format.
+Ignore: {listIgnore}
+Priority Instructions: {priority_instructions}
+Format Instructions: {format_instructions}
+"""
+
+instructions = "Extract key points, maintain structure, and include images if available."
+
+# Define the prompt for generating questions and answers
+prompt = """
+Based on the following text, generate {num_questions} questions and their corresponding answers:
+
+{text}
+
+Format the output as a list of dictionaries, each containing:
+- "question": The question text
+- "answer": The answer text
+"""
+
+# Set your Azure OpenAI API details
+azure_api_key = "YOUR_AZURE_OPENAI_API_KEY"  # Replace with your API key
+azure_endpoint = "YOUR_AZURE_ENDPOINT"  # Replace with your Azure OpenAI endpoint
+deployment_name = "ssgpt-40"  # Replace with your deployment name if different
+
+# Specify the number of questions you want to generate
+num_questions = 5  # You can change this number as needed
+
+# Generate the message content
+message = create_message_with_qa(pdf_path, prompt_template, instructions, prompt, num_questions, azure_api_key, azure_endpoint, deployment_name)
+
+# Output the content
+for item in message:
+    print(item)
+
+
+
+
+
+
+
+
 import PyPDF2
 import base64
 import fitz  # PyMuPDF for image extraction
