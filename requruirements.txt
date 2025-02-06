@@ -1,3 +1,100 @@
+
+import PyPDF2
+import base64
+import fitz  # PyMuPDF for image extraction
+from langchain.chat_models import AzureChatOpenAI
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path: str) -> str:
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text() or ""  # Handle pages with None
+    return text
+
+# Function to encode images from a PDF
+def extract_images_from_pdf(pdf_path: str):
+    doc = fitz.open(pdf_path)
+    encoded_images = []
+
+    for page_number in range(len(doc)):
+        for img_index, img in enumerate(doc[page_number].get_images(full=True)):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_data = base_image["image"]
+            # Convert image data to base64 and store it
+            encoded_images.append(base64.b64encode(image_data).decode('utf-8'))
+
+    return encoded_images
+
+# Function to generate questions and answers using Azure OpenAI
+def generate_questions_and_answers(text: str, prompt: str, num_questions: int, azure_api_key: str, azure_endpoint: str, deployment_name: str) -> list:
+    azure_openai = AzureChatOpenAI(
+        temperature=0.7,
+        api_version="2023-06-01-preview",
+        azure_openai_api_key=azure_api_key,  # Pass API key directly
+        azure_openai_base_url=azure_endpoint,  # Pass Azure endpoint directly
+        deployment_name=deployment_name
+    )
+
+    # Format the prompt with the text and number of questions
+    formatted_prompt = prompt.format(text=text, num_questions=num_questions)
+
+    # Properly formatted input for AzureChatOpenAI
+    response = azure_openai([{"role": "user", "content": formatted_prompt}])
+
+    try:
+        # Parse the response and return as a list
+        q_and_a_list = eval(response.content.strip())
+        return q_and_a_list
+    except Exception as e:
+        print("Error parsing Azure OpenAI response:", e)
+        return []
+
+# Function to generate a message with text, images, and questions/answers
+def create_message_with_qa(pdf_path: str, prompt_template: str, instructions: str, prompt: str, num_questions: int, azure_api_key: str, azure_endpoint: str, deployment_name: str) -> list:
+    # Step 1: Extract text from PDF
+    extracted_text = extract_text_from_pdf(pdf_path)
+    # Step 2: Extract and encode images
+    encoded_images = extract_images_from_pdf(pdf_path)
+    # Step 3: Generate questions and answers from the text using the provided prompt and number of questions
+    questions_and_answers = generate_questions_and_answers(extracted_text, prompt, num_questions, azure_api_key, azure_endpoint, deployment_name)
+
+    # Step 4: Format the message
+    message_content = [
+        {
+            "type": "text",
+            "text": prompt_template.format(
+                listIgnore=["Line number", "MSH Item", "SKU number"],
+                priority_instructions=instructions,
+                format_instructions="Extract in JSON format with sections and subsections."
+            ) + "\n\nExtracted Text:\n" + extracted_text
+        }
+    ] + [
+        {
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{img_data}"}
+        } for img_data in encoded_images
+    ] + [
+        {
+            "type": "qa",
+            "question": qa["question"],
+            "answer": qa["answer"]
+        } for qa in questions_and_answers
+    ]
+
+    return message_content
+
+
+
+
+
+
+
+
+
+
 def generate_questions_and_answers(text: str) -> list:
     azure_openai = AzureChatOpenAI(
         temperature=0.7,
