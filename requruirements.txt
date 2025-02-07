@@ -1,3 +1,11 @@
+https://medium.com/@odhitom09/using-gpt-4o-instead-of-ocr-for-data-extraction-and-processing-in-elt-workflows-a6558f769c12
+
+
+
+
+
+
+
 # Objective:
 
 Your task is to generate **procedural question-and-answer pairs** by analyzing the provided input, which includes indexed **text content** and **image descriptions**. The answers must be **comprehensive and logically structured**, combining information from both **text** and **image descriptions**, including details from consecutive indexes if required.
