@@ -1,3 +1,99 @@
+import fitz  # PyMuPDF
+import base64
+import json
+import pandas as pd
+from langchain.schema import HumanMessage
+from azure.ai.openai import AzureOpenAI  # Assuming this part is already configured
+
+def extract_text_and_images(pdf_path, num_pages):
+    pdf_document = fitz.open(pdf_path)
+    encoded_images = []
+    combined_text = []
+
+    for page_number in range(min(num_pages, pdf_document.page_count)):
+        page = pdf_document[page_number]
+        
+        # Extract text
+        page_text = page.get_text("text").strip()
+        combined_text.append(page_text)
+
+        # Extract image and encode as base64
+        pix = page.get_pixmap(dpi=200)
+        image_bytes = pix.tobytes("png")
+        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+        encoded_images.append(encoded_image)
+
+    text = "\n\n".join(combined_text)
+    return text, encoded_images
+
+def detect_and_correct_json(response_text):
+    try:
+        # Try parsing the response as JSON
+        parsed_response = json.loads(response_text)
+        return parsed_response
+    except json.JSONDecodeError:
+        print("Invalid JSON detected in the response!")
+        return None
+
+def save_to_excel(data, output_file):
+    # Save questions and answers to an Excel file
+    df = pd.DataFrame(data, columns=["Question", "Answer"])
+    df.to_excel(output_file, index=False)
+    print(f"Saved to {output_file}")
+
+def main(pdf_path, num_questions):
+    # Extract text and images
+    text, encoded_images = extract_text_and_images(pdf_path, num_pages=40)
+
+    # Define prompt and instructions
+    prompt_template = "Please extract {num_questions} meaningful questions and their corresponding answers from the given content."
+    instructions = "Provide the output in JSON format."
+    
+    # Create the message for the model
+    message = HumanMessage(
+        content=[
+            {
+                "type": "text",
+                "text": prompt_template.format(num_questions=num_questions),
+            }
+        ] + [
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{img_data}"}
+            }
+            for img_data in encoded_images
+        ]
+    )
+
+    # Invoke the model
+    azure_openai = AzureOpenAI(api_version="2023-03-15-preview", deployment_name="ssgpt-46")  # Replace as per configuration
+    response = azure_openai.invoke([message])
+
+    # Process and validate the response
+    parsed_response = detect_and_correct_json(response)
+
+    if parsed_response:
+        # Assuming JSON response contains a list of {"question": ..., "answer": ...}
+        qa_pairs = [(qa["question"], qa["answer"]) for qa in parsed_response]
+        save_to_excel(qa_pairs, "extracted_questions_answers.xlsx")
+    else:
+        print("Failed to save due to invalid JSON.")
+
+if __name__ == "__main__":
+    # Run the function with the desired PDF path and number of questions
+    pdf_path = r"h:\Question and answer Fund accounting (Resubmit 1025)36. VFMC AA525 SOP 5.8 1.pdf"
+    num_questions = 10  # Specify the number of questions
+    main(pdf_path, num_questions)
+
+
+
+
+
+
+
+
+
+
 
 import fitz  # PyMuPDF
 import base64
