@@ -1,3 +1,124 @@
+
+import fitz  # PyMuPDF
+import base64
+from langchain.schema import HumanMessage
+import openai
+import json
+import pandas as pd
+
+# Azure OpenAI Configuration (Example using invoke)
+openai.api_type = "azure"
+openai.api_version = "azure_openai_api_version"
+openai.api_base = "https://azure_openai_endpoint"
+openai.api_key = "your_azure_openai_api_key"
+deployment_name = "ssgpt-40"
+
+# Function to extract text and images from the PDF
+def extract_pdf_content(pdf_path, max_pages=40):
+    pdf_document = fitz.open(pdf_path)
+
+    encoded_images = []
+    combined_text = []
+
+    for page_number in range(min(max_pages, pdf_document.page_count)):
+        page = pdf_document[page_number]
+
+        # Extract text from the page
+        page_text = page.get_text("text").strip()
+        combined_text.append(page_text)
+
+        # Extract image and encode as base64
+        pix = page.get_pixmap(dpi=200)
+        image_bytes = pix.tobytes("png")
+        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+        encoded_images.append(encoded_image)
+
+    all_text = "\n\n".join(combined_text)
+    return all_text, encoded_images
+
+# Function to generate questions and answers using OpenAI
+def generate_questions_and_answers(text_content, images, num_questions):
+    # Define the prompt template
+    prompt_template = f"""
+    Based on the following text and image content, generate {num_questions} meaningful questions and answers in JSON format:
+    [
+        {{"question": "?", "answer": "?"}}
+    ]
+
+    Text Content:
+    {text_content}
+    """
+
+    # Create the HumanMessage as per the given structure
+    message = HumanMessage(
+        content=[
+            {
+                "type": "text",
+                "text": prompt_template
+            }
+        ] + [
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{img_data}"}
+            }
+            for img_data in images
+        ]
+    )
+
+    # Azure OpenAI API call
+    response = openai.ChatCompletion.create(
+        engine=deployment_name,
+        messages=[{"role": "system", "content": "You are an assistant that processes both text and image data."}, message],
+        temperature=0
+    )
+
+    # Parse the response
+    response_content = response['choices'][0]['message']['content']
+    return json.loads(response_content)
+
+# Store results in an Excel file
+def store_results_to_excel(results, output_file="questions_and_answers.xlsx"):
+    data = []
+
+    for item in results:
+        data.append({
+            "Question Type": "Generated",
+            "Question": item["question"],
+            "Answer": item["answer"]
+        })
+
+    # Create a DataFrame and save to Excel
+    df = pd.DataFrame(data)
+    df.to_excel(output_file, index=False)
+
+# Main function to extract content and generate questions
+def main(pdf_path, num_questions=5, output_file="questions_and_answers.xlsx"):
+    # Extract text and images
+    text_content, images = extract_pdf_content(pdf_path)
+
+    # Generate questions and answers
+    questions_and_answers = generate_questions_and_answers(text_content, images, num_questions)
+
+    # Store results to Excel
+    store_results_to_excel(questions_and_answers, output_file)
+
+    print(f"Questions and answers have been stored in {output_file}")
+
+# Run the main function
+pdf_path = "your_pdf_file.pdf"
+main(pdf_path, num_questions=10)
+
+
+
+
+
+
+
+
+
+
+
+
 import pandas as pd
 import os
 
