@@ -1,3 +1,33 @@
+# Assuming this is the part where you process the response
+response = llm.invoke([message])
+
+# Extracting response content
+if isinstance(response[0], dict) and "content" in response[0]:
+    response_text = response[0]["content"]
+elif hasattr(response[0], 'content'):
+    response_text = response[0].content
+else:
+    raise ValueError("Unable to extract content from the response.")
+
+# Validate and parse the JSON content
+try:
+    parsed_response = json.loads(response_text)
+except json.JSONDecodeError as e:
+    raise ValueError(f"Invalid JSON response: {e}")
+
+# Process the parsed response as needed
+qa_pairs = [(item["question"], item.get("answer", "No answer provided")) for item in parsed_response]
+save_to_excel(qa_pairs, "extracted_questions_answers.xlsx")
+
+
+
+
+
+
+
+
+
+
 import fitz  # PyMuPDF
 import base64
 import json
