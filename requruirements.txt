@@ -1,4 +1,54 @@
 
+def generate_markdown_from_pages(data):
+    markdown_output = ""
+    
+    for idx, page in enumerate(data["pages"]):
+        # Add text section
+        markdown_output += f"### {idx} text:\n```\n{page['text']}\n```\n"
+        
+        # Collect and add image descriptions dynamically
+        for key, value in page.items():
+            if key.startswith("image_description"):
+                markdown_output += f"### {idx} {key.replace('_', ' ')}:\n```\n{value}\n```\n"
+    
+    return markdown_output
+
+# Example usage
+input_data = {
+    "pages": [
+        {
+            "page_number": 1,
+            "text": "Information Classification: Limited Access \n \nPage 1 \nInformation Classificat",
+            "image_description_1": "The document in question appears to be a professional financial st"
+        },
+        {
+            "page_number": 2,
+            "text": "Hub Procedure Oversight Owner \nNames(s): Not Applicable Oversight Owner Email:",
+            "image_description_1": "No image descriptions available"
+        },
+        {
+            "page_number": 3,
+            "text": "1. DMH Data Maintenance \n1.1 Ensure monthly book in MCH have been released \n\u",
+            "image_description_1": "The image described appears to be a detailed financial document, li",
+            "image_description_2": "The image depicts a detailed financial document from State Street C"
+        }
+    ]
+}
+
+# Generate markdown output
+markdown_result = generate_markdown_from_pages(input_data)
+print(markdown_result)
+
+
+
+
+
+
+
+
+
+
+
 Key Points to Understand the JSON Structure:
 Page Number:
 
