@@ -1,3 +1,37 @@
+import pandas as pd
+import os
+
+def save_to_excel(questions_and_answers, output_file):
+    # Check if there is data to save
+    if questions_and_answers:
+        # Create a DataFrame
+        df = pd.DataFrame(questions_and_answers)
+        
+        # Save to Excel
+        df.to_excel(output_file, index=False)
+        print(f"Questions and answers saved to {output_file}.")
+    else:
+        print(f"No data to save for {output_file}.")
+
+# Define the output path with the correct file extension
+output_file = r"H:\Question and answer\Fund accounting.xlsx"
+
+# Ensure the subdirectory structure in the output folder
+os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+# Example response to test the function (replace this with your actual data)
+response = [
+    {"question": "What is AI?", "answer": "AI stands for Artificial Intelligence."},
+    {"question": "What is Machine Learning?", "answer": "A subset of AI that focuses on learning from data."},
+]
+
+# Save the responses to the Excel file
+save_to_excel(response, output_file)
+
+
+
+
+
 
 import fitz  # PyMuPDF
 import base64
