@@ -1,3 +1,50 @@
+
+# Objective:
+
+Your task is to analyze the provided input containing indexed text and image descriptions to generate procedural question-and-answer pairs, ensuring no important details from the text or image descriptions are omitted. The procedural responses should include **step-by-step instructions** while considering the **logical flow** and **contextual relevance** of each index.
+
+# Steps for reading the input:
+
+1. Read the input carefully, including **both indexed text and image descriptions**.
+2. For each index, consider all text provided as well as any image descriptions associated with it.
+3. **If the content of the image description adds procedural details, integrate those details into the appropriate step within the answer.**
+4. Ensure that the steps are **logically ordered** and maintain a **cohesive flow** from start to end.
+
+# Guidelines for combining text and image descriptions:
+- If an image description provides additional details (e.g., tables, diagrams, or data representations), **include them where they enhance or explain specific steps**.
+- Avoid duplicating content but ensure that **relevant visual information** is properly referenced in procedural steps where applicable.
+
+# Key procedural instructions:
+1. Generate a **JSON array** containing procedural question-answer pairs.
+2. Ensure that **step numbers are sequential** and cover all necessary details, including those from both text and image descriptions.
+3. Maintain accuracy, logical progression, and clarity for each step.
+4. The output must **ONLY** contain a JSON array response, and each entry must follow this format:
+
+# JSON format:
+
+```json
+[
+  {
+    "question": "What are the steps to complete this process?",
+    "answer": [
+      "Step 1: [Include necessary details from indexed text or image description].",
+      "Step 2: [Continue logical steps].",
+      "Step n: [Incorporate visual context if relevant, referencing the image description]."
+    ]
+  }
+]
+
+
+
+
+
+
+
+
+
+
+
+
 import re
 import json
 import pandas as pd
