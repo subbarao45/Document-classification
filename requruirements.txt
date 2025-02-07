@@ -1,3 +1,65 @@
+import re
+import json
+import pandas as pd
+from langchain.schema import HumanMessage
+
+def clean_response_text(response_text):
+    """
+    Cleans the LLM response by removing unwanted metadata and fixing JSON formatting issues.
+    """
+    # Step 1: Remove unwanted metadata like 'content_filter_result'
+    cleaned_text = re.sub(r"'?content_filter_result.*", "", response_text, flags=re.DOTALL)
+
+    # Step 2: Fix any common JSON formatting issues
+    cleaned_text = cleaned_text.strip().rstrip(",")  # Remove trailing commas
+    
+    # Ensure it’s a valid JSON array
+    if not cleaned_text.startswith("["):
+        cleaned_text = "[" + cleaned_text
+    if not cleaned_text.endswith("]"):
+        cleaned_text += "]"
+
+    return cleaned_text
+
+def main(pdf_path, num_questions):
+    # Assuming text and images extraction are done before this
+    # Prepare and send the message to LLM
+    # Replace 'llm.invoke' and 'message' with your existing API call and input
+    response = llm.invoke([message])
+
+    # Step 3: Extract and clean response
+    response_text = response[0].content  # Directly access the content attribute
+    cleaned_text = clean_response_text(response_text)  # Clean unwanted content
+
+    # Step 4: Parse the cleaned response into JSON
+    try:
+        parsed_response = json.loads(cleaned_text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse cleaned JSON response: {e}")
+
+    # Step 5: Extract questions and answers
+    qa_pairs = [(item["question"], item.get("answer", "No answer provided")) for item in parsed_response if "question" in item]
+
+    # Save to Excel
+    save_to_excel(qa_pairs, "extracted_questions_answers.xlsx")
+
+def save_to_excel(data, output_file):
+    # Save questions and answers to an Excel sheet
+    df = pd.DataFrame(data, columns=["Question", "Answer"])
+    df.to_excel(output_file, index=False)
+    print(f"Saved to {output_file}")
+
+if __name__ == "__main__":
+    pdf_path = r"path/to/your/pdf.pdf"
+    num_questions = 10  # Pass as needed
+    main(pdf_path, num_questions)
+
+
+
+
+
+
+
 # Assuming this is the part where you process the response
 response = llm.invoke([message])
 
