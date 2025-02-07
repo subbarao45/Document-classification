@@ -1,3 +1,81 @@
+import fitz  # PyMuPDF
+import base64
+from langchain.schema import HumanMessage
+from azure.ai.openai import AzureOpenAI
+
+# Azure OpenAI Configuration
+azure_openai = AzureOpenAI(
+    api_version="azure_openai_api_version",
+    endpoint="azure_openai_endpoint",
+    api_key="your_azure_openai_api_key"
+)
+
+# Extract text and images from PDF
+pdf_path = "your_pdf_file.pdf"
+pdf_document = fitz.open(pdf_path)
+encoded_images = []
+combined_pages = []
+
+for page_number in range(min(40, pdf_document.page_count)):
+    page = pdf_document[page_number]
+    
+    # Extract text from the page
+    page_text = page.get_text("text").strip()
+    
+    # Extract and encode image as base64
+    pix = page.get_pixmap(dpi=200)
+    image_bytes = pix.tobytes("png")
+    encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+    
+    # Store combined text and image
+    combined_pages.append({
+        "text": page_text,
+        "encoded_image": f"data:image/png;base64,{encoded_image}"
+    })
+
+# Prompt template to combine text and image
+prompt_template = """
+Based on the provided text and image content, generate meaningful questions and their corresponding answers. 
+Format the output as follows:
+[
+    {{"question": "?", "answer": "?"}}
+]
+
+Text Content:
+{text}
+
+Image Content: [Attached as a base64-encoded image]
+"""
+
+results = []
+
+# Call the Azure LLM using HumanMessage
+for page_info in combined_pages:
+    prompt = prompt_template.format(text=page_info["text"])
+    
+    # Human message combining text and base64 image
+    message = HumanMessage(
+        content=prompt + f"\nImage Content: {page_info['encoded_image']}"
+    )
+    
+    # Azure LLM response
+    response = azure_openai.invoke(messages=[message])
+    
+    # Collect the output
+    result = response["choices"][0]["message"]["content"]
+    results.append(result)
+
+# Display results for each page
+for index, output in enumerate(results):
+    print(f"\nPage {index + 1} Output:\n{output}")
+
+
+
+
+
+
+
+
 
 def generate_markdown_from_pages(data):
     markdown_output = ""
