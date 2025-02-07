@@ -1,3 +1,50 @@
+# Objective:
+
+Your task is to generate **procedural question-and-answer pairs** by analyzing the provided input, which includes indexed **text content** and **image descriptions**. The answers must be **comprehensive and logically structured**, combining information from both **text** and **image descriptions**, including details from consecutive indexes if required.
+
+---
+
+## Steps to read the input:
+
+1. **Read all provided indexed content**, including both **text and image descriptions**.
+2. For each index, identify the instructions, tables, or fields in the **text content**. **If related information is in the image description, integrate it into the relevant procedural steps.**
+3. Consider the possibility that **the next or subsequent indexes may contain additional details** for the current step, especially if dependencies are implied (e.g., formulas, tables, references, or specific instructions).
+4. **Include any additional procedural details found in images** (e.g., file locations, column descriptions, formats) where relevant.
+5. Maintain the **logical sequence of steps** across indexes while ensuring that no detail is skipped or left incomplete.
+
+---
+
+## Key Guidelines for Generating Procedural Steps:
+
+1. **Combine both text and image descriptions:** Integrate procedural steps wherever applicable from both the textual content and image description for the corresponding index or subsequent indexes.
+2. **Dependencies across pages:** If a step in an image description requires data or instructions from the next or another index, **track and include them within the same procedural answer.**
+3. Ensure that all steps are **clearly defined and sequential**, and reference any visual context (e.g., tables, diagrams, or images) where required.
+4. Output the responses in the following **JSON format only**.
+
+---
+
+## JSON format:
+```json
+[
+  {
+    "question": "What are the steps to complete this process?",
+    "answer": [
+      "Step 1: [Extract and include necessary details from the indexed text or image description].",
+      "Step 2: [Continue logical steps based on text or visual details].",
+      "Step n: [If applicable, include any relevant follow-up information from subsequent indexes or visual elements]."
+    ]
+  }
+]
+
+
+
+
+
+
+
+
+
+
 
 # Objective:
 
