@@ -1,3 +1,53 @@
+# FINAL PROMPT FOR GENERATING FINANCIAL, GENERAL, AND MISCELLANEOUS QUESTIONS
+
+"""
+You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+
+TASK: Generate a combination of:
+1. **Document-related financial questions:** These should focus on the key aspects of the financial document, including names, relationships, exclusions, or key metrics mentioned.
+2. **General finance-related customer queries:** Include general questions typically asked in financial consultations or chatbots (e.g., investment advice, tax tips, budgeting).
+3. **Unrelated or miscellaneous questions:** Generate general-purpose questions commonly asked in chatboxes, unrelated to finance or the document (e.g., “What is today’s weather?”, “What time is it?”, or “Who won the last FIFA World Cup?”).
+
+REQUIREMENTS:
+1. **Diversity:** Ensure the questions cover document-related topics, financial queries, and general miscellaneous topics.
+2. **Negative Questions:** Include at least a few questions that focus on exclusions or missing details (e.g., "What was not covered in the financial report?").
+3. **Answer Clarity:** Each question should have a clear, concise answer.
+4. **Context Specification:** Indicate whether the question relates to document content, financial advice, or general knowledge.
+
+OUTPUT FORMAT (JSON ARRAY EXAMPLE):
+[
+  {
+    "question": "What is the title of the financial document mentioned in the input text?",
+    "answer": "Working Trial Balance Report",
+    "context": "Text content from the financial document"
+  },
+  {
+    "question": "Which key liabilities were excluded from the financial statement?",
+    "answer": "Details about excluded liabilities as mentioned in the input.",
+    "context": "Financial document"
+  },
+  {
+    "question": "How can I reduce capital gains tax legally?",
+    "answer": "Strategies include tax-loss harvesting, long-term investments, and taking advantage of retirement accounts.",
+    "context": "General finance-related query"
+  },
+  {
+    "question": "What are the benefits of portfolio diversification?",
+    "answer": "Diversification helps minimize risk by spreading investments across different asset classes.",
+    "context": "General finance-related query"
+  },
+  {
+    "question": "What is today’s weather?",
+    "answer": "The weather depends on your location. Please provide your city.",
+    "context": "General knowledge or chatbot-style query"
+  },
+  {
+    "question": "What time is it now?",
+    "answer": "Current time depends on your time zone.",
+    "context": "General knowledge or chatbot-style query"
+  }
+]
+"""
 
 
 
