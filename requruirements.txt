@@ -1,3 +1,107 @@
+
+import json
+import re
+
+# Sample text containing multiple questions and answers
+raw_text = """
+Question Type: Procedural
+Question: How do you perform RTS reconciliation in DMH?
+Answer:
+# Perform RTS Reconciliation in DMH
+
+## Introduction
+
+This procedure outlines the steps to perform RTS reconciliation in DMH, ensuring data accuracy and consistency.
+
+**Prerequisites**
+
+- Access to DMH.
+- RTS report.
+
+## Procedure
+
+### Step 1: Prepare RTS Reconciliation File
+
+1. Delete two subtotals at the bottom of the report.
+2. Subtotal column J-0.
+
+### Step 2: Perform Reasonability Check
+
+1. Validate cusips with AAS25 adjustment but nil MCH G/L.
+2. Ensure the data is accurate and consistent.
+
+### Step 3: Reconcile Data
+
+1. Perform the same steps as in NRM reconciliation.
+2. Ensure there are no discrepancies between the data sets.
+
+Question Type: Procedural
+Question: How do you perform XYZ reconciliation?
+Answer:
+# Perform XYZ Reconciliation
+
+## Introduction
+
+XYZ reconciliation ensures data integrity across systems.
+
+**Prerequisites**
+
+- Access to XYZ system.
+- XYZ report.
+
+## Procedure
+
+### Step 1: Extract Data
+
+1. Download the latest XYZ report.
+2. Ensure all required columns are included.
+
+### Step 2: Compare Entries
+
+1. Validate transactions against the master dataset.
+2. Identify and document discrepancies.
+
+### Step 3: Finalize Reconciliation
+
+1. Adjust incorrect entries.
+2. Submit the final reconciliation report.
+"""
+
+# Function to extract questions and answers from raw text and convert into JSON
+def extract_questions_answers(raw_text):
+    # Regular expression to match question-answer pairs
+    pattern = re.compile(r"Question Type: (.+?)\nQuestion: (.+?)\nAnswer:\s+(.+?)(?=(Question Type:|$))", re.DOTALL)
+    
+    # Find all matches
+    matches = pattern.findall(raw_text)
+
+    # Prepare the final JSON structure
+    questions_answers = []
+    for match in matches:
+        question_type, question, answer = match
+        questions_answers.append({
+            "Question Type": question_type.strip(),
+            "Question": question.strip(),
+            "Answer": answer.strip()
+        })
+
+    return questions_answers
+
+# Extract data and convert to JSON
+questions_answers = extract_questions_answers(raw_text)
+json_output = json.dumps(questions_answers, indent=4)
+
+# Print the JSON output
+print(json_output)
+
+
+
+
+
+
+
+
+
 import json
 import pandas as pd
 
