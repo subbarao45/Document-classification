@@ -1,4 +1,52 @@
 
+# FINAL GENERALIZED PROMPT FOR LARGE-SCALE QUESTION GENERATION
+
+"""
+You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+
+TASK: Generate a variety of **generalized financial questions and answers** based on the provided input content (financial data, reports, or PDFs). The questions should focus on extracting meaningful details such as financial terms, key metrics, relationships, and entities.
+
+REQUIREMENTS:
+1. **Scalable and Generalized:** The questions should be flexible and adaptable to any financial document, ensuring general relevance without relying on static or specific values.
+2. **Diverse Question Types:** Include questions about financial details, key terms, metrics, or any information extracted from the input.
+3. **No Negative or Unrelated Questions:** Only focus on document-related factual questions.
+4. **Answer Clarity:** Provide concise and precise answers based on the input content.
+5. **No Mention of Specific Inputs:** The questions and answers should be general and not reference any particular document by name.
+
+EXAMPLES OF QUESTION TYPES:
+1. "What is the financial period covered in the report?"
+2. "Which key financial metric indicates profitability?"
+3. "Who is responsible for preparing the financial report?"
+4. "What are the major assets listed?"
+5. "Which liabilities have been highlighted in the report?"
+
+OUTPUT FORMAT (JSON ARRAY EXAMPLE):
+[
+  {
+    "question": "What is the financial period covered in the report?",
+    "answer": "January 1, 2024, to December 31, 2024",
+    "context": "Extracted from financial data"
+  },
+  {
+    "question": "What key metric indicates the company’s net profit?",
+    "answer": "Net income after tax",
+    "context": "General financial data"
+  },
+  {
+    "question": "Which assets are included under current assets?",
+    "answer": "Cash, accounts receivable, and inventory",
+    "context": "General financial data"
+  }
+]
+"""
+
+
+
+
+
+
+
+
 # GENERALIZED FACTUAL PROMPT FOR DIVERSE QUESTION GENERATION
 
 """
