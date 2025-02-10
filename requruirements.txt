@@ -1,4 +1,92 @@
 
+import json
+import pandas as pd
+
+def process_response(response_text):
+    """
+    Convert a procedural text response into a structured JSON format.
+    """
+    lines = response_text.strip().split("\n")
+    question = lines[0].strip()
+    title = lines[1].strip()
+    introduction = lines[3].strip()
+    
+    prerequisites = []
+    procedure_steps = []
+    
+    # Parse prerequisites and procedure steps
+    section = None
+    for line in lines[5:]:  # Skip first few lines (question, title, intro)
+        line = line.strip()
+        if line.startswith("Prerequisites:"):
+            section = "prerequisites"
+            continue
+        elif line.startswith("Procedure:"):
+            section = "procedure"
+            continue
+        
+        if section == "prerequisites":
+            prerequisites.append(line.lstrip("- "))
+        elif section == "procedure":
+            step_number = len(procedure_steps) + 1
+            procedure_steps.append({"step": step_number, "description": line})
+    
+    # Convert response into structured JSON format
+    structured_data = {
+        "question_type": "Procedural",
+        "question": question,
+        "answer": {
+            "title": title,
+            "introduction": introduction,
+            "prerequisites": prerequisites,
+            "procedure": procedure_steps
+        }
+    }
+    
+    return structured_data
+
+def save_json_to_excel(json_data, file_name="procedural_data.xlsx"):
+    """
+    Save JSON data into an Excel file.
+    """
+    df = pd.json_normalize(json_data)
+    df.to_excel(file_name, index=False)
+    print(f"JSON saved to {file_name} successfully.")
+
+# Example function response (This will be replaced with your actual function response)
+response_text = """How do you ensure the monthly book in MCH has been released?
+Ensuring Monthly Book Release in MCH
+Introduction:
+This procedure ensures that the monthly book in MCH has been released, which is crucial for accurate accounting data flow.
+
+Prerequisites:
+- Access to MCH BLRL screen
+- Knowledge of fund SDVK (composite are SFZC/DBZC/DRWC)
+
+Procedure:
+1. Go to the MCH BLRL screen.
+2. Verify that the S1 status shows 'released'.
+3. Ensure that DATE, TIME, FUND, and other parameters are correct.
+4. Confirm that the monthly book will be released on SBD.
+"""
+
+# Process response
+json_output = process_response(response_text)
+
+# Save JSON data to Excel
+save_json_to_excel(json_output)
+
+
+
+
+
+
+
+
+
+
+
+
 # FINAL GENERALIZED PROMPT FOR LARGE-SCALE QUESTION GENERATION
 
 """
