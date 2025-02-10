@@ -1,3 +1,118 @@
+import json
+import re
+
+# Sample raw text input
+raw_text = """
+Question Type: Procedural
+
+Question: How do you reconcile NRM, RTS, and SIT data in DMH?
+
+Answer:
+
+#Reconcile NRM, RTS, and SIT Data in DMH
+
+## Introduction
+
+This procedure outlines the steps to reconcile NRM, RTS, and SIT data in DMH, ensuring data consistency and accuracy.
+
+** Prerequisites
+
+Access to DMH.
+
+Previous month's NRM SIT RTS recon file.
+
+## Procedure
+
+### Step 1: Prepare Reconciliation File
+
+1. Copy the NRM SIT RTS recon file of the previous month.
+
+2. Rename it and save it in the applicable working folder for the current month.
+
+3. Update the date to reflect the required report period.
+
+### Step 2: Update Formulas
+
+1. Ensure the formulas in Column E are correct.
+
+2. Verify the data for accuracy and consistency.
+
+*** Step 3: Perform Reconciliation
+
+1. Reconcile the NRM, RTS, and SIT data by comparing the relevant columns and values.
+
+2. Ensure there are no discrepancies between the data sets.
+-------
+
+Question Type: Procedural
+
+Question: How do you download Working Trial Balance Report and Account Position Appraisal Report in CMOD?
+
+Answer:
+
+Download Working Trial Balance Report and Account Position Appraisal Report in CMOD
+
+Introduction
+
+Es procedure outlines the steps to download the Working Trial Balance Report and Account Position Appraisal Report in CMOD.
+
+Prerequisites
+
+Access to CMOD.
+
+Procedure
+
+Step 1: Log in to CMOD
+
+Log in to CMOD.
+
+Select 'Sydney 00 ALL REPORTS and click 'Open'.
+
+Step 2: Search for Reports
+
+Input the fund code, report code (working trial-VM649; APA-VM910), and click search. ! [Screenshot of the software interface showing search criteria and document list.](images/screenshot.png)
+
+*Figure 1: Software interface showing search criteria and document list.*
+
+Step 3: Download Reports
+
+Download the Working Trial Balance Report and Account Position Appraisal Report.
+
+Ensure the reports are for the correct period and have the status "APPROVED".
+"""
+
+# Function to extract questions and answers from raw text and convert them into JSON
+def extract_questions_answers(raw_text):
+    # Regex pattern to capture Question Type, Question, and Answer
+    pattern = re.compile(r"Question Type: (.+?)\nQuestion: (.+?)\nAnswer:\s*(.*?)\n(?=(Question Type:|$))", re.DOTALL)
+
+    # Find all matches
+    matches = pattern.findall(raw_text)
+
+    # Prepare the final JSON structure
+    questions_answers = []
+    for match in matches:
+        question_type, question, answer = match
+        questions_answers.append({
+            "Question Type": question_type.strip(),
+            "Question": question.strip(),
+            "Answer": answer.strip()
+        })
+
+    return questions_answers
+
+# Extract data and convert to JSON
+questions_answers = extract_questions_answers(raw_text)
+json_output = json.dumps(questions_answers, indent=4)
+
+# Print the JSON output
+print(json_output)
+
+
+
+
+
+
 
 import json
 import re
