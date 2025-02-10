@@ -2,6 +2,56 @@ import pandas as pd
 import json
 
 def save_json_to_excel(json_data, file_name="procedural_data.xlsx"):
+    # Ensure the data is a valid list of dictionaries
+    if isinstance(json_data, list) and all(isinstance(i, dict) for i in json_data):
+        # Convert to DataFrame
+        df = pd.DataFrame(json_data)
+        # Save to Excel
+        df.to_excel(file_name, index=False)
+        print(f"JSON saved to {file_name} successfully.")
+    else:
+        print("Error: Provided data is not in the expected format (list of dictionaries).")
+
+# Correct JSON data as a list of dictionaries
+json_data = [
+    {
+        "Question Type": "Procedural",
+        "Question": "How do you ensure the monthly book in MCH has been released?",
+        "Answer": "# Ensure Monthly Book in MCH has been Released\n## Introduction\nThis procedure ensures that the monthly book in MCH has been released correctly."
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "How do you ensure a new fund has been added into Fund Master?",
+        "Answer": "# Ensure New Fund has been Added into Fund Master\n## Introduction\nThis procedure ensures that a new fund is added into the Fund Master correctly."
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "How do you run the job \"AAS_MC_UPDATE_CLIENT_VFMC\" in DMH?",
+        "Answer": "# Run Job \"AAS_MC_UPDATE_CLIENT_VFMC\" in DMH\n## Introduction\nThis procedure outlines the steps to run the job AAS_MC_UPDATE_CLIENT_VFMC in DMH."
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "How do you handle job failures in DMH?",
+        "Answer": "# Handle Job Failures in DMH\n## Introduction\nThis procedure outlines the steps to handle job failures in DMH."
+    }
+]
+
+# Call the function to save the data to Excel
+save_json_to_excel(json_data)
+
+
+
+
+
+
+
+
+
+
+import pandas as pd
+import json
+
+def save_json_to_excel(json_data, file_name="procedural_data.xlsx"):
     # Check if the data is a valid list of dictionaries
     if isinstance(json_data, list) and all(isinstance(i, dict) for i in json_data):
         # Convert the list of dictionaries to a DataFrame
