@@ -1,3 +1,44 @@
+import pandas as pd
+import json
+
+def save_json_to_excel(json_data, file_name="procedural_data.xlsx"):
+    # Check if the data is a valid list of dictionaries
+    if isinstance(json_data, list) and all(isinstance(i, dict) for i in json_data):
+        # Convert the list of dictionaries to a DataFrame
+        df = pd.DataFrame(json_data)
+        # Save to Excel
+        df.to_excel(file_name, index=False)
+        print(f"JSON saved to {file_name} successfully.")
+    else:
+        print("Error: Provided data is not in the expected format (list of dictionaries).")
+
+# Example of how to use the function:
+json_output = [
+    {
+        "Question Type": "Procedural",
+        "Question": "How do you reconcile NRM, RTS, and SIT data in DMH?",
+        "Answer": "Reconcile NRM, RTS, and SIT data in DMH steps..."
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "How do you download Working Trial Balance Report and Account Position Appraisal Report in CMOD?",
+        "Answer": "Steps to download reports from CMOD..."
+    }
+]
+
+# Call the function to save the data to Excel
+save_json_to_excel(json_output)
+
+
+
+
+
+
+
+
+
+
+
 
 import json
 import re
