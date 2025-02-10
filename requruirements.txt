@@ -1,3 +1,102 @@
+# Importing Libraries
+# !pip install pytesseract
+# !pip install opencv-python
+
+import pytesseract 
+import cv2
+# !pip install pdf2image
+from pdf2image import convert_from_path
+import glob
+from PyPDF2 import PdfFileMerger
+import os
+import warnings
+warnings.filterwarnings("ignore")
+
+# Cleaning directories
+def clean_dir():
+    d = "image_path"
+    filesToRemove = [os.path.join(d, f) for f in os.listdir(d)]
+    for f in filesToRemove:
+        os.remove(f)
+
+    d = "pdfs_out_path"
+    filesToRemove = [os.path.join(d, f) for f in os.listdir(d)]
+    for f in filesToRemove:
+        os.remove(f)
+
+# Converting Scanned PDF to searchable PDF
+def create_searchable_pdf(pdf_file):
+    ext = os.path.splitext(pdf_file)
+    filename = ext[0].split("//")[-1]
+    total_images = 0
+
+    # Setting Tesseract path
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+    pdfs = glob.glob(pdf_file)
+    for pdf_path in pdfs:
+        # Converting PDF to images using Poppler
+        pages = convert_from_path(pdf_path, 500, poppler_path=r'C:\Program Files\poppler-0.68.0\bin')
+        for pageNum, imgBlob in enumerate(pages):
+            if not os.path.isdir("image_path/"):
+                os.mkdir("image_path/", mode=0o777)
+            imgBlob.save(f'image_path/{pageNum}_{filename}_image_converted.jpg')
+            total_images += 1
+
+    print(f'PDF file converted to {total_images} images successfully.')
+
+    pdfs = []
+    tessdata_dir_config = '--tessdata-dir "C://Program Files//Tesseract-OCR//tessdata"'
+    for root, dirs, files in os.walk("image_path/"):
+        for file in files:
+            fname = os.path.splitext(file)[0].split("//")[-1]
+            img = cv2.imread(f"image_path/{file}", 1)
+            result = pytesseract.image_to_pdf_or_hocr(img, lang="eng", config=tessdata_dir_config)
+            if not os.path.isdir("pdfs_out_path/"):
+                os.mkdir("pdfs_out_path/", mode=0o777)
+            with open(f"pdfs_out_path/{fname}_searchable_pdf.pdf", "w+b") as f:
+                f.write(bytearray(result))
+            pdfs.append(f"{fname}_searchable_pdf.pdf")
+
+    # Merging individual PDFs
+    merger = PdfFileMerger()
+    for pdf in pdfs:
+        merger.append(f"pdfs_out_path/{pdf}")
+
+    if not os.path.isdir("result/"):
+        os.mkdir("result/", mode=0o777)
+    merger.write(f"result/{filename}_searchable_pdf_from_pdf.pdf")
+    print("Searchable PDF Created Successfully")
+    merger.close()
+    clean_dir()
+
+# Converting scanned image to searchable PDF
+def img_to_searchable_pdf(file):
+    ext = os.path.splitext(file)
+    filename = ext[0].split("//")[-1]
+
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    tessdata_dir_config = '--tessdata-dir "C://Program Files//Tesseract-OCR//tessdata"'
+
+    img = cv2.imread(file, 1)
+    result = pytesseract.image_to_pdf_or_hocr(img, lang="eng", config=tessdata_dir_config)
+    if not os.path.isdir("result/"):
+        os.mkdir("result/", mode=0o777)
+    with open(f"result/{filename}_searchable_pdf_from_image.pdf", "w+b") as f:
+        f.write(bytearray(result))
+    print("Searchable PDF Created Successfully")
+
+# Process for PDF or Image files
+def searchable_pdf_process(file):
+    ext = os.path.splitext(file)
+    if ext[-1].lower() == '.pdf':
+        create_searchable_pdf(file)
+    else:
+        img_to_searchable_pdf(file)
+
+# For scanned PDF
+path = r"c:\Users\subba\OneDrive\Desktop\Certificates_Software\KLU\December 2017.pdf"
+searchable_pdf_process(path)
 
 
 
