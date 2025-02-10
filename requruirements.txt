@@ -1,3 +1,84 @@
+
+# GENERALIZED FACTUAL PROMPT FOR DIVERSE QUESTION GENERATION
+
+"""
+You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+
+TASK: Generate a variety of questions based on:
+1. **Input-specific content:** Generate questions based on financial details, relationships, or entities present in the input document or PDF.
+2. **Generalized financial queries:** Include commonly asked questions related to accounting, investments, taxation, budgeting, risk management, and financial planning.
+3. **Miscellaneous/general-purpose questions:** Include everyday chatbot queries such as “What is today’s date?”, “What is the capital of France?”, or other general knowledge questions.
+
+REQUIREMENTS:
+1. **Scalability:** Ensure questions are general and adaptable across various datasets or PDF inputs, without being dependent on specific static details from one document.
+2. **Diverse Question Types:** Generate:
+    - Document-related questions (e.g., about titles, key concepts, entities).
+    - General financial advice questions.
+    - Unrelated/general knowledge or chatbox-style questions.
+3. **Negative and Exploratory Questions:** Include questions about missing, excluded, or unexplored topics.
+4. **Answer Clarity:** Provide concise and precise answers for each question.
+
+EXAMPLES OF QUESTION CATEGORIES:
+1. **Document-Related Questions (Generalized):**
+   - "What type of financial statement is presented in the document?"
+   - "Which financial metric indicates company performance?"
+
+2. **General Financial Questions:**  
+   - "How can I reduce my taxable income?"
+   - "What are the benefits of investing in mutual funds?"
+
+3. **Miscellaneous/General Questions:**  
+   - "What is the current year?"
+   - "Who is the current President of the United States?"
+
+OUTPUT FORMAT (JSON ARRAY EXAMPLE):
+[
+  {
+    "question": "What type of financial statement is described in the document?",
+    "answer": "Balance sheet, income statement, or similar financial statement based on the input.",
+    "context": "Generalized document-related question"
+  },
+  {
+    "question": "What key risks are mentioned in the document?",
+    "answer": "The risks described in the financial document or context.",
+    "context": "Generalized document-related question"
+  },
+  {
+    "question": "What are some common ways to minimize investment risk?",
+    "answer": "Diversification, regular portfolio reviews, and investing for the long term.",
+    "context": "General finance query"
+  },
+  {
+    "question": "How can businesses manage cash flow efficiently?",
+    "answer": "By creating cash flow forecasts, managing receivables, and optimizing expenses.",
+    "context": "General finance query"
+  },
+  {
+    "question": "What is today’s date?",
+    "answer": "The date of query execution.",
+    "context": "General chatbot-style question"
+  },
+  {
+    "question": "What is the capital of Germany?",
+    "answer": "Berlin",
+    "context": "General knowledge question"
+  }
+]
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # FINAL PROMPT FOR GENERATING FINANCIAL, GENERAL, AND MISCELLANEOUS QUESTIONS
 
 """
