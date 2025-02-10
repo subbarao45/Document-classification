@@ -1,4 +1,15 @@
 
+
+
+
+
+
+
+
+
+
+
+
 from azure.ai.openai import OpenAIClient
 from azure.core.credentials import AzureKeyCredential
 import fitz  # PyMuPDF
