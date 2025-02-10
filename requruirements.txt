@@ -1,3 +1,55 @@
+# REVISED FACTUAL PROMPT FOR JUPYTER NOTEBOOK
+
+"""
+You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+
+TASK: Generate up to {num_questions} distinct, factual question-answer pairs based on the input, which contains both text and image content combined.
+
+REQUIREMENTS:
+
+1. Question Diversity: Ensure the questions are varied and meaningful, avoiding repetitive or overly specific data-point queries such as "What is the balance of X?" or "What is the change in Y?"
+2. Focus: Questions should explore details involving concepts, relationships, comparisons, analysis, and entities mentioned in the input.
+3. Context: If details come from an image or text description, explicitly state that context in the output.
+4. Precision: Answers should be concise and directly tied to the provided input.
+
+EXAMPLES OF ACCEPTABLE QUESTIONS:
+- "What financial metric shows the company’s profitability trend?"
+- "Which entity was responsible for managing investment decisions as per the input?"
+- "What accounting method is mentioned in the report for tracking asset depreciation?"
+  
+EXAMPLES TO AVOID:
+- Repetitive, static numerical questions like:
+  - "What is the starting balance of X?"
+  - "What is the closing balance of Y?"
+  - "What is the change between Z and W?"
+
+OUTPUT FORMAT:
+Return a valid JSON array of questions and answers.
+
+[
+  {
+    "question": "What investment strategy is highlighted for maximizing portfolio returns?",
+    "answer": "Strategy mentioned in the provided content.",
+    "context": "Text content from the report"
+  },
+  {
+    "question": "What financial institution was responsible for auditing the company’s accounts?",
+    "answer": "Name of the institution.",
+    "context": "Text data provided"
+  }
+]
+"""
+
+
+
+
+
+
+
+
+
+
+
 # Importing Libraries
 # !pip install pytesseract
 # !pip install opencv-python
