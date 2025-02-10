@@ -1,3 +1,189 @@
+
+
+
+
+
+
+
+
+
+
+import pytesseract
+import cv2
+from pdf2image import convert_from_path
+from PyPDF2 import PdfMerger
+from PIL import Image
+import os
+import re
+import warnings
+
+warnings.filterwarnings("ignore")
+
+# Set the TESSDATA_PREFIX environment variable
+os.environ["TESSDATA_PREFIX"] = r"C:\Users\P872643\AppData\Local\Programs\Tesseract-OCR\tessdata"
+
+# Cleaning directories
+def clean_dir():
+    dirs = ["image_path", "pdfs_out_path"]
+    for d in dirs:
+        if os.path.exists(d):
+            files_to_remove = [os.path.join(d, f) for f in os.listdir(d)]
+            for f in files_to_remove:
+                os.remove(f)
+
+# Deskew image to correct alignment issues
+def deskew_image(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+    lines = cv2.HoughLines(edges, 1, cv2.HOUGH_GRADIENT, 150)
+    
+    if lines is not None:
+        for rho, theta in lines[0]:
+            angle = (theta * 180 / 3.14159265359) - 90
+            h, w = image.shape[:2]
+            center = (w // 2, h // 2)
+            M = cv2.getRotationMatrix2D(center, angle, 1.0)
+            return cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    return image
+
+# Preprocess image to enhance OCR accuracy
+def preprocess_image(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return thresh
+
+# Correct common OCR errors
+def post_process_text(text):
+    corrections = {
+        r"\b1\b": "I",    # Correct "1" to "I"
+        r"\b0\b": "O"     # Correct "0" to "O"
+    }
+    for pattern, replacement in corrections.items():
+        text = re.sub(pattern, replacement, text)
+    return text
+
+# Convert scanned PDF to a searchable PDF
+def create_searchable_pdf(pdf_file):
+    ext = os.path.splitext(pdf_file)
+    filename = os.path.basename(ext[0])
+    total_images = 0
+
+    # Configure Tesseract
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Users\P872643\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+    tessdata_dir_config = '--tessdata-dir "C:/Users/P872643/AppData/Local/Programs/Tesseract-OCR/tessdata"'
+
+    # Convert PDF pages to images (higher DPI for better quality)
+    pages = convert_from_path(pdf_file, 600, poppler_path=r'C:\Users\P872643\Downloads\poppler-0.68.0\bin')
+    if not os.path.exists("image_path/"):
+        os.mkdir("image_path/")
+
+    # Save and process each page
+    for page_num, img_blob in enumerate(pages):
+        image_path = f"image_path/{page_num}_{filename}_image_converted.jpg"
+        img_blob.save(image_path)
+        total_images += 1
+
+    print(f'PDF file converted to {total_images} images successfully.')
+
+    # Perform OCR on each image and save as individual PDFs
+    if not os.path.exists("pdfs_out_path/"):
+        os.mkdir("pdfs_out_path/")
+    
+    pdfs = []
+    for page_num in range(total_images):
+        image_path = f"image_path/{page_num}_{filename}_image_converted.jpg"
+        img = cv2.imread(image_path, 1)
+        
+        if img is None:
+            raise FileNotFoundError(f"Image not found or cannot read: {image_path}")
+
+        # Deskew and preprocess the image
+        img = deskew_image(img)
+        img = preprocess_image(img)
+
+        # Convert BGR to RGB for pytesseract
+        pil_img = Image.fromarray(img)
+
+        # Perform OCR and generate a searchable PDF
+        result = pytesseract.image_to_pdf_or_hocr(pil_img, lang="eng", config='--oem 1 --psm 6')
+        pdf_path = f"pdfs_out_path/{page_num}_{filename}_searchable.pdf"
+        
+        with open(pdf_path, "w+b") as f:
+            f.write(bytearray(result))
+        
+        pdfs.append(pdf_path)
+
+    # Merge individual searchable PDFs into one
+    merger = PdfMerger()
+    for pdf in pdfs:
+        merger.append(pdf)
+    
+    if not os.path.exists("result/"):
+        os.mkdir("result/")
+    output_file = f"result/{filename}_searchable_pdf_from_pdf.pdf"
+    merger.write(output_file)
+    print(f"Searchable PDF created successfully at {output_file}")
+    merger.close()
+    clean_dir()
+
+# Convert a scanned image to a searchable PDF
+def img_to_searchable_pdf(file):
+    ext = os.path.splitext(file)
+    filename = os.path.basename(ext[0])
+
+    # Configure Tesseract
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Users\P872643\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+    tessdata_dir_config = '--tessdata-dir "C:/Users/P872643/AppData/Local/Programs/Tesseract-OCR/tessdata"'
+
+    # Read and validate image
+    img = cv2.imread(file, 1)
+    if img is None:
+        raise FileNotFoundError(f"Image not found or cannot read: {file}")
+
+    # Deskew and preprocess the image
+    img = deskew_image(img)
+    img = preprocess_image(img)
+
+    # Convert BGR to RGB for pytesseract
+    pil_img = Image.fromarray(img)
+
+    # Perform OCR and create a searchable PDF
+    result = pytesseract.image_to_pdf_or_hocr(pil_img, lang="eng", config='--oem 1 --psm 6')
+    
+    if not os.path.exists("result/"):
+        os.mkdir("result/")
+    output_file = f"result/{filename}_searchable_pdf_from_image.pdf"
+    
+    with open(output_file, "w+b") as f:
+        f.write(bytearray(result))
+    print(f"Searchable PDF created successfully at {output_file}")
+
+# Decide whether to process a PDF or an image
+def searchable_pdf_process(file):
+    ext = os.path.splitext(file)
+    if ext[-1].lower() == '.pdf':
+        create_searchable_pdf(file)
+    else:
+        img_to_searchable_pdf(file)
+
+# Process scanned PDF or image
+path = r"h:\Question and answer Fund accounting (Resubmit_1025)36. VFMC AAS25 SOP 5.0 1.pdf"
+searchable_pdf_process(path)
+
+-->
+
+351
+
+raise DeprecationError(msg)
+
+DeprecationError: PdfFileMerger is deprecated and was removed in PyPDF2 3.0.0. Use PdfMerger instead.
+
+
+
+
+
+
+
 # REVISED FACTUAL PROMPT FOR JUPYTER NOTEBOOK
 
 """
