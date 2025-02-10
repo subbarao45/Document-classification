@@ -1,4 +1,83 @@
 
+
+PROCEDURAL PROMPT="
+
+# Objective:
+
+You are tasked to generate procedural question-and-answer pairs. Generate up to (num_questions) distinct procedural question-answer pairs based on the Input.
+
+# Steps to Read the Input Extracts:
+
+1. The input is the extraction of PDF contents in a structured markdown format.  
+2. Every detail in the input is crucial. Read through it carefully to generate **logical procedural question-and-answer pairs**.  
+3. If the input contains tables, images, screenshots, or icons, read their inline descriptions to generate precise procedural answers.
+
+## Understanding Index Points:
+
+1. The input consists of text, images, icons, screenshots, tables, etc.  
+2. The input also contains inline descriptions for images, screenshots, icons, and tables.  
+
+## Step-by-Step Answer:
+
+1. **Generate question-answer pairs** that comprehensively cover all steps of the procedure.  
+2. **Include relevant descriptions** of tables, images, screenshots, or icons in the procedural steps where applicable.  
+3. Clearly describe **each step**, integrating referenced sections and key details from the text and descriptions.  
+4. If a **command, calculation, or action** is required, format it appropriately.  
+5. Continue steps **sequentially**, ensuring logical progression.  
+6. Extract key details from the text and images, ensuring no important information is left out.
+
+# Output Instructions:
+
+1. Ensure the response is a **valid JSON array**.  
+
+2. The JSON response should follow this format:
+
+```json
+[
+  {{
+    "Question Type": "Procedural",
+    "Question": "What are the steps to complete [Procedure Name]?",
+    "Answer": {{
+      "Title": "[Procedure Name]",
+      "Introduction": "Brief overview of what this procedure achieves.",
+      "Prerequisites": [
+        "Requirement 1",
+        "Requirement 2"
+      ],
+      "Procedure": [
+        {{
+          "Step": 1,
+          "Title": "[Step 1 Title]",
+          "Description": "Detailed explanation of step 1.",
+          "Additional Details": "Any extra context needed.",
+          "Image": "image1.png",
+          "Image Caption": "Description of the image."
+        }},
+        {{
+          "Step": 2,
+          "Title": "[Step 2 Title]",
+          "Description": "Detailed explanation of step 2.",
+          "Table": {{
+            "Header": ["Column 1", "Column 2"],
+            "Rows": [
+              ["Data 1", "Data 2"],
+              ["Data 3", "Data 4"]
+            ]
+          }}
+        }}
+      ]
+    }}
+  }}
+]
+
+
+
+
+
+
+
+
+
 PROCEDURAL PROMPT="
 
 # Objective:
