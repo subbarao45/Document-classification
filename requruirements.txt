@@ -1,3 +1,129 @@
+import os
+import json
+import base64
+import pandas as pd
+from pdf2image import convert_from_path
+from langchain_core.messages import HumanMessage
+from langchain_openai import AzureChatOpenAI
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+
+# Set up Azure OpenAI connection
+azure_openai_api_version = "your_api_version"
+azure_openai_endpoint = "your_endpoint"
+llm = AzureChatOpenAI(
+    temperature=0,
+    top_p=0,
+    api_version=azure_openai_api_version,
+    azure_endpoint=azure_openai_endpoint,
+    deployment_name="ssgpt-40",
+    seed=1
+)
+
+# Define procedural prompt template
+PROCEDURAL_PROMPT = """ 
+#Objective:
+You are tasked to generate a procedural question and answer pairs. Generate up to {num_questions} distinct procedural question-answer pairs based on the Input.
+...
+"""
+
+# Function to extract valid JSON from response
+def extract_valid_json(response):
+    try:
+        json_start = response.find("[")
+        json_end = response.rfind("]")
+        if json_start != -1 and json_end != -1:
+            return json.loads(response[json_start:json_end + 1])
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON detected.")
+    return []
+
+# Function to extract question-answer pairs
+def extract_questions_answers(raw_text):
+    pattern = re.compile(r"(Question Type: .+?) (?=(Question Type: |$))", re.DOTALL)
+    matches = pattern.findall(raw_text)
+    
+    questions_answers = []
+    for match in matches:
+        question_block = match[0].strip()
+        question_type = re.search(r"Question Type: (.+)", question_block)
+        question = re.search(r"Question: (.+)", question_block)
+        answer = re.search(r"Answer:\s*(.+)", question_block, re.DOTALL)
+        
+        questions_answers.append({
+            "Question Type": question_type.group(1).strip() if question_type else "Unknown",
+            "Question": question.group(1).strip() if question else "No Question",
+            "Answer": answer.group(1).strip() if answer else "No Answer"
+        })
+    return questions_answers
+
+# Function to save JSON data to Excel
+def save_json_to_excel(json_data, file_name):
+    if isinstance(json_data, list) and all(isinstance(i, dict) for i in json_data):
+        df = pd.DataFrame(json_data)
+        df.to_excel(file_name, index=False)
+        print(f"JSON saved to {file_name} successfully.")
+    else:
+        print("Error: Provided data is not in the expected format.")
+
+# Function to process PDFs from a directory
+def process_pdfs(root_dir, output_dir, num_questions):
+    os.makedirs(output_dir, exist_ok=True)
+    
+    for root, _, files in os.walk(root_dir):
+        for file in files:
+            if file.endswith(".pdf"):
+                pdf_path = os.path.join(root, file)
+                output_folder = os.path.join(output_dir, os.path.splitext(file)[0])
+                os.makedirs(output_folder, exist_ok=True)
+                
+                print(f"Processing: {pdf_path}")
+                
+                # Convert PDF to images
+                images = convert_from_path(pdf_path, 500, poppler_path=r'C:\Users\P872643\Downloads\poppler-0.68.0\bin')
+                extract_list = []
+                
+                for i, img in enumerate(images):
+                    image_path = os.path.join(output_folder, f"page_{i+1}.png")
+                    img.save(image_path, "PNG")
+                    
+                    with open(image_path, "rb") as image_file:
+                        image_data = base64.b64encode(image_file.read()).decode("utf-8")
+                    
+                    message = HumanMessage(
+                        content=[
+                            {"type": "text", "text": "Extract structured data from this document in markdown format."},
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
+                        ]
+                    )
+                    
+                    response = llm.invoke([message])
+                    extract_list.append(response.content)
+
+                # Generate question-answer pairs
+                formatted_prompt = PROCEDURAL_PROMPT.format(paragraph=extract_list, num_questions=num_questions)
+                llm_chain = LLMChain(llm=llm, prompt=PromptTemplate(input_variables=["paragraph", "num_questions"], template=PROCEDURAL_PROMPT))
+                qa_response = llm_chain.predict(paragraph=extract_list, num_questions=str(num_questions))
+
+                # Extract valid JSON
+                result = extract_valid_json(qa_response)
+                
+                # Save JSON and Excel output
+                json_output_path = os.path.join(output_folder, f"{os.path.splitext(file)[0]}.json")
+                excel_output_path = os.path.join(output_folder, f"{os.path.splitext(file)[0]}.xlsx")
+                
+                with open(json_output_path, "w", encoding="utf-8") as f:
+                    json.dump(result, f, indent=4, ensure_ascii=False)
+                
+                save_json_to_excel(result, excel_output_path)
+
+# Define input directory, output directory, and number of questions
+root_directory = "h:/your_root_directory"
+output_directory = "h:/your_output_directory"
+total_questions = 40  # Set the desired number of questions
+
+# Run the process
+process_pdfs(root_directory, output_directory, total_questions)
 
 
 PROCEDURAL PROMPT="
