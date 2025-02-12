@@ -1,3 +1,23 @@
+def generate_factual_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Factual", total_questions, FACTUAL_PROMPT, chunk_size)
+
+def generate_procedural_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Procedural", total_questions, PROCEDURAL_PROMPT, chunk_size)
+
+def generate_conceptual_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Conceptual", total_questions, CONCEPTUAL_PROMPT, chunk_size)
+
+def generate_inferential_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Inferential", total_questions, INFERENTIAL_PROMPT, chunk_size)
+
+def generate_reasoning_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Reasoning-based", total_questions, REASONING_PROMPT, chunk_size)
+
+
+
+
+
+
 
 {
   "question_type": "Procedural",
