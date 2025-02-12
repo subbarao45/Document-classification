@@ -1,3 +1,65 @@
+
+import fitz  # PyMuPDF
+import os
+from PIL import Image
+import base64
+from langchain.schema import HumanMessage
+from langchain.chat_models import AzureChatOpenAI
+
+def extract_text_from_pdf(pdf_path, output_folder="pdf_images"):
+    os.makedirs(output_folder, exist_ok=True)
+    doc = fitz.open(pdf_path)
+
+    extract_list = ""
+    
+    for i, page in enumerate(doc):
+        pix = page.get_pixmap()
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        image_path = os.path.join(output_folder, f"page_{i+1}.png")
+        img.save(image_path, "PNG")
+        
+        print(f"\n--- Processing Page {i+1} ---\n")
+
+        # Send image to GPT-40
+        with open(image_path, "rb") as image_file:
+            image_data = base64.b64encode(image_file.read()).decode("utf-8")
+
+        message = HumanMessage(
+            content=[
+                {
+                    "type": "text",
+                    "objective": "You are an AI assistant that extracts data from documents and returns them in structured markdown format...",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},
+                }
+            ]
+        )
+
+        # Call GPT-40 using Azure OpenAI
+        llm = AzureChatOpenAI(
+            temperature=0,
+            api_version="your_api_version",
+            azure_endpoint="your_azure_endpoint",
+            deployment_name="ssgpt-40",
+            seed=3
+        )
+
+        response = llm.invoke([message])
+        print("Response:", response)
+
+        extract_list += response.content
+
+    return extract_list
+
+
+
+
+
+
+
+
 Vivek,
 
 I ran the same code today on yesterday's file, but I am getting a different response. How can we resolve this issue where the output changes with each run? Additionally, the results are not as good as yesterday's, even though the previous results were good.
