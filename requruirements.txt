@@ -1,4 +1,94 @@
 import json
+import re
+
+def clean_json_response(response):
+    """
+    Cleans an LLM response that contains improperly formatted JSON.
+    Extracts and returns a properly formatted dictionary or list.
+    """
+
+    if isinstance(response, dict):
+        return response  # Already a dictionary, return as is
+
+    if not isinstance(response, str):
+        print("❌ Unsupported data type, returning as is.")
+        return response  # Return as is if it's neither string nor dict
+
+    try:
+        # Try parsing directly
+        return json.loads(response)
+    except json.JSONDecodeError:
+        print("❌ Invalid JSON format, attempting cleanup...")
+
+        # 1️⃣ Remove any unwanted characters (like extra backticks or non-JSON content)
+        response = response.strip("```json").strip("```").strip()
+
+        # 2️⃣ Extract JSON objects manually using regex
+        json_match = re.search(r"(\{.*\}|\[.*\])", response, re.DOTALL)
+
+        if json_match:
+            json_data = json_match.group(1)
+            try:
+                return json.loads(json_data)  # Try parsing extracted JSON
+            except json.JSONDecodeError:
+                print("❌ Cleanup failed, returning as raw string.")
+                return response  # Return raw response if parsing fails
+
+    return response  # If everything fails, return original response
+
+
+def generate_questions(paragraph, question_type, num_questions, prompt_template, llm):
+    """
+    Generates questions using an LLM based on the given prompt template.
+    Ensures JSON response is properly parsed.
+    """
+
+    # Create the prompt template
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions", "question_type"],
+        template=prompt_template
+    )
+
+    # Fill the prompt using format
+    fill_prompt = prompt.format(
+        paragraph=paragraph, 
+        num_questions=num_questions, 
+        question_type=question_type
+    )
+
+    print(f"✅ Generated Prompt: \n{fill_prompt}")
+
+    # Create the LLM chain
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        # Call LLM to generate questions
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions),
+            question_type=str(question_type)
+        )
+
+        # Ensure response is valid JSON
+        processed_response = clean_json_response(response)
+
+        print(f"✅ LLM Processed Response: {processed_response}")
+
+        return processed_response
+
+    except Exception as e:
+        print(f"❌ Error generating questions: {e}")
+        return []
+
+
+
+
+
+
+
+
+
+import json
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
