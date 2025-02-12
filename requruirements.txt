@@ -1,3 +1,12 @@
+Vivek,
+
+I ran the same code today on yesterday's file, but I am getting a different response. How can we resolve this issue where the output changes with each run? Additionally, the results are not as good as yesterday's, even though the previous results were good.
+
+
+
+
+
+
 
 import json
 import re
