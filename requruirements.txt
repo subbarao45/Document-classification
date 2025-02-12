@@ -1,3 +1,52 @@
+
+{
+  "question_type": "Procedural",
+  "question": "How do you reset a user's password in the system?",
+  "answer": {
+    "introduction": "Resetting a user's password is required when they forget it or for security reasons.",
+    "prerequisites": [
+      "Administrator access to the system.",
+      "User's registered email or username."
+    ],
+    "procedure": {
+      "step_1": {
+        "title": "Navigate to Password Reset",
+        "steps": [
+          "Log into the admin panel.",
+          "Go to 'User Management' and select 'Reset Password'."
+        ]
+      },
+      "step_2": {
+        "title": "Reset and Notify User",
+        "steps": [
+          "Enter the user's email or username.",
+          "Generate a new password or send a reset link.",
+          "Notify the user via email."
+        ],
+        "example_email_format": {
+          "subject": "Password Reset Request",
+          "body": "Dear User,\n\nYour password has been reset successfully. Use the link below to set a new password:\n[Reset Link]\n\nBest Regards,\nSupport Team"
+        }
+      }
+    },
+    "example_output_format": {
+      "user_id": "12345",
+      "status": "Password reset successfully",
+      "reset_link": "https://example.com/reset-password"
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
 import os
 import json
 import base64
