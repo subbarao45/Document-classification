@@ -1,3 +1,191 @@
+import os
+import json
+import base64
+import pandas as pd
+import dotenv
+import math
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pdf2image import convert_from_path
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain_core.messages import HumanMessage
+from langchain_openai import AzureChatOpenAI
+
+# Load environment variables
+dotenv.load_dotenv()
+
+# Define Azure OpenAI configuration (Update these with your actual values)
+azure_openai_api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+
+# Define prompts for each question type
+FACTUAL_PROMPT = "Generate factual questions based on the given paragraph."
+PROCEDURAL_PROMPT = "Generate procedural questions based on the given paragraph."
+CONCEPTUAL_PROMPT = "Generate conceptual questions based on the given paragraph."
+INFERENTIAL_PROMPT = "Generate inferential questions based on the given paragraph."
+REASONING_PROMPT = "Generate reasoning-based questions based on the given paragraph."
+
+# Utility Functions
+def extract_valid_json(response):
+    """Extract valid JSON from a response string."""
+    try:
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+        if json_start != -1 and json_end != -1:
+            return json.loads(response[json_start:json_end + 1])
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON detected.")
+    return []
+
+def save_to_excel(questions_and_answers, output_file):
+    """Save questions and answers to an Excel file."""
+    if questions_and_answers:
+        df = pd.DataFrame(questions_and_answers)
+        df.to_excel(output_file, index=False)
+        print(f"Questions and answers saved to {output_file}.")
+    else:
+        print(f"No data to save for {output_file}.")
+
+def remove_duplicates(questions):
+    """Remove duplicate questions."""
+    if not questions:
+        return []
+    seen = set()
+    unique_questions = []
+    for question in questions:
+        if question["question"] not in seen:
+            unique_questions.append(question)
+            seen.add(question["question"])
+    return unique_questions
+
+# PDF Processing
+def extract_text_from_pdf(pdf_path, output_folder="pdf_images"):
+    """Extract text from a PDF by converting it to images and using GPT to process images."""
+    os.makedirs(output_folder, exist_ok=True)
+    
+    # Convert PDF to images
+    images = convert_from_path(pdf_path, 500)
+    extract_list = ""
+
+    for i, img in enumerate(images):
+        image_path = os.path.join(output_folder, f"page_{i+1}.png")
+        img.save(image_path, "PNG")
+        print(f"\n--- Processing Page {i+1} ---\n")
+
+        # Read and encode the image
+        with open(image_path, "rb") as image_file:
+            image_data = base64.b64encode(image_file.read()).decode("utf-8")
+
+        # Process image with GPT
+        llm = AzureChatOpenAI(temperature=0, api_version=azure_openai_api_version, azure_endpoint=azure_openai_endpoint)
+        message = HumanMessage(content=[
+            {"type": "text", "text": "Extract structured data from this image."},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
+        ])
+
+        response = llm.invoke([message])
+        extract_list += response.content
+
+    return extract_list
+
+# Question Generation Functions
+def generate_questions(paragraph, question_type, num_questions, prompt_template):
+    """Generate questions using LLM based on a specific type."""
+    prompt = PromptTemplate(input_variables=["paragraph", "num_questions", "question_type"], template=prompt_template)
+    formatted_prompt = prompt.format(paragraph=paragraph, num_questions=num_questions, question_type=question_type)
+
+    llm = AzureChatOpenAI(temperature=0, api_version=azure_openai_api_version, azure_endpoint=azure_openai_endpoint)
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        response = llm_chain.predict(paragraph=paragraph, num_questions=str(num_questions), question_type=str(question_type))
+        return extract_valid_json(response)
+    except Exception as e:
+        print(f"Error generating questions: {e}")
+        return []
+
+def generate_questions_in_chunks(paragraph, question_type, total_questions, prompt_template, chunk_size=10):
+    """Generate questions in chunks to handle large inputs."""
+    all_questions = []
+    for i in range(0, total_questions, chunk_size):
+        try:
+            chunk_questions = generate_questions(
+                paragraph, question_type, min(chunk_size, total_questions - i), prompt_template
+            )
+            all_questions.extend(chunk_questions)
+        except Exception as e:
+            print(f"Error generating chunk for {question_type}: {e}")
+    return all_questions
+
+# Individual Modules for Each Question Type
+def generate_factual_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Factual", total_questions, FACTUAL_PROMPT, chunk_size)
+
+def generate_procedural_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Procedural", total_questions, PROCEDURAL_PROMPT, chunk_size)
+
+def generate_conceptual_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Conceptual", total_questions, CONCEPTUAL_PROMPT, chunk_size)
+
+def generate_inferential_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Inferential", total_questions, INFERENTIAL_PROMPT, chunk_size)
+
+def generate_reasoning_questions(paragraph, total_questions, chunk_size=10):
+    return generate_questions_in_chunks(paragraph, "Reasoning-based", total_questions, REASONING_PROMPT, chunk_size)
+
+# Master Function to Call Specific Modules
+def generate_questions_by_type(paragraph, question_type, total_questions, chunk_size=10):
+    question_functions = {
+        "Factual": generate_factual_questions,
+        "Procedural": generate_procedural_questions,
+        "Conceptual": generate_conceptual_questions,
+        "Inferential": generate_inferential_questions,
+        "Reasoning-based": generate_reasoning_questions,
+    }
+
+    if question_type not in question_functions:
+        print(f"Error: {question_type} is not a valid question type.")
+        return []
+
+    print(f"Generating {total_questions} {question_type} questions...")
+    return question_functions[question_type](paragraph, total_questions, chunk_size)
+
+# Main Processing Function
+def process_pdfs_in_subdirectories(root_directory, total_questions=10, chunk_size=10, output_folder="output", question_type=None):
+    """Processes all PDFs and generates specific or all question types."""
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for dirpath, _, filenames in os.walk(root_directory):
+        for filename in filenames:
+            if filename.endswith('.pdf'):
+                pdf_path = os.path.join(dirpath, filename)
+
+                try:
+                    print(f"Processing: {pdf_path}")
+                    pdf_text = extract_text_from_pdf(pdf_path)
+
+                    if question_type:
+                        questions_and_answers = generate_questions_by_type(pdf_text, question_type, total_questions, chunk_size)
+                    else:
+                        questions_and_answers = generate_questions_by_all_types(pdf_text, total_questions, chunk_size)
+
+                    relative_path = os.path.relpath(pdf_path, root_directory)
+                    output_file = os.path.join(output_folder, relative_path.replace(".pdf", "_questions.xlsx"))
+
+                    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                    save_to_excel(questions_and_answers, output_file)
+
+                except Exception as e:
+                    print(f"Error processing {pdf_path}: {e}")
+
+
+
+
+
+
+
+
 def generate_factual_questions(paragraph, total_questions, chunk_size=10):
     return generate_questions_in_chunks(paragraph, "Factual", total_questions, FACTUAL_PROMPT, chunk_size)
 
