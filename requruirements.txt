@@ -1,3 +1,132 @@
+
+import json
+import re
+
+def ensure_valid_json(response):
+    """
+    Ensures the response is valid JSON.
+    - If it's a JSON string, convert it to a Python object.
+    - If it's already a dictionary or list, return as is.
+    - If malformed, attempt to extract valid JSON from it.
+    """
+    if isinstance(response, (dict, list)):
+        return response  # Already valid JSON
+
+    elif isinstance(response, str):
+        try:
+            return json.loads(response)  # Directly parse JSON string
+        except json.JSONDecodeError:
+            print("⚠ Warning: Malformed JSON detected, attempting cleanup.")
+            extracted_json = extract_json_from_text(response)
+            if extracted_json:
+                return extracted_json
+
+            print("❌ Failed to recover JSON, returning raw response.")
+            return {"error": "Invalid JSON", "raw_response": response}
+
+    else:
+        print("❌ Unsupported response type, returning raw response.")
+        return {"error": "Unsupported response type", "raw_response": response}
+
+def extract_json_from_text(response_text):
+    """
+    Extracts valid JSON from text if the response contains extra content.
+    Handles cases where JSON is wrapped in Markdown or has extra text.
+    """
+    try:
+        # Look for JSON inside ```json\n ... \n``` blocks
+        json_match = re.search(r'```json\n([\s\S]+?)\n```', response_text)
+        if json_match:
+            json_str = json_match.group(1).strip()
+        else:
+            json_str = response_text.strip()
+
+        # Attempt to parse extracted JSON
+        return json.loads(json_str)
+    
+    except json.JSONDecodeError:
+        print("⚠ Warning: Failed to extract valid JSON.")
+        return None
+
+def post_process_questions(response):
+    """
+    Processes and cleans up the JSON response from `generate_questions()`
+    - Ensures valid JSON
+    - Extracts structured questions
+    - Handles malformed JSON, extra text, and nested structures
+    """
+    processed_response = ensure_valid_json(response)
+
+    if isinstance(processed_response, str):
+        print(f"⚠ Warning: Received a raw string response: {processed_response}")
+        return []
+
+    questions_list = []
+
+    # If response is a list of Q&A pairs
+    if isinstance(processed_response, list):
+        for qa in processed_response:
+            question_text = qa.get("question", "N/A").strip()
+            answer_text = qa.get("answer", "N/A")
+
+            if isinstance(answer_text, dict):  # Handle structured answers
+                formatted_answer = format_complex_answer(answer_text)
+            else:
+                formatted_answer = str(answer_text).strip()
+
+            questions_list.append({
+                "Question": question_text,
+                "Answer": formatted_answer,
+                "Question Type": qa.get("question_type", "Unknown")
+            })
+
+    elif isinstance(processed_response, dict):
+        # If response is a single dictionary instead of a list
+        question_text = processed_response.get("question", "N/A").strip()
+        answer_text = processed_response.get("answer", "N/A")
+
+        formatted_answer = format_complex_answer(answer_text) if isinstance(answer_text, dict) else str(answer_text).strip()
+
+        questions_list.append({
+            "Question": question_text,
+            "Answer": formatted_answer,
+            "Question Type": processed_response.get("question_type", "Unknown")
+        })
+
+    return questions_list
+
+def format_complex_answer(answer_dict):
+    """
+    Converts complex structured answers into a readable format.
+    Handles nested steps, images, and descriptions.
+    """
+    formatted_answer = ""
+
+    for key, value in answer_dict.items():
+        if isinstance(value, str):
+            formatted_answer += f"**{key}:** {value}\n"
+        elif isinstance(value, list):
+            formatted_answer += f"**{key}:**\n"
+            for item in value:
+                if isinstance(item, str):
+                    formatted_answer += f"- {item}\n"
+                elif isinstance(item, dict):  # Handle nested dictionaries
+                    for sub_key, sub_value in item.items():
+                        formatted_answer += f"  - **{sub_key}:** {sub_value}\n"
+        elif isinstance(value, dict):
+            formatted_answer += f"**{key}:**\n"
+            for sub_key, sub_value in value.items():
+                formatted_answer += f"  - **{sub_key}:** {sub_value}\n"
+
+    return formatted_answer.strip()
+
+
+
+
+
+
+
+
 import json
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
