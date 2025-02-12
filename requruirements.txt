@@ -1,4 +1,153 @@
 import json
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+
+def ensure_dict(response):
+    """
+    Ensures the response is a dictionary or list.
+    If it's a JSON string, convert it.
+    If it's already a dictionary or list, return it as is.
+    Otherwise, return as a raw string.
+    """
+    if isinstance(response, (dict, list)):  # If response is already valid
+        return response  
+    elif isinstance(response, str):  
+        try:
+            return json.loads(response)  # Convert JSON string to Python object
+        except json.JSONDecodeError:
+            print("❌ Cleanup failed, returning as raw string.")
+            return response  # Return as a raw string if JSON parsing fails
+    else:
+        print("❌ Unsupported response type, returning as is.")
+        return response  # Return as is if it's neither string nor dict
+
+def extract_questions(response):
+    """
+    Extracts questions from a structured LLM response.
+    Supports different formats, including:
+    - Simple Q&A format
+    - Nested answers (procedures, steps, images)
+    - Invalid JSON handling
+    """
+    processed_response = ensure_dict(response)
+
+    if isinstance(processed_response, str):
+        print(f"⚠ Warning: Received a raw string response instead of structured data: {processed_response}")
+        return []
+
+    questions_list = []
+
+    # If the response is a list of dictionaries (standard case)
+    if isinstance(processed_response, list):
+        for qa in processed_response:
+            question_text = qa.get("question", "N/A").strip()
+            answer_text = qa.get("answer", "N/A")
+
+            # Handle complex answer structures (e.g., Procedures, Steps, Images)
+            if isinstance(answer_text, dict):
+                formatted_answer = format_complex_answer(answer_text)
+            else:
+                formatted_answer = str(answer_text).strip()
+
+            questions_list.append({
+                "Question": question_text,
+                "Answer": formatted_answer,
+                "Question Type": qa.get("question_type", "Unknown")
+            })
+
+    elif isinstance(processed_response, dict):  
+        # If response is a single dictionary instead of a list
+        question_text = processed_response.get("question", "N/A").strip()
+        answer_text = processed_response.get("answer", "N/A")
+
+        formatted_answer = format_complex_answer(answer_text) if isinstance(answer_text, dict) else str(answer_text).strip()
+
+        questions_list.append({
+            "Question": question_text,
+            "Answer": formatted_answer,
+            "Question Type": processed_response.get("question_type", "Unknown")
+        })
+
+    return questions_list
+
+def format_complex_answer(answer_dict):
+    """
+    Converts complex structured answers into readable format.
+    Handles nested steps, images, and descriptions.
+    """
+    formatted_answer = ""
+
+    for key, value in answer_dict.items():
+        if isinstance(value, str):
+            formatted_answer += f"**{key}:** {value}\n"
+        elif isinstance(value, list):
+            formatted_answer += f"**{key}:**\n"
+            for item in value:
+                if isinstance(item, str):
+                    formatted_answer += f"- {item}\n"
+                elif isinstance(item, dict):  # Handle images, descriptions, or other metadata
+                    for sub_key, sub_value in item.items():
+                        formatted_answer += f"  - **{sub_key}:** {sub_value}\n"
+        elif isinstance(value, dict):
+            formatted_answer += f"**{key}:**\n"
+            for sub_key, sub_value in value.items():
+                formatted_answer += f"  - **{sub_key}:** {sub_value}\n"
+
+    return formatted_answer.strip()
+
+def generate_questions(paragraph, question_type, num_questions, prompt_template, llm):
+    """
+    Generates questions using an LLM based on the given prompt template.
+    Handles complex and nested JSON responses.
+    """
+
+    # Create the prompt template
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions", "question_type"],
+        template=prompt_template
+    )
+
+    # Fill the prompt using format
+    fill_prompt = prompt.format(
+        paragraph=paragraph, 
+        num_questions=num_questions, 
+        question_type=question_type
+    )
+
+    print(f"✅ Generated Prompt: \n{fill_prompt}")
+
+    # Create the LLM chain
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        # Call LLM to generate questions
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions),
+            question_type=str(question_type)
+        )
+
+        print(f"✅ Raw LLM Response: {response}")
+
+        # Process and extract valid questions
+        questions = extract_questions(response)
+
+        print(f"✅ Extracted Questions: {questions}")
+
+        return questions
+
+    except Exception as e:
+        print(f"❌ Error generating questions: {e}")
+        return []
+
+
+
+
+
+
+
+
+import json
 import re
 
 def clean_json_response(response):
