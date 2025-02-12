@@ -1,3 +1,54 @@
+def generate_questions_by_type(paragraph, question_type, total_questions, chunk_size=10):
+    question_functions = {
+        "Factual": generate_factual_questions,
+        "Procedural": generate_procedural_questions,
+        "Conceptual": generate_conceptual_questions,
+        "Inferential": generate_inferential_questions,
+        "Reasoning-based": generate_reasoning_questions,
+    }
+
+    question_type = question_type.strip().capitalize()
+
+    if question_type not in question_functions:
+        print(f"❌ Error: {question_type} is not a valid question type.")
+        return []
+
+    print(f"✅ Generating {total_questions} {question_type} questions...")
+    questions = question_functions[question_type](paragraph, total_questions, chunk_size)
+
+    if not questions:
+        print(f"❌ No questions generated for {question_type}.")
+        return []
+
+    formatted_questions = []
+    
+    # 🔹 Process and format each question-answer pair
+    for qa in questions:
+        question_text = qa.get("question", "N/A")
+        answer_text = qa.get("answer", "N/A")
+
+        formatted_questions.append({
+            "Question Type": question_type,
+            "Question": question_text,
+            "Answer": answer_text,
+            # "Question Length (Chars)": len(question_text),
+            # "Answer Length (Chars)": len(str(answer_text)) if isinstance(answer_text, str) else 0,
+            # "Question Tokens": calculate_tokens(question_text),
+            # "Answer Tokens": calculate_tokens(answer_text) if isinstance(answer_text, str) else 0,
+        })
+
+    print(f"\n🔍 Generated Questions:\n", formatted_questions)  # Print formatted questions
+
+    return formatted_questions
+
+
+
+
+
+
+
+
+
 import os
 import json
 import base64
