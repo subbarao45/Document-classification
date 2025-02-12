@@ -1,3 +1,84 @@
+import json
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+
+def ensure_dict(response):
+    """
+    Ensures the response is a dictionary.
+    If it's a JSON string, convert it.
+    If it's already a dictionary, return it as is.
+    """
+    if isinstance(response, dict):
+        return response  # Already a dictionary, return as is
+    elif isinstance(response, str):  
+        try:
+            return json.loads(response)  # Convert JSON string to dictionary
+        except json.JSONDecodeError:
+            print("❌ Invalid JSON format, returning as string.")
+            return response  # Keep it as a string if conversion fails
+    else:
+        print("❌ Unsupported data type, returning as is.")
+        return response  # Return as is if it's neither string nor dict
+
+def extract_valid_json(response):
+    """Extract valid JSON from a response string."""
+    try:
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+        if json_start != -1 and json_end != -1:
+            return json.loads(response[json_start:json_end + 1])
+    except json.JSONDecodeError:
+        print("❌ Invalid JSON detected.")
+    return []
+
+def generate_questions(paragraph, question_type, num_questions, prompt_template, llm):
+    """
+    Generates questions using an LLM based on the given prompt template.
+    Ensures JSON response is properly parsed.
+    """
+
+    # Create the prompt template
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions", "question_type"],
+        template=prompt_template
+    )
+
+    # Fill the prompt using format
+    fill_prompt = prompt.format(
+        paragraph=paragraph, 
+        num_questions=num_questions, 
+        question_type=question_type
+    )
+
+    print(f"✅ Generated Prompt: \n{fill_prompt}")
+
+    # Create the LLM chain
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        # Call LLM to generate questions
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions),
+            question_type=str(question_type)
+        )
+
+        # Ensure response is a valid dictionary
+        processed_response = ensure_dict(response)
+
+        print(f"✅ LLM Response: {processed_response}")
+
+        return processed_response
+
+    except Exception as e:
+        print(f"❌ Error generating questions: {e}")
+        return []
+
+
+
+
+
+
 def generate_questions_by_type(paragraph, question_type, total_questions, chunk_size=10):
     question_functions = {
         "Factual": generate_factual_questions,
