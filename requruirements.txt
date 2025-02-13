@@ -1,3 +1,77 @@
+import json
+
+def extract_valid_json(response):
+    """Extract and fix malformed JSON from an LLM response."""
+    try:
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+
+        if json_start != -1 and json_end != -1:
+            json_text = response[json_start:json_end + 1]
+
+            # ✅ Fix unclosed JSON by ensuring all brackets are balanced
+            if json_text.count('{') > json_text.count('}'):
+                json_text += '}' * (json_text.count('{') - json_text.count('}'))
+
+            if json_text.count('[') > json_text.count(']'):
+                json_text += ']' * (json_text.count('[') - json_text.count(']'))
+
+            return json.loads(json_text)  # ✅ Parse JSON safely
+
+        else:
+            print("⚠ Warning: No valid JSON detected in response.")
+            return []
+
+    except json.JSONDecodeError as e:
+        print(f"❌ Error: Invalid JSON detected. Reason: {e}")
+
+        # ✅ Attempt a partial recovery: Extract JSON-like parts
+        try:
+            fixed_json = json.loads(json_text + ']}')  # Try closing brackets
+            print("✅ Fixed JSON automatically.")
+            return fixed_json
+        except:
+            return []
+
+
+
+
+
+
+def generate_questions(paragraph, num_questions, prompt_template):
+    """Generate questions and answers while ensuring proper JSON formatting."""
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions"],
+        template=prompt_template
+    )
+
+    formatted_prompt = prompt.format(paragraph=paragraph, num_questions=num_questions)
+
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions)
+        )
+
+        print(f"\n📝 Raw LLM Response:\n{response}")  # ✅ Log response before JSON parsing
+
+        questions = extract_valid_json(response)
+
+        if not questions:
+            print(f"⚠ Warning: No questions generated. Response was:\n{response}")
+
+        return questions
+    except Exception as e:
+        print(f"❌ Error generating questions: {e}")
+        return []
+
+
+
+
+
+
 def generate_questions(paragraph, num_questions, prompt_template):
     """Generate questions and answers."""
     prompt = PromptTemplate(
