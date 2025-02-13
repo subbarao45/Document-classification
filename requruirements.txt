@@ -16,6 +16,80 @@ def extract_valid_json(response):
             # Remove extra commas before closing brackets
             json_text = re.sub(r',\s*}', '}', json_text)
             json_text = re.sub(r',\s*\]', ']', json_text)
+
+            # Remove unwanted control characters
+            json_text = re.sub(r'[\x00-\x1F\x7F]', '', json_text)
+
+            # Attempt to parse the fixed JSON
+            parsed_json = json.loads(json_text)
+
+            # Filter out invalid or incomplete questions and half answers
+            filtered_json = []
+            for item in parsed_json:
+                question = item.get("Question", "").strip()
+                answer = item.get("Answer", "").strip()
+
+                # Skip questions with incomplete or half answers
+                if question and answer and len(answer.split()) > 5:  # Ensure answer has enough content
+                    # Ensure the question ends with a proper punctuation
+                    if question[-1] not in ['?', '.']:
+                        print(f"Warning: Skipping incomplete question: {question}")
+                    else:
+                        filtered_json.append(item)
+                else:
+                    print(f"Warning: Skipping question with incomplete or too short answer: {question}")
+
+            return filtered_json
+
+        else:
+            print("Warning: No valid JSON detected in response.")
+            return []
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON detected. Reason: {e}")
+        return []
+
+# Sample usage:
+response = """[{
+    "Question": "What is the purpose of the Global Delivery Standard Operating Procedure (GD SOP) Template",
+    "Answer": "# Purpose of the GD SOP Template\n\n## Introduction..."
+}, {
+    "Question": "How to reconcile NRM, RTS, and SIT data?",
+    "Answer": "# Reconciling NRM, RTS, and SIT Data\n\n## Introduction\nThis procedure outlines..."
+}, {
+    "Question": "What is the system error handling process?",
+    "Answer": ""
+}, {
+    "Question": "How to monitor job performance?",
+    "Answer": "Use the monitoring dashboard to check for anomalies."
+}]"""
+
+# Call the function
+valid_json = extract_valid_json(response)
+print(valid_json)
+
+
+
+
+
+
+import json
+import re
+
+def extract_valid_json(response):
+    """Extract and fix malformed JSON from an LLM response."""
+    try:
+        # Find the JSON array within the response
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+
+        if json_start != -1 and json_end != -1:
+            # Extract the portion of the string that is supposed to be JSON
+            json_text = response[json_start:json_end + 1]
+
+            # Fix common issues in malformed JSON:
+            # Remove extra commas before closing brackets
+            json_text = re.sub(r',\s*}', '}', json_text)
+            json_text = re.sub(r',\s*\]', ']', json_text)
             json_text = re.sub(r',\s*\}', '}', json_text)
             
             # Handle unterminated strings (e.g., missing closing quotes)
