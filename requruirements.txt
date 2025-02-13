@@ -1,3 +1,53 @@
+import json
+import re
+
+def extract_valid_json(response):
+    """Extract and fix malformed JSON from an LLM response."""
+    try:
+        # Find the JSON array within the response
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+
+        if json_start != -1 and json_end != -1:
+            # Extract the portion of the string that is supposed to be JSON
+            json_text = response[json_start:json_end + 1]
+
+            # Fix common issues in malformed JSON:
+            # Remove extra commas before closing brackets
+            json_text = re.sub(r',\s*}', '}', json_text)
+            json_text = re.sub(r',\s*\]', ']', json_text)
+            json_text = re.sub(r',\s*\}', '}', json_text)
+            
+            # Handle unterminated strings (e.g., missing closing quotes)
+            json_text = re.sub(r'(\w+)\s*[:]\s*(\w+)', r'"\1": "\2"', json_text)
+
+            # Remove unwanted control characters that may appear
+            json_text = re.sub(r'[\x00-\x1F\x7F]', '', json_text)
+
+            # Attempt to parse the fixed JSON
+            return json.loads(json_text)
+        else:
+            print("Warning: No valid JSON detected in response.")
+            return []
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON detected. Reason: {e}")
+        return []
+
+# Sample usage:
+response = """[{
+    "Question": "What is the purpose of the Global Delivery Standard Operating Procedure (GD SOP) Template",
+    "Answer": "# Purpose of the GD SOP Template\n\n## Introduction..."
+}]"""
+
+# Call the function
+valid_json = extract_valid_json(response)
+print(valid_json)
+
+
+
+
+
+
 
 # Objective:
 
