@@ -1,3 +1,56 @@
+def generate_questions(paragraph, question_type, num_questions, prompt_template):
+    """Generate questions and answers for a specific type."""
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions"],
+        template=prompt_template
+    )
+
+    formatted_prompt = prompt.format(paragraph=paragraph, num_questions=num_questions)
+
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions)
+        )
+        questions = extract_valid_json(response)
+
+        if not questions:
+            print(f"⚠ Warning: No questions generated for {question_type}. Response was:\n{response}")
+
+        return questions
+    except Exception as e:
+        print(f"❌ Error generating {question_type} questions: {e}")
+        return []
+
+
+
+
+
+def extract_valid_json(response):
+    """Extract valid JSON from a response string, handling errors gracefully."""
+    try:
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+        if json_start != -1 and json_end != -1:
+            json_text = response[json_start:json_end + 1]
+            return json.loads(json_text)  # ✅ Properly parse JSON
+        else:
+            print("⚠ Warning: No valid JSON detected in response.")
+            return []
+    except json.JSONDecodeError as e:
+        print(f"❌ Error: Invalid JSON detected. Reason: {e}")
+        return []
+
+
+
+
+
+
+
+
+
 def remove_duplicates(questions):
     """Removes duplicate questions while retaining question type and counting occurrences."""
     if not questions:
