@@ -27,6 +27,60 @@ You are tasked to generate procedural question-answer pairs. Generate up to (num
 # Output Format:
 
 - The response **must be a valid JSON array**.
+- Each **Question-Answer pair must be enclosed in curly brackets `{}`**.
+- The JSON array must be enclosed in square brackets `[]`.
+- Each **Answer must follow Markdown formatting**.
+
+**Expected JSON Output Format:**
+
+```json
+[
+  {
+    "Question": "What is the purpose of the Global Delivery Standard Operating Procedure?",
+    "Answer": "# Purpose of the GD SOP Template\n\n## Introduction\n\nThe Global Delivery Standard Operating Procedure (GD SOP) outlines the key steps and guidelines..."
+  },
+  {
+    "Question": "What are the steps involved in DMH Data Maintenance for the AAS25 procedure?",
+    "Answer": "# DMH Data Maintenance for AAS25 Procedure\n\n## Introduction\n\nThis procedure ensures accurate data handling for AAS25...\n\n## Prerequisites\n\n- Access to DMH system\n- Required input files...\n\n## Procedure\n\n### Step 1: Prepare Reconciliation File\n\n1. Copy the NRM SIT RTS recon file from the previous month.\n2. Rename and save it in the applicable folder for the current month.\n\n### Step 2: Update Formulas\n\n1. Ensure formulas in Column E are accurate.\n\n![NRM SIT RTS summary](images/nrm_sit_rts_summary.png) *Figure 1: NRM SIT RTS summary overview.*\n\n### Step 3: Reconcile NRM Data\n\n1. Open the NRM file.\n2. Filter by 'Transaction Type' in Column V and select 'Total'.\n3. Subtotal columns A1-AZ.\n4. Input totals into the reconciliation template in Column D...\n\n### Step 4: Final Review\n\n1. Verify data consistency.\n2. Submit the finalized reconciliation report."
+  }
+]
+
+
+
+
+
+
+
+
+# Objective:
+
+You are tasked to generate procedural question-answer pairs. Generate up to (num_questions) distinct procedural question-answer pairs based on the Input.
+
+# Steps to read the Input extracts:
+
+1. The input is an extraction of PDF contents in a structured markdown format.
+2. Every detail present in the input is very important. Read through the input carefully to generate logical procedural question-answer pairs.
+3. Read the descriptions of tables, images, and screenshots to generate logical procedural answers.
+
+## Understanding Index Points:
+
+1. The input consists of structured text, images, icons, screenshots, and tables.
+2. Inline descriptions for images, screenshots, icons, and tables are also included.
+
+**Input:**
+{paragraph}
+
+## Step-by-Step Answer Generation:
+
+1. Generate question-answer pairs covering all steps in the procedure.
+2. If tables, images, screenshots, or icons are relevant to the procedural steps, include their descriptions within the steps.
+3. Clearly describe each step, referencing sections, tables, and key details.
+4. Integrate relevant notes, calculations, or field names to provide context in procedural answers.
+5. Ensure a logical step-by-step progression.
+
+# Output Format:
+
+- The response **must be a valid JSON array**.
 - Each question-answer pair must follow this format:
 
 [
