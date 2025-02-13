@@ -1,3 +1,57 @@
+# Objective:
+
+You are tasked to generate procedural question-answer pairs. Generate up to (num_questions) distinct procedural question-answer pairs based on the Input.
+
+# Steps to read the Input extracts:
+
+1. The input is an extraction of PDF contents in a structured markdown format.
+2. Every detail present in the input is very important. Read through the input carefully to generate logical procedural question-answer pairs.
+3. Read the descriptions of tables, images, and screenshots to generate logical procedural answers.
+
+## Understanding Index Points:
+
+1. The input consists of structured text, images, icons, screenshots, and tables.
+2. Inline descriptions for images, screenshots, icons, and tables are also included.
+
+**Input:**
+{paragraph}
+
+## Step-by-Step Answer Generation:
+
+1. Generate question-answer pairs covering all steps in the procedure.
+2. If tables, images, screenshots, or icons are relevant to the procedural steps, include their descriptions within the steps.
+3. Clearly describe each step, referencing sections, tables, and key details.
+4. Integrate relevant notes, calculations, or field names to provide context in procedural answers.
+5. Ensure a logical step-by-step progression.
+
+# Output Format:
+
+- The response **must be a valid JSON array**.
+- Each question-answer pair must follow this format:
+
+[
+  {
+    "Question Type": "<Type of Question>",
+    "Question": "<Generated Question>",
+    "Answer": "<Generated Answer>"
+  }
+]
+
+- Ensure:
+  - Questions are logically structured.
+  - Answers are well-explained and sequential.
+  - No information from the input is ignored.
+  - JSON formatting is strictly followed without additional characters or formatting errors.
+
+
+
+
+
+
+
+
+
+
 PROCEDURAL_PROMPT = """
 # Objective:
 Generate up to {num_questions} distinct procedural question-answer pairs based on the Input.
