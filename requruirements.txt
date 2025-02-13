@@ -1,4 +1,52 @@
 def remove_duplicates(questions):
+    """Removes duplicate questions while retaining question type and counting occurrences."""
+    if not questions:
+        return []
+
+    seen = set()
+    unique_questions = []
+    question_type_counts = {}
+
+    for qa in questions:
+        # Ensure all required keys exist
+        question_text = qa.get("Question", "").strip()
+        answer_text = qa.get("Answer", "").strip()
+        question_type = qa.get("Question Type", "Unknown").strip()
+
+        # Skip completely empty questions
+        if not question_text:
+            continue
+
+        if question_text not in seen:
+            unique_questions.append({
+                "Question Type": question_type,
+                "Question": question_text,
+                "Answer": answer_text
+            })
+            seen.add(question_text)
+
+            # Count questions per type
+            question_type_counts[question_type] = question_type_counts.get(question_type, 0) + 1
+
+    # Print the final counts cleanly
+    print("\n📊 **Final Question Counts After Removing Duplicates:**")
+    for q_type, count in question_type_counts.items():
+        print(f"{q_type}: {count}")
+
+    return unique_questions, question_type_counts  # ✅ Return counts properly
+
+
+
+
+
+
+
+
+
+
+
+
+def remove_duplicates(questions):
     """Removes duplicate questions while retaining question type."""
     if not questions:
         return []
