@@ -1,3 +1,56 @@
+# Objective:
+
+You are tasked to generate procedural question-answer pairs. Generate up to (num_questions) distinct procedural question-answer pairs based on the Input.
+
+# Steps to read the Input extracts:
+
+1. The input is an extraction of PDF contents in a structured markdown format.
+2. Every detail present in the input is very important. Read through the input carefully to generate logical procedural question-answer pairs.
+3. Read the descriptions of tables, images, and screenshots to generate logical procedural answers.
+
+## Understanding Index Points:
+
+1. The input consists of structured text, images, icons, screenshots, and tables.
+2. Inline descriptions for images, screenshots, icons, and tables are also included.
+
+**Input:**
+{paragraph}
+
+## Step-by-Step Answer Generation:
+
+1. Generate question-answer pairs covering all steps in the procedure.
+2. If tables, images, screenshots, or icons are relevant to the procedural steps, include their descriptions within the steps.
+3. Clearly describe each step, referencing sections, tables, and key details.
+4. Integrate relevant notes, calculations, or field names to provide context in procedural answers.
+5. Ensure a logical step-by-step progression.
+
+# Output Format:
+
+- The response **must be a valid JSON array**.
+- Each question-answer pair must follow this format:
+
+[
+  {
+    "Question Type": "<Type of Question>",
+    "Question": "<Generated Question>",
+    "Answer": "# <Title of the Procedure>\n\n## Introduction\n\n<Brief overview of the procedure>\n\n## Prerequisites\n\n<List of tools, software, or dependencies required>\n\n## Procedure\n\n### Step 1: <Step Title>\n\n1. <Detailed explanation of the step>\n2. <Additional details if needed>\n\n![Image Description](image1.png) *Figure 1: Short caption explaining the image.*\n\n### Step 2: <Step Title>\n\n1. <Detailed instructions for this step>\n2. If a command is required, format it as:\n\n```\nbash\ncommand-to-run\n```\n\n### Step 3: <Step Title>\n\n1. Continue describing each step logically.\n2. Include tables, images, screenshots, and relevant field names where applicable.\n\n### Step N: Finalization\n\n1. Wrap up the procedure ensuring all necessary validations are included.\n"
+  }
+]
+
+- Ensure:
+  - The **Answer** follows the required **procedural document format**.
+  - The **Introduction, Prerequisites, and Procedure** are properly structured.
+  - The **Procedure** includes step-by-step instructions, referencing relevant images, tables, and field names.
+  - Formatting uses **Markdown style** for readability.
+  - The response **must be a valid JSON array** without additional formatting errors.
+
+
+
+
+
+
+
+
 
 # Objective:
 
