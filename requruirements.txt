@@ -1,3 +1,223 @@
+import os
+import json
+import fitz  # PyMuPDF for extracting text from PDFs
+import pandas as pd
+from concurrent.futures import ThreadPoolExecutor
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Initialize Azure OpenAI LLM Model
+llm = AzureChatOpenAI(
+    temperature=0,
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+)
+
+# 🟢 1️⃣ Define Prompts for Each Question Type
+FACTUAL_PROMPT = "Generate {num_questions} factual questions with answers from this text: {paragraph}"
+PROCEDURAL_PROMPT = "Generate {num_questions} procedural questions with answers from this text: {paragraph}"
+CONCEPTUAL_PROMPT = "Generate {num_questions} conceptual questions with answers from this text: {paragraph}"
+INFERENTIAL_PROMPT = "Generate {num_questions} inferential questions with answers from this text: {paragraph}"
+REASONING_PROMPT = "Generate {num_questions} reasoning-based questions with answers from this text: {paragraph}"
+
+# 🟢 2️⃣ Extract Text from PDF
+def extract_text_from_pdf(pdf_path):
+    """Extract text from a given PDF file."""
+    try:
+        with fitz.open(pdf_path) as doc:
+            text = "\n".join([page.get_text("text") for page in doc])
+        return text.strip()
+    except Exception as e:
+        print(f"Error extracting text from {pdf_path}: {e}")
+        return ""
+
+# 🟢 3️⃣ Generate Questions & Answers for a Specific Type
+def generate_questions(paragraph, question_type, num_questions, prompt_template):
+    """Generate questions and answers for a specific type."""
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions"],
+        template=prompt_template
+    )
+
+    formatted_prompt = prompt.format(paragraph=paragraph, num_questions=num_questions)
+
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions)
+        )
+        return extract_valid_json(response)
+    except Exception as e:
+        print(f"Error generating {question_type} questions: {e}")
+        return []
+
+# 🟢 4️⃣ Extract Valid JSON Response
+def extract_valid_json(response):
+    """Extract valid JSON from a response string."""
+    try:
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+        if json_start != -1 and json_end != -1:
+            return json.loads(response[json_start:json_end + 1])
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON detected.")
+    return []
+
+# 🟢 5️⃣ Remove Duplicate Questions
+def remove_duplicates(questions):
+    """Removes duplicate questions from the list."""
+    if not questions:
+        return []
+
+    seen = set()
+    unique_questions = []
+
+    for qa in questions:
+        question_text = qa.get("Question", "").strip()
+
+        if question_text not in seen:
+            unique_questions.append(qa)
+            seen.add(question_text)
+
+    print(f"Removed duplicates. {len(unique_questions)} unique questions remain.")
+    return unique_questions
+
+# 🟢 6️⃣ Define Functions for Each Question Type
+def generate_factual_questions(paragraph, num_questions):
+    return generate_questions(paragraph, "Factual", num_questions, FACTUAL_PROMPT)
+
+def generate_procedural_questions(paragraph, num_questions):
+    return generate_questions(paragraph, "Procedural", num_questions, PROCEDURAL_PROMPT)
+
+def generate_conceptual_questions(paragraph, num_questions):
+    return generate_questions(paragraph, "Conceptual", num_questions, CONCEPTUAL_PROMPT)
+
+def generate_inferential_questions(paragraph, num_questions):
+    return generate_questions(paragraph, "Inferential", num_questions, INFERENTIAL_PROMPT)
+
+def generate_reasoning_questions(paragraph, num_questions):
+    return generate_questions(paragraph, "Reasoning-Based", num_questions, REASONING_PROMPT)
+
+# 🟢 7️⃣ Run Multiple Question Types with Custom Counts
+def process_pdf_for_multiple_question_types(pdf_path, question_type_counts):
+    """Extract text from PDF and generate different question types with custom counts."""
+    
+    extracted_text = extract_text_from_pdf(pdf_path)
+    
+    if not extracted_text:
+        print(f"No text extracted from {pdf_path}!")
+        return []
+
+    # Dictionary of available question modules
+    question_modules = {
+        "Factual": generate_factual_questions,
+        "Procedural": generate_procedural_questions,
+        "Conceptual": generate_conceptual_questions,
+        "Inferential": generate_inferential_questions,
+        "Reasoning-Based": generate_reasoning_questions
+    }
+
+    # Validate selected types
+    selected_types = [q for q in question_type_counts.keys() if q in question_modules]
+    
+    if not selected_types:
+        print("No valid question types selected!")
+        return []
+
+    # Store generated questions
+    all_questions = []
+
+    # Run selected question types in parallel
+    with ThreadPoolExecutor() as executor:
+        futures = {
+            executor.submit(question_modules[q_type], extracted_text, num_questions): q_type
+            for q_type, num_questions in question_type_counts.items()
+        }
+
+        for future in futures:
+            try:
+                question_type = futures[future]
+                questions = future.result()
+
+                if questions:
+                    for qa in questions:
+                        all_questions.append({
+                            "Question Type": question_type,
+                            "Question": qa.get("question", "N/A"),
+                            "Answer": qa.get("answer", "N/A")
+                        })
+                else:
+                    print(f"No questions generated for {question_type}")
+
+            except Exception as e:
+                print(f"Error processing {futures[future]}: {e}")
+
+    # Remove duplicate questions before returning
+    return remove_duplicates(all_questions)
+
+# 🟢 8️⃣ Save Questions & Answers to Excel
+def save_questions_to_excel(questions, output_file):
+    """Save generated questions and answers to an Excel file."""
+    if questions:
+        df = pd.DataFrame(questions)
+        df.to_excel(output_file, index=False)
+        print(f"Questions saved to {output_file}")
+    else:
+        print("No questions to save!")
+
+# 🟢 9️⃣ Process All PDFs in a Directory
+def process_pdfs_in_directory(directory_path, question_type_counts, output_folder="output"):
+    """Processes all PDF files in a given directory."""
+    
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for filename in os.listdir(directory_path):
+        if filename.endswith(".pdf"):
+            pdf_path = os.path.join(directory_path, filename)
+
+            try:
+                print(f"Processing: {pdf_path}")
+
+                # Extract text from PDF and generate questions
+                questions = process_pdf_for_multiple_question_types(pdf_path, question_type_counts)
+
+                # Save results to Excel
+                output_file = os.path.join(output_folder, filename.replace(".pdf", "_questions.xlsx"))
+                save_questions_to_excel(questions, output_file)
+
+            except Exception as e:
+                print(f"Error processing {pdf_path}: {e}")
+
+# 🟢 🔟 Run with Custom Question Counts for Each Type
+if __name__ == "__main__":
+    # Example Directory Path
+    pdf_directory = "pdf_files"
+
+    # Define different number of questions for each selected type
+    question_type_counts = {
+        "Factual": 50,  # Generate 50 factual questions
+        "Procedural": 20,  # Generate 20 procedural questions
+        "Conceptual": 15  # Generate 15 conceptual questions
+    }
+
+    # Process all PDFs in the directory
+    process_pdfs_in_directory(pdf_directory, question_type_counts)
+
+
+
+
+
+
+
+
 
 import fitz  # PyMuPDF
 import os
