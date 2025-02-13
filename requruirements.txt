@@ -1,3 +1,35 @@
+import pandas as pd
+
+def save_questions_to_excel(questions, output_file):
+    """Save questions and answers to an Excel file with proper column formatting."""
+    if questions:
+        # ✅ Ensure correct structure before converting to DataFrame
+        cleaned_data = []
+        for qa in questions:
+            cleaned_data.append({
+                "Question Type": qa.get("Question Type", "Unknown"),  # ✅ Ensure key exists
+                "Question": qa.get("Question", "N/A"),
+                "Answer": qa.get("Answer", "N/A")
+            })
+
+        # ✅ Convert to DataFrame and ensure column order
+        df = pd.DataFrame(cleaned_data, columns=["Question Type", "Question", "Answer"])
+
+        # ✅ Save using 'openpyxl' to prevent Excel formatting issues
+        df.to_excel(output_file, index=False, engine="openpyxl")
+
+        print(f"✅ Questions successfully saved to {output_file}.")
+    else:
+        print("⚠ No questions to save!")
+
+
+
+
+
+
+
+
+
 def save_questions_to_excel(questions, output_file):
     """Save generated questions and answers to an Excel file with proper column formatting."""
     if questions:
