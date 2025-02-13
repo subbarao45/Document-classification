@@ -1,3 +1,33 @@
+def remove_duplicates(questions):
+    """Removes duplicate questions from the list while handling missing keys."""
+    if not questions:
+        return []
+
+    seen = set()
+    unique_questions = []
+
+    for qa in questions:
+        # Ensure keys exist, if missing, use default values
+        question_text = qa.get("Question", "").strip()
+        answer_text = qa.get("Answer", "").strip()
+
+        # Skip completely empty questions
+        if not question_text:
+            continue
+
+        if question_text not in seen:
+            unique_questions.append({"Question": question_text, "Answer": answer_text})
+            seen.add(question_text)
+
+    print(f"Removed duplicates. {len(unique_questions)} unique questions remain.")
+    return unique_questions
+
+
+
+
+
+
+
 import os
 import json
 import fitz  # PyMuPDF for extracting text from PDFs
