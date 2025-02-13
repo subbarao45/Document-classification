@@ -1,3 +1,47 @@
+PROCEDURAL_PROMPT
+
+# Objective:
+You are an AI assistant that **extracts procedural question-answer pairs** from a structured markdown input.
+
+## **Input Format**
+- **Input:** A structured **markdown extraction** from a PDF.
+- **Content:** The input includes **text, images, icons, screenshots, tables, and inline descriptions**.
+- **Number of Questions:** You must generate exactly `{num_questions}` distinct procedural **question-answer pairs**.
+
+---
+
+## **Steps to Process the Input:**
+1. Read the **structured markdown content** carefully.
+2. Extract **key procedural details** to generate **logical procedural question-answer pairs**.
+3. If **tables, images, screenshots, or icons** are present, **include them inside the procedural markdown answer**.
+4. The **number of questions must match** `{num_questions}`.
+5. **Ensure all JSON brackets `{}` and `[]` are properly closed**—do not generate invalid JSON.
+
+---
+
+# **Output Format**
+The response **MUST** be a **valid JSON array**, following this structure:
+
+```json
+[
+    {
+        "question_type": "Procedure",
+        "question": "What is the procedure for [specific process]?",
+        "answer": "# Title of the Procedure\n\n## Introduction\n\nA brief overview of the procedure, explaining what it is and why it's needed.\n\n## Prerequisites\n\n- List of tools, software, or dependencies required before starting.\n\n## Procedure\n\n### Step 1: [Title of Step]\n\n1. Description of the step explaining what needs to be done.\n2. Additional details if needed.\n\n![Image Description](image1.png)\n\n*Figure 1: Short caption explaining the image*\n\n### Step 2: [Title of Step]\n\n1. Detailed instructions for this step.\n2. If a command is required, format it as:\n\n```bash\ncommand-to-run\n```"
+    },
+    {
+        "question_type": "Procedure",
+        "question": "What are the steps involved in [another process]?",
+        "answer": "# Another Procedure\n\n## Introduction\n\nOverview of the new procedure...\n\n## Prerequisites\n\n- Required tools and dependencies.\n\n## Procedure\n\n### Step 1: [Step Name]\n\n1. Explanation of the step.\n2. Additional details.\n\n### Step 2: [Step Name]\n\n1. Further instructions.\n\n```bash\nexample-command\n```"
+    }
+]
+
+
+
+
+
+
+
 ## **Output Format**
 The response **must** be a **valid JSON array** with the following structure:
 
