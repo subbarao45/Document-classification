@@ -1,3 +1,31 @@
+def save_questions_to_excel(questions, output_file):
+    """Save generated questions and answers to an Excel file with proper column formatting."""
+    if questions:
+        try:
+            # ✅ Convert list of dictionaries into a properly formatted DataFrame
+            df = pd.DataFrame(questions)
+
+            # ✅ Ensure correct column order
+            df = df[['Question Type', 'Question', 'Answer']]
+
+            # ✅ Save the DataFrame to an Excel file with proper formatting
+            df.to_excel(output_file, index=False, sheet_name="Questions")
+
+            print(f"✅ Questions and answers saved to {output_file}")
+
+        except Exception as e:
+            print(f"❌ Error saving questions to Excel: {e}")
+    else:
+        print("⚠ No questions to save!")
+
+
+
+
+
+
+
+
+
 import json
 
 def extract_valid_json(response):
