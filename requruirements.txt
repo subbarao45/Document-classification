@@ -1,3 +1,62 @@
+
+# Objective:
+
+You are tasked with generating procedural question-answer pairs. Generate up to (num_questions) distinct procedural question-answer pairs based on the Input.
+
+# Steps to Process the Input:
+
+1. The input consists of structured markdown extracted from a PDF.
+2. The input may contain text, images, icons, screenshots, and tables.
+3. Descriptions for images, screenshots, icons, and tables are included.
+4. Every detail in the input is important. Read carefully to generate logical procedural question-answer pairs.
+
+## Answer Generation Guidelines:
+
+1. **Each answer must follow a structured Markdown format** and contain:
+   - **Introduction**: A brief explanation of the procedure.
+   - **Prerequisites**: Any required tools, software, or dependencies.
+   - **Procedure**: A step-by-step guide including any necessary images, tables, or notes.
+   
+2. **Ensure logical sequencing**:
+   - Describe the **first step** clearly, referencing key details from the input.
+   - Explain subsequent steps with necessary details, integrating relevant tables or images.
+   - Maintain a smooth, sequential flow in the procedural steps.
+
+3. **If there are tables, images, or screenshots relevant to a step, include them in the description**.
+
+## Output Format:
+
+- The response **must be a valid JSON array**.
+- Each **Question-Answer pair must be enclosed in `{}`**.
+- The JSON array must be enclosed in square brackets `[]`.
+- The **Answer field must follow Markdown formatting**.
+- **Avoid returning a tuple (`(...)`) or a single object (`{}`) instead of a JSON array (`[...]`).**
+
+---
+
+## **Expected Output Format (Example)**
+
+```json
+[
+  {
+    "Question": "What is the purpose of the Global Delivery Standard Operating Procedure?",
+    "Answer": "# Purpose of the GD SOP Template\n\n## Introduction\n\nThe Global Delivery Standard Operating Procedure (GD SOP) outlines the key steps and guidelines for managing...\n\n## Prerequisites\n\n- Access to GD SOP documentation\n- Required user permissions\n\n## Procedure\n\n### Step 1: Access the SOP Document\n\n1. Open the GD SOP system.\n2. Navigate to the 'Standard Procedures' section.\n\n### Step 2: Review Compliance Guidelines\n\n1. Ensure all steps align with the compliance checklist.\n\n![SOP Compliance Guidelines](images/sop_guidelines.png) *Figure 1: Compliance checklist reference.*"
+  },
+  {
+    "Question": "How do you perform DMH Data Maintenance for the AAS25 procedure?",
+    "Answer": "# DMH Data Maintenance for AAS25 Procedure\n\n## Introduction\n\nDMH Data Maintenance ensures data consistency for AAS25 processing...\n\n## Prerequisites\n\n- Access to DMH System\n- Required input files\n\n## Procedure\n\n### Step 1: Prepare Reconciliation File\n\n1. Copy the NRM SIT RTS recon file from the previous month.\n2. Rename and save it in the working folder for the current month.\n3. Update the date to reflect the required report period.\n\n### Step 2: Update Formulas\n\n1. Ensure formulas in Column E are correct.\n\n![NRM SIT RTS summary](images/nrm_sit_rts_summary.png) *Figure 1: NRM SIT RTS summary overview.*\n\n### Step 3: Reconcile NRM Data\n\n1. Open the NRM file.\n2. Filter by 'Transaction Type' in Column V and select 'Total'.\n3. Subtotal columns A1-AZ.\n4. Input totals into the reconciliation template in Column D according to the column indicator.\n\n### Step 4: Final Review\n\n1. Verify data consistency.\n2. Submit the finalized reconciliation report."
+  }
+]
+
+
+
+
+
+
+
+
+
+
 # Objective:
 
 You are tasked to generate procedural question-answer pairs. Generate up to (num_questions) distinct procedural question-answer pairs based on the Input.
