@@ -1,6 +1,80 @@
 import pandas as pd
 
 def save_questions_to_excel(questions, output_file):
+    """Save questions and answers to an Excel file with proper formatting."""
+    if not questions:
+        print("⚠ No questions to save!")
+        return
+
+    # ✅ Ensure each item in 'questions' is a dictionary
+    if isinstance(questions, list) and all(isinstance(q, dict) for q in questions):
+        df = pd.DataFrame(questions)  # ✅ Convert list of dicts to DataFrame properly
+    else:
+        print("❌ Error: Expected a list of dictionaries but got something else.")
+        return
+
+    # ✅ Ensure DataFrame has the correct columns before saving
+    required_columns = ["Question Type", "Question", "Answer"]
+    missing_columns = [col for col in required_columns if col not in df.columns]
+
+    if missing_columns:
+        print(f"⚠ Warning: Missing columns in DataFrame: {missing_columns}")
+        return
+
+    # ✅ Save using 'openpyxl' to prevent formatting issues
+    df.to_excel(output_file, index=False, engine="openpyxl")
+    print(f"✅ Questions successfully saved to {output_file}.")
+
+def remove_duplicates(questions):
+    """Removes duplicate questions while retaining question type."""
+    if not questions or not isinstance(questions, list):
+        print("⚠ Warning: No valid questions provided for deduplication.")
+        return []
+
+    seen = set()
+    unique_questions = []
+    question_type_counts = {}
+
+    for qa in questions:
+        if not isinstance(qa, dict):  # ✅ Ensure each item is a dictionary
+            continue
+
+        question_text = qa.get("Question", "").strip()
+        answer_text = qa.get("Answer", "").strip()
+        question_type = qa.get("Question Type", "Unknown").strip()
+
+        if not question_text:  # ✅ Skip empty questions
+            continue
+
+        if question_text not in seen:
+            unique_questions.append({
+                "Question Type": question_type,
+                "Question": question_text,
+                "Answer": answer_text
+            })
+            seen.add(question_text)
+
+            # ✅ Count questions per type
+            question_type_counts[question_type] = question_type_counts.get(question_type, 0) + 1
+
+    # ✅ Print summary
+    print("\n📊 **Final Question Counts After Removing Duplicates:**")
+    for q_type, count in question_type_counts.items():
+        print(f"{q_type}: {count}")
+
+    return unique_questions  # ✅ Always return a structured list
+
+
+
+
+
+
+
+
+
+.import pandas as pd
+
+def save_questions_to_excel(questions, output_file):
     """Save questions and answers to an Excel file with proper column formatting."""
     if questions:
         # ✅ Ensure correct structure before converting to DataFrame
