@@ -1,3 +1,35 @@
+def generate_questions(paragraph, num_questions, prompt_template):
+    """Generate questions and answers."""
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions"],
+        template=prompt_template
+    )
+
+    formatted_prompt = prompt.format(paragraph=paragraph, num_questions=num_questions)
+
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions)
+        )
+        questions = extract_valid_json(response)
+
+        if not questions:
+            print(f"⚠ Warning: No questions generated. Response was:\n{response}")
+
+        return questions
+    except Exception as e:
+        print(f"❌ Error generating questions: {e}")
+        return []
+
+
+
+
+
+
+
 def generate_questions(paragraph, question_type, num_questions, prompt_template):
     """Generate questions and answers for a specific type."""
     prompt = PromptTemplate(
