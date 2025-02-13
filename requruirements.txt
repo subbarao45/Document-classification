@@ -1,3 +1,227 @@
+def generate_questions_in_chunks(paragraph, num_questions, prompt_template, chunk_size=10):
+    """Generate questions in smaller chunks to prevent truncation issues."""
+    all_questions = []
+
+    for i in range(0, num_questions, chunk_size):
+        try:
+            chunk_questions = generate_questions(
+                paragraph=paragraph,
+                num_questions=min(chunk_size, num_questions - i),
+                prompt_template=prompt_template
+            )
+            all_questions.extend(chunk_questions)
+
+        except Exception as e:
+            print(f"❌ Error generating chunk for questions: {e}")
+            continue  # Continue processing even if one chunk fails
+
+    return all_questions
+
+import json
+import re
+
+def extract_valid_json(response):
+    """Extract and fix malformed JSON from an LLM response."""
+    try:
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+
+        if json_start != -1 and json_end != -1:
+            json_text = response[json_start:json_end + 1]
+
+            # ✅ Fix unterminated strings and extra commas
+            json_text = re.sub(r',\s*}', '}', json_text)  # Remove trailing commas before }
+            json_text = re.sub(r',\s*\]', ']', json_text)  # Remove trailing commas before ]
+
+            return json.loads(json_text)
+
+        else:
+            print("⚠ Warning: No valid JSON detected in response.")
+            return []
+
+    except json.JSONDecodeError as e:
+        print(f"❌ Error: Invalid JSON detected. Reason: {e}")
+        return []
+
+
+
+def generate_questions(paragraph, num_questions, prompt_template):
+    """Generate questions and answers while ensuring proper JSON formatting."""
+    prompt = PromptTemplate(
+        input_variables=["paragraph", "num_questions"],
+        template=prompt_template
+    )
+
+    formatted_prompt = prompt.format(paragraph=paragraph, num_questions=num_questions)
+
+    llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    try:
+        response = llm_chain.predict(
+            paragraph=paragraph,
+            num_questions=str(num_questions)
+        )
+
+        print(f"\n📝 Raw LLM Response:\n{response}")  # ✅ Log response before JSON parsing
+
+        questions = extract_valid_json(response)
+
+        if not questions:
+            print(f"⚠ Warning: No questions generated. Response was:\n{response}")
+
+        return questions
+    except Exception as e:
+        print(f"❌ Error generating questions: {e}")
+        return []
+
+def remove_duplicates(questions):
+    """Removes duplicate questions while retaining question type."""
+    if not questions or not isinstance(questions, list):
+        print("⚠ Warning: No valid questions provided for deduplication.")
+        return []
+
+    seen = set()
+    unique_questions = []
+    question_type_counts = {}
+
+    for qa in questions:
+        if not isinstance(qa, dict):  # ✅ Ensure each item is a dictionary
+            continue
+
+        question_text = qa.get("Question", "").strip()
+        answer_text = qa.get("Answer", "").strip()
+        question_type = qa.get("Question Type", "Unknown").strip()
+
+        if not question_text:  # ✅ Skip empty questions
+            continue
+
+        if question_text not in seen:
+            unique_questions.append({
+                "Question Type": question_type,
+                "Question": question_text,
+                "Answer": answer_text
+            })
+            seen.add(question_text)
+
+            # ✅ Count questions per type
+            question_type_counts[question_type] = question_type_counts.get(question_type, 0) + 1
+
+    # ✅ Print summary
+    print("\n📊 **Final Question Counts After Removing Duplicates:**")
+    for q_type, count in question_type_counts.items():
+        print(f"{q_type}: {count}")
+
+    return unique_questions
+
+import pandas as pd
+
+def save_questions_to_excel(questions, output_file):
+    """Save questions and answers to an Excel file with proper formatting."""
+    if not questions:
+        print("⚠ No questions to save!")
+        return
+
+    # ✅ Ensure each item in 'questions' is a dictionary
+    if isinstance(questions, list) and all(isinstance(q, dict) for q in questions):
+        df = pd.DataFrame(questions)  # ✅ Convert list of dicts to DataFrame properly
+    else:
+        print("❌ Error: Expected a list of dictionaries but got something else.")
+        return
+
+    # ✅ Ensure DataFrame has the correct columns before saving
+    required_columns = ["Question Type", "Question", "Answer"]
+    missing_columns = [col for col in required_columns if col not in df.columns]
+
+    if missing_columns:
+        print(f"⚠ Warning: Missing columns in DataFrame: {missing_columns}")
+        return
+
+    # ✅ Save using 'openpyxl' to prevent formatting issues
+    df.to_excel(output_file, index=False, engine="openpyxl")
+    print(f"✅ Questions successfully saved to {output_file}.")
+
+def process_pdf_for_multiple_question_types(pdf_path, question_type_counts):
+    """Extract text from PDF and generate different question types with custom counts."""
+    
+    extracted_text = extract_text_from_pdf(pdf_path)
+    
+    if not extracted_text:
+        print(f"No text extracted from {pdf_path}!")
+        return []
+
+    question_modules = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Reasoning-Based": REASONING_PROMPT
+    }
+
+    all_questions = []
+
+    with ThreadPoolExecutor() as executor:
+        futures = {
+            executor.submit(
+                generate_questions_in_chunks, extracted_text, num_questions, question_modules[q_type]
+            ): q_type
+            for q_type, num_questions in question_type_counts.items()
+        }
+
+        for future in futures:
+            try:
+                question_type = futures[future]
+                questions = future.result()
+
+                if questions:
+                    for qa in questions:
+                        all_questions.append({
+                            "Question Type": question_type,
+                            "Question": qa.get("question", "N/A"),
+                            "Answer": qa.get("answer", "N/A")
+                        })
+                else:
+                    print(f"No questions generated for {question_type}")
+
+            except Exception as e:
+                print(f"Error processing {futures[future]}: {e}")
+
+    return remove_duplicates(all_questions)
+
+
+def process_pdfs_in_directory(directory_path, question_type_counts, output_folder="output"):
+    """Processes all PDF files in a given directory."""
+    
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for filename in os.listdir(directory_path):
+        if filename.endswith(".pdf"):
+            pdf_path = os.path.join(directory_path, filename)
+
+            try:
+                print(f"Processing: {pdf_path}")
+
+                questions = process_pdf_for_multiple_question_types(pdf_path, question_type_counts)
+
+                output_file = os.path.join(output_folder, filename.replace(".pdf", "_questions.xlsx"))
+                save_questions_to_excel(questions, output_file)
+
+            except Exception as e:
+                print(f"Error processing {pdf_path}: {e}")
+
+if __name__ == "__main__":
+    pdf_directory = "pdf_files"
+    question_type_counts = {"Factual": 50, "Procedural": 20, "Conceptual": 15}
+
+    process_pdfs_in_directory(pdf_directory, question_type_counts)
+
+
+
+
+
+
+
+
 PROCEDURAL_PROMPT
 
 # Objective:
