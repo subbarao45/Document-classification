@@ -1,3 +1,37 @@
+PROCEDURAL_PROMPT = """
+# Objective:
+Generate up to {num_questions} distinct procedural question-answer pairs based on the Input.
+
+# Instructions:
+
+1. Read the Input carefully to generate **complete** procedural question-answer pairs.
+2. **Do NOT stop in the middle of an answer**. Each answer must be a complete step-by-step process.
+3. Ensure answers **always contain a full procedure, including an introduction, steps, and conclusions**.
+
+## Input:
+
+{paragraph}
+
+## Output Format:
+[
+    {{
+        "question_type": "Procedural",
+        "question": "How to reconcile NRM, RTS, and SIT data in DMH?",
+        "answer": "# Reconcile NRM, RTS, and SIT Data in DMH\\n\\n## Introduction\\nThis procedure explains how to reconcile NRM, RTS, and SIT data in DMH, ensuring data consistency and accuracy.\\n\\n## Prerequisites\\n- Access to DMH\\n- Previous month's NRM SIT RTS recon file\\n\\n## Procedure\\n### Step 1: Prepare Reconciliation File\\n1. Copy the NRM SIT RTS recon file of the previous month.\\n2. Rename it and save it in the applicable working folder of the current month.\\n3. Update the date to reflect the required report period.\\n\\n### Step 2: Update Formulas\\n1. Ensure the formulas in Column E are correct.\\n\\n![NRM SIT RTS summary July 19.xlsx](images/nrm_sit_rts_summary_july_19.png) *Figure 1: NRM SIT RTS summary for respective data.*\\n\\n### Step 3: Reconcile NRM Data\\n1. Open the NRM file.\\n2. Filter by column V Transaction Type and select Total."
+    }}
+]
+
+**DO NOT STOP IN THE MIDDLE OF A SENTENCE.**
+**Ensure all answers are fully generated before stopping.**
+**Return only valid JSON.**
+"""
+
+
+
+
+
+
+
 
 PROCEDURAL_PROMPT = """
 # Objective:
