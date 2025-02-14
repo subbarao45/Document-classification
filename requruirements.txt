@@ -1,3 +1,44 @@
+import pandas as pd
+
+def save_questions_to_excel(questions, output_file):
+    """Save questions and answers to an Excel file with proper formatting."""
+    
+    if not questions:
+        print("⚠️ No questions to save!")
+        return
+
+    # Ensure input is a list of dictionaries
+    if isinstance(questions, list) and all(isinstance(q, dict) for q in questions):
+        df = pd.DataFrame(questions)
+    else:
+        print("❌ Error: Expected a list of dictionaries but got something else.")
+        return
+
+    # Define required columns
+    required_columns = ["Question Type", "Question", "Answer"]
+
+    # Add missing columns with empty values if they don’t exist
+    for col in required_columns:
+        if col not in df.columns:
+            df[col] = ""  # Fill missing columns with empty values
+
+    # Save using 'openpyxl' to ensure proper formatting
+    df.to_excel(output_file, index=False, engine="openpyxl")
+
+    print(f"✅ Questions successfully saved to {output_file}")
+
+# Example Usage
+output_file = r"H:\Question and answer\Test.xlsx"  # Ensure proper file extension
+save_questions_to_excel(response, output_file)
+
+
+
+
+
+
+
+
+
 import json
 from langchain.chains import LLMChain
 from langchain.chat_models import AzureChatOpenAI
