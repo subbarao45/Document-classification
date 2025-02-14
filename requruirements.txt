@@ -1,3 +1,68 @@
+
+import json
+import pandas as pd
+import warnings
+
+def extract_valid_json(response):
+    """Fix and parse JSON response properly."""
+    try:
+        # Try parsing as JSON
+        return json.loads(response)
+    except json.JSONDecodeError:
+        print("⚠️ Invalid JSON detected. Attempting to fix...")
+        response = response.strip().rstrip(",")  # Remove trailing commas
+        response = response.replace("\n", "")  # Remove unnecessary newlines
+
+        # Add closing bracket if missing
+        if not response.endswith("]"):
+            response += "]"
+
+        try:
+            return json.loads(response)  # Retry parsing
+        except:
+            print("❌ Failed to fix JSON. Returning empty list.")
+            return []  # Return empty if still invalid
+
+def save_questions_to_excel(questions, output_file):
+    """Save valid questions and answers to an Excel file."""
+    
+    if not questions:
+        print("⚠️ No valid questions found to save!")
+        return
+
+    # Ensure list of dictionaries format
+    if not isinstance(questions, list) or not all(isinstance(q, dict) for q in questions):
+        print("❌ Error: Expected a list of dictionaries but got something else.")
+        return
+
+    df = pd.DataFrame(questions)
+
+    # Ensure required columns exist
+    required_columns = ["Question_type", "Question", "Answer"]
+    for col in required_columns:
+        if col not in df.columns:
+            df[col] = ""  # Fill missing columns with empty values
+
+    # Suppress warnings related to Excel saving
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df.to_excel(output_file, index=False, engine="openpyxl")
+
+    print(f"✅ Questions successfully saved to {output_file}")
+
+# Example Usage
+response = """[{"Question_type": "Procedural", "Question": "How do you ensure the monthly book in MCH has been released?", "Answer": "Procedure details here..."}, {"Question_type": "Procedural", "Question": "What steps are involved in adding a new fund into Fund Master?", "Answer": "Procedure details here..."}]"""  # Simulated response
+
+parsed_response = extract_valid_json(response)
+output_file = r"H:\Question and answer\Test.xlsx"
+save_questions_to_excel(parsed_response, output_file)
+
+
+
+
+
+
+
 import pandas as pd
 
 def save_questions_to_excel(questions, output_file):
