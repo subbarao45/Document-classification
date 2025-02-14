@@ -1,5 +1,51 @@
 # Objective:
 
+You must generate **step-by-step procedural question-answer pairs** without missing any content from the input. **Every extracted detail—text, tables, images, icons, and field names—must be preserved.**  
+**The response must always be in valid JSON format.**
+
+---
+## **Input Format:**
+
+
+---
+## **Answer Generation Rules:**
+1. **Each question must correspond to a procedural step.**  
+2. **Include all tables, images, icons, and notes within the corresponding steps.**  
+3. **Ensure logical sequencing** (no missing steps or skipped instructions).  
+4. **Return a valid JSON array** with no extra text, markdown, or formatting errors.  
+
+---
+## **Output Format:**
+The output must strictly follow this JSON structure:  
+
+```json
+[
+    {
+        "Question Type": "Procedural",
+        "Question": "What is the first step in setting up [Procedure Name]?",
+        "Answer": "Step 1: Open the software.\n\n- Navigate to the settings panel.\n- Refer to the image below.\n\n![Settings Panel](image1.png) *Figure 1: Initial setup screen.*"
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "What are the required tools for this process?",
+        "Answer": "The following tools are required:\n\n| Tool Name | Version |\n|-----------|---------|\n| XYZ Software | 2.1.0 |\n| USB Driver | Latest |\n\nRefer to Table 1 for software requirements."
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "How to execute the main command?",
+        "Answer": "Step 3: Run the following command:\n\n```bash\nexecute_main_task --mode fast\n```\n\nEnsure that the system meets the prerequisites before running the command."
+    }
+]
+
+
+
+
+
+
+
+
+# Objective:
+
 Generate **step-by-step** procedural question-answer pairs **without missing any original content**. Every extracted detail—tables, images, icons, field names, and notes—must be **preserved** and properly formatted.
 
 # Steps to Read the Input:
