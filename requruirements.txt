@@ -1,3 +1,23 @@
+def get_procedural_qa(paragraph, total_questions):
+    batch_size = 20  # Process in smaller chunks
+    responses = []
+
+    for i in range(0, total_questions, batch_size):
+        num_q = min(batch_size, total_questions - i)  # Adjust last batch size
+        response = llm_chain.predict(paragraph=paragraph, num_questions=str(num_q))
+        response_json = extract_valid_json(response)
+        responses.extend(response_json.get("questions", []))  # Merge results
+    
+    return responses
+
+
+
+
+
+
+
+
+
 # Objective:
 
 You must generate **step-by-step procedural question-answer pairs** without missing any content from the input. **Every extracted detail—text, tables, images, icons, and field names—must be preserved.**  
