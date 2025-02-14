@@ -1,5 +1,62 @@
 # Objective:
 
+Generate **step-by-step** procedural question-answer pairs **without missing any original content**. Every extracted detail—tables, images, icons, field names, and notes—must be **preserved** and properly formatted.
+
+# Steps to Read the Input:
+
+1. The input is a **structured markdown extraction** from PDF content.
+2. It contains **text, images, icons, screenshots, tables, and inline descriptions**.
+3. Every piece of information must be carefully analyzed to **generate detailed procedural steps**.
+4. **Maintain logical sequencing**: No steps should be skipped.
+
+---
+## **Input Format:**
+
+{paragrah}
+
+---
+## **Answer Generation Rules:**
+1. **Generate step-by-step procedural answers** that follow the exact sequence of actions.
+2. **If an image, table, or icon is mentioned in the input,** include its **description within the relevant step.**
+3. **Do not omit any information**—every extracted detail must be preserved in the answers.
+4. **Maintain clear step-by-step formatting** with numbered steps.
+
+---
+## **Output Instructions (Strict JSON Format):**
+- Return **only a JSON array** without extra text, markdown, or delimiters.
+- The JSON structure must contain the following fields:
+  - `"Question Type"`: Always `"Procedural"`.
+  - `"Question"`: The step-related procedural question.
+  - `"Answer"`: The step-by-step procedural answer, including **text, images, tables, and descriptions**.
+
+### **Expected JSON Format:**
+```json
+[
+    {
+        "Question Type": "Procedural",
+        "Question": "What is the first step in setting up [Procedure Name]?",
+        "Answer": "1. Open the software.\n2. Navigate to the settings panel (See Figure 1 below for reference).\n\n![Settings Panel](image1.png) *Figure 1: Initial setup screen.*"
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "What are the required tools for this process?",
+        "Answer": "The following tools are required:\n\n| Tool Name | Version |\n|-----------|---------|\n| XYZ Software | 2.1.0 |\n| USB Driver | Latest |\n\nRefer to Table 1 for software requirements."
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "How to execute the main command?",
+        "Answer": "Run the following command:\n\n```bash\nexecute_main_task --mode fast\n```\n\nEnsure that the system meets the prerequisites before running the command."
+    }
+]
+
+
+
+
+
+
+
+# Objective:
+
 You are tasked to generate procedural question-answer pairs. Generate up to (num_questions) distinct procedural question-answer pairs based on the Input. The question-answer pairs should include all important details such as images, tables, icons, field names, notes, etc.
 
 # Steps to Read the Input Extracts:
