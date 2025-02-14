@@ -1,3 +1,71 @@
+# Objective:
+
+You are tasked to generate procedural question-answer pairs. Generate up to (num_questions) distinct procedural question-answer pairs based on the Input. The question-answer pairs should include all important details such as images, tables, icons, field names, notes, etc.
+
+# Steps to Read the Input Extracts:
+
+1. The input is a structured markdown extraction from PDF content.
+2. Pay close attention to every detail in the input.
+3. Extract the procedural steps, tables, images, screenshots, icons, and any other relevant descriptions.
+4. If there are any images, tables, or screenshots mentioned, include their descriptions along with the procedural steps.
+
+## Understanding Input Format:
+1. The input is the **structured markdown** extraction of PDF pages, consisting of text, images, icons, screenshots, and tables.
+2. Descriptions of images, screenshots, icons, and tables are inline and should be integrated into the procedural answers.
+
+### **Input Example:**
+
+{input}
+
+---
+## **Step-by-Step Answer Generation:**
+
+1. Generate distinct **question-answer pairs** covering all steps of the procedure.
+2. Ensure to include **details from tables, images, screenshots, icons, and any other visual content** that are related to the procedural steps.
+3. Clearly describe the **first step**, including referenced sections and key details from text and descriptions.
+4. Describe any next actions, including calculations or references to **tables or images**.
+5. Ensure that each step is described **sequentially**, integrating the details (e.g., tables, images, screenshots) where relevant.
+6. Include **notes, field names, important points, or icons** when they provide context to the procedure.
+
+---
+## **Output Instructions:**
+1. **Return ONLY the JSON array** containing the question-answer pairs.
+2. The JSON structure must contain the following fields:
+   - `Question Type`: Type of question (e.g., "Procedural").
+   - `Question`: The actual question based on the procedure.
+   - `Answer`: The detailed answer including all references to the text, images, tables, screenshots, etc.
+3. Do not include anything else in the output such as additional explanations, markdown, or unnecessary delimiters.
+4. Ensure the **JSON response is valid** and properly formatted.
+
+### **Expected Output Format:**
+```json
+[
+    {
+        "Question Type": "Procedural",
+        "Question": "What is the first step in the procedure?",
+        "Answer": "The first step is to open the software, as shown in the image below. The image explains the initial screen layout and buttons to click."
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "What is the tool required to complete the task?",
+        "Answer": "The tool required is the XYZ software. Please refer to the table below for software specifications."
+    },
+    {
+        "Question Type": "Procedural",
+        "Question": "What should be done after opening the software?",
+        "Answer": "After opening the software, click the 'Start' button located on the left panel. See the screenshot below for reference."
+    }
+]
+
+
+
+
+
+
+
+
+
+
 import json
 import re
 
