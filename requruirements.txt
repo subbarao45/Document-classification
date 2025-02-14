@@ -1,3 +1,88 @@
+import json
+from langchain.chains import LLMChain
+from langchain.chat_models import AzureChatOpenAI
+from langchain.prompts import PromptTemplate
+
+# 🔹 Azure GPT-4 Turbo Configuration
+llm = AzureChatOpenAI(
+    temperature=0.2,  
+    top_p=0.9,
+    api_version="2023-10-01-preview",  # Update based on your Azure API version
+    azure_endpoint="https://your-endpoint.openai.azure.com/",  
+    deployment_name="gpt-4-turbo",  # Your Azure OpenAI model deployment
+    model_kwargs={"response_format": {"type": "json_object"}},  
+    max_tokens=16000  # Adjust based on response size
+)
+
+# 🔹 Define the Procedural Prompt
+PROCEDURAL_PROMPT = """
+# Objective:
+You are tasked to generate procedural question-answer pairs from the input text.
+
+# Input:
+{paragraph}
+
+# Instructions:
+1. Generate up to {num_questions} procedural Q&A pairs.
+2. Ensure each question follows a step-by-step process.
+3. If tables, images, or screenshots are referenced, include descriptions.
+4. Return a **valid JSON response** in this format:
+
+{
+  "questions": [
+    {"question": "Step-by-step question 1", "answer": "Detailed procedural answer 1"},
+    {"question": "Step-by-step question 2", "answer": "Detailed procedural answer 2"}
+  ]
+}
+"""
+
+# 🔹 Create a Prompt Template
+prompt = PromptTemplate(input_variables=["paragraph", "num_questions"], template=PROCEDURAL_PROMPT)
+
+# 🔹 Create the LLM Chain
+llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+# 🔹 Function to Process in Chunks (Avoids Token Limit Issues)
+def get_procedural_qa(paragraph, total_questions):
+    batch_size = 20  # Process in smaller chunks
+    responses = []
+
+    for i in range(0, total_questions, batch_size):
+        num_q = min(batch_size, total_questions - i)  # Adjust last batch size
+        response = llm_chain.predict(paragraph=paragraph, num_questions=str(num_q))
+        response_json = extract_valid_json(response)
+        responses.extend(response_json.get("questions", []))  # Merge results
+    
+    return responses
+
+# 🔹 Function to Validate & Fix JSON Responses
+def extract_valid_json(response):
+    try:
+        return json.loads(response)
+    except json.JSONDecodeError:
+        print("⚠️ Invalid JSON detected. Attempting to fix...")
+        response = response.strip().rstrip(",")  # Remove trailing commas
+        fixed_json = response + "}"  # Try closing JSON properly
+        try:
+            return json.loads(fixed_json)
+        except:
+            return {"questions": []}  # Return empty if still invalid
+
+# 🔹 Run the Pipeline
+paragraph_data = "Your extracted PDF text here..."
+total_questions = 40
+
+final_qa_pairs = get_procedural_qa(paragraph_data, total_questions)
+print(json.dumps(final_qa_pairs, indent=2))
+
+
+
+
+
+
+
+
+
 def get_procedural_qa(paragraph, total_questions):
     batch_size = 20  # Process in smaller chunks
     responses = []
