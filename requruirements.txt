@@ -1,3 +1,67 @@
+
+1. Using Prompt Engineering (LLMs Only – No ML Model)
+If your goal is to analyze, summarize, and extract insights from banking data, prompt engineering can help.
+
+Example Use Cases for Prompt Engineering:
+Transaction Summary:
+"Summarize the last 6 months of transactions for a customer and highlight unusual patterns."
+Risk Analysis:
+"List customers with frequent overdrafts and suggest reasons based on transaction history."
+Fraud Detection (Basic Rules-Based):
+"Identify transactions that exceed the customer’s usual spending by 50% or more."
+Querying Data in Natural Language:
+"Which customers made the highest deposits in the last 3 months?"
+Customer Segmentation (Basic):
+"Group customers based on spending patterns into High Spenders, Moderate Spenders, and Low Spenders."
+✅ Best When:
+
+Your data is structured (tables, transactions, customer info).
+You only need insights, summaries, and reports.
+There’s no need for learning from past trends.
+2. Using Machine Learning Models (With or Without LLMs)
+If your goal is prediction, automation, or deep analysis, ML models are required.
+
+Example Use Cases for ML Models:
+Fraud Detection (Anomaly Detection Model):
+Detects patterns of fraudulent transactions based on past fraud cases.
+Loan Approval Prediction (Classification Model):
+Predicts whether a customer is likely to default on a loan.
+Customer Segmentation (Clustering Model):
+Groups customers into meaningful segments based on their spending behavior.
+Credit Score Estimation (Regression Model):
+Predicts a customer’s creditworthiness based on transaction history and income.
+Churn Prediction (Classification Model):
+Predicts whether a customer will stop using banking services.
+✅ Best When:
+
+You need predictions (e.g., "Will this customer default on a loan?").
+You want to automate decision-making (e.g., approve or reject a loan).
+The system should learn from past data to improve over time.
+How to Decide?
+Scenario	Use Prompt Engineering	Use ML Model
+Extracting insights from past transactions	✅ Yes	❌ No
+Generating financial reports	✅ Yes	❌ No
+Predicting fraud based on past cases	❌ No	✅ Yes
+Approving loans automatically	❌ No	✅ Yes
+Identifying top spending customers	✅ Yes	❌ No
+Grouping customers based on behavior	✅ Basic	✅ Advanced
+Hybrid Approach (Using Both ML & LLMs)
+For best results, you can combine both:
+
+Use ML models to detect fraud, predict defaults, or segment customers.
+Use Prompt Engineering to explain, summarize, and interact with the results.
+Final Thought
+If you need only insights & summaries → Use Prompt Engineering
+If you need predictions & automation → Use Machine Learning
+
+What exactly do you want to achieve in your PoC? Let me know so I can guide you better!
+
+
+
+
+
+
+
 # Objective:
 
 You are tasked with generating procedural question-and-answer pairs. Generate up to {num_questions} distinct procedural question-answer pairs based on the given input.
