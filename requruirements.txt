@@ -1,3 +1,60 @@
+# Objective:
+
+You are tasked with generating procedural question-and-answer pairs. Generate up to {num_questions} distinct procedural question-answer pairs based on the given input.
+
+# Steps to Read the Input Extracts:
+
+1. The input consists of structured markdown extraction of PDF contents.  
+2. Every detail present in the input is important. Carefully read through the input to generate logical procedural question-answer pairs.  
+3. Read through descriptions of tables, images, and screenshots present in the input to generate logical procedural answers.  
+
+## Understanding Input Elements:
+
+1. The input provided is a structured markdown extraction of PDF pages.  
+2. The input may contain text, images, icons, screenshots, tables, and descriptions.  
+3. Inline descriptions for images, screenshots, icons, and tables are included in the input.  
+
+**Input:**  
+
+{paragraph}  
+
+## Step-by-Step Answer Generation:
+
+1. Generate procedural question-answer pairs that cover all necessary steps to follow the procedure.  
+2. If tables, images, screenshots, or icons are present within the procedural steps, incorporate relevant descriptions into the answers.  
+3. Clearly describe the first step, including referenced sections and key details from the text and descriptions.  
+4. Describe the next action or calculation required, integrating relevant notes or table data.  
+5. Extract and understand descriptions from the input and add them to procedural answers.  
+6. Continue the steps sequentially, ensuring logical progression. Include tables, image descriptions, field names, notes, etc., to enhance the procedural answer's context.  
+
+# Output Instructions:
+
+1. Generate a list of valid JSON objects, each containing keys: `Question_type`, `Question`, and `Answer`.  
+2. Store the question type inside the `Question_type` key, and the respective question and answer inside `Question` and `Answer` keys.  
+3. Use the following output format to structure the answers properly.  
+
+### **Output Format:**
+**Example JSON Output:**  
+```json
+[
+  {
+    "Question_type": "Procedural",
+    "Question": "How do you process a trade transaction in the system?",
+    "Answer": "## Procedure\n\n### Step 1: Access the System\n\n1. Log in using your credentials.\n2. Navigate to the 'Trade Transactions' module.\n\n### Step 2: Enter Trade Details\n\n1. Select 'New Trade Entry'.\n2. Fill in the trade details as per the provided form.\n\n### Step 3: Validate and Submit\n\n1. Cross-check the trade details for accuracy.\n2. Click 'Submit' to finalize the trade entry."
+  },
+  {
+    "Question_type": "Procedural",
+    "Question": "How do you retrieve exchange rates for a given date?",
+    "Answer": "## Procedure\n\n### Step 1: Open Exchange Rate Module\n\n1. Use the function `BEXR` in MCH.\n2. Select the source as `WM11`.\n\n### Step 2: Specify Date and Fetch Rate\n\n1. Enter the required pay date/value date.\n2. Click 'Fetch' to retrieve the exchange rate for that date."
+  }
+]
+
+
+
+
+
+
+
 
 import json
 import pandas as pd
