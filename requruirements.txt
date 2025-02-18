@@ -1,3 +1,46 @@
+import pandas as pd
+import warnings
+
+def save_questions_to_excel(questions, output_file):
+    """Save valid questions and answers to an Excel file."""
+    
+    if not questions:
+        print("No valid questions found to save.")
+        return
+
+    # Ensure list of dictionaries format
+    if not isinstance(questions, list) or not all(isinstance(q, dict) for q in questions):
+        print("Error: Expected a list of dictionaries but got something else.")
+        return
+
+    df = pd.DataFrame(questions)
+
+    # Ensure required columns exist
+    required_columns = ["Question Type", "Question", "Answer"]
+    for col in required_columns:
+        if col not in df.columns:
+            df[col] = ""  # Fill missing columns with empty values
+
+    # Convert any YYYYMMDD format to MM-DD-YYYY
+    for col in ["Question", "Answer"]:  # Adjust column names accordingly
+        df[col] = pd.to_datetime(df[col], format='%Y%m%d', errors='ignore').dt.strftime('%m-%d-%Y')
+
+    # Suppress warnings related to Excel saving
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        # Ensure correct engine is used
+        df.to_excel(output_file, index=False, engine="openpyxl")
+
+    print(f"Questions successfully saved to {output_file}")
+
+
+
+
+
+
+
+
 import warnings
 import pandas as pd
 from openpyxl import load_workbook
