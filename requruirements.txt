@@ -1,3 +1,91 @@
+
+import json
+import re
+
+def extract_valid_json(response):
+    """Extract and fix malformed JSON from an LLM response."""
+    try:
+        # Find JSON array start and end
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+
+        if json_start == -1:
+            print("Warning: No JSON structure detected.")
+            return []
+
+        if json_end == -1:
+            response += ']'  # Add closing bracket if missing
+            json_end = len(response) - 1
+
+        json_text = response[json_start:json_end + 1]
+
+        # Remove unwanted control characters and junk text
+        json_text = re.sub(r'[\x00-\x1F\x7F]', '', json_text)  # Remove ASCII control chars
+        json_text = re.sub(r'[^{}[\],":\w\s#-]', '', json_text)  # Remove unexpected characters
+        json_text = re.sub(r'\b(IN|J|m|U+)\b', '', json_text)  # Remove specific junk words
+
+        # Fix missing commas between objects
+        json_text = re.sub(r'(?<=\})(?=\s*\{)', '},', json_text)
+
+        # Fix missing values in "Answer" fields
+        json_text = re.sub(r'("Answer":\s*)(?=[},\]])', r'\1""', json_text)
+
+        # Fix trailing commas
+        json_text = re.sub(r',\s*}', '}', json_text)
+        json_text = re.sub(r',\s*\]', ']', json_text)
+
+        # Remove incomplete objects at the end
+        json_text = re.sub(r'\{[^{}]*$', '', json_text)  # Remove unfinished `{`
+        if not json_text.endswith(']'):
+            json_text += ']'
+
+        # Parse JSON safely
+        parsed_json = json.loads(json_text)
+
+        # Filter out empty questions
+        filtered_json = [
+            item for item in parsed_json
+            if "Question" in item and item["Question"].strip()
+        ]
+
+        return filtered_json
+
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON detected. Reason: {e}")
+        return []
+
+# Sample broken response with junk characters
+response = """[{
+    "Question": "What is the purpose of the GD SOP Template",
+    "Answer": "# Purpose of the GD SOP Template\n\n## Introduction..."
+}, {
+    "Question": "How to reconcile NRM, RTS, and SIT data?",
+    "Answer": "# Reconciling NRM, RTS, and SIT Data\n\n## Introduction..."
+}, {
+    "Question": "What is the system error handling process?",
+    "Answer":
+}, {
+J
+m
+IN
+"Question": "How to monitor job performance?",
+"Answer": "Use the monitoring"
+"""
+
+# Call function
+valid_json = extract_valid_json(response)
+print(valid_json)
+
+
+
+
+
+
+
+
+
+
+
 import json
 import re
 
