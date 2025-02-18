@@ -1,3 +1,127 @@
+from concurrent.futures import ThreadPoolExecutor
+
+def process_pdf_for_multiple_question_types(pdf_path, question_type_counts):
+    """Extract text from PDF and generate different question types with custom counts."""
+    extracted_text = extract_text_from_pdf(pdf_path)
+
+    if not extracted_text:
+        print(f"No text extracted from {pdf_path}!")
+        return []
+
+    question_modules = {
+        "Factual": FACTUAL_PROMPT,
+        "Procedural": PROCEDURAL_PROMPT,
+        "Conceptual": CONCEPTUAL_PROMPT,
+        "Inferential": INFERENTIAL_PROMPT,
+        "Reasoning-Based": REASONING_PROMPT
+    }
+
+    all_questions = []
+
+    with ThreadPoolExecutor() as executor:
+        futures = {
+            executor.submit(
+                generate_questions_in_chunks, extracted_text, num_questions, question_modules[q_type]
+            ): q_type
+            for q_type, num_questions in question_type_counts.items()
+        }
+
+        for future in futures:
+            try:
+                question_type = futures[future]
+                questions = future.result()
+
+                if questions:
+                    print(f"Generated questions for {question_type}: {len(questions)}")
+                    for qa in questions:
+                        if qa.get("Question") and qa.get("Answer"):
+                            all_questions.append({
+                                "Question Type": question_type,
+                                "Question": qa.get("Question", "N/A"),
+                                "Answer": qa.get("Answer", "N/A")
+                            })
+                        else:
+                            print(f"Skipping invalid question: {qa}")
+                else:
+                    print(f"No questions generated for {question_type}")
+
+            except Exception as e:
+                print(f"Error processing {futures[future]}: {e}")
+
+    # Remove duplicates and return the final list of questions
+    return remove_duplicates(all_questions)
+
+def remove_duplicates(questions):
+    """Removes duplicate questions while retaining question type."""
+    if not questions or not isinstance(questions, list):
+        print("Warning: No valid questions provided for deduplication.")
+        return []
+
+    seen = set()
+    unique_questions = []
+    question_type_counts = {}
+
+    for qa in questions:
+        if not isinstance(qa, dict):
+            continue
+
+        question_text = qa.get("Question", "").strip()
+        answer_text = qa.get("Answer", "").strip()
+        question_type = qa.get("Question Type", "Unknown").strip()
+
+        if not question_text:
+            continue
+
+        if question_text not in seen:
+            unique_questions.append({
+                "Question Type": question_type,
+                "Question": question_text,
+                "Answer": answer_text
+            })
+            seen.add(question_text)
+
+        question_type_counts[question_type] = question_type_counts.get(question_type, 0) + 1
+
+    print("\n **Final Question Counts After Removing Duplicates:**")
+    for q_type, count in question_type_counts.items():
+        print(f"{q_type}: {count}")
+
+    return unique_questions
+
+def generate_questions_in_chunks(paragraph, num_questions, prompt_template, chunk_size=30):
+    """Generate questions in smaller chunks to prevent truncation issues."""
+    all_questions = []
+    for i in range(0, num_questions, chunk_size):
+        try:
+            chunk_questions = generate_questions(
+                paragraph=paragraph, num_questions=min(chunk_size, num_questions - i), prompt_template=prompt_template
+            )
+            all_questions.extend(chunk_questions)
+        except Exception as e:
+            print(f"Error generating chunk for questions: {e}")
+            continue  # Continue processing even if one chunk fails
+
+    return all_questions
+
+def generate_questions(paragraph, num_questions, prompt_template):
+    """A placeholder function to simulate question generation."""
+    # Simulate question generation logic (e.g., using OpenAI API, etc.)
+    questions = []
+    for i in range(num_questions):
+        questions.append({
+            "Question": f"Sample Question {i+1}",
+            "Answer": f"Sample Answer {i+1}"
+        })
+    return questions
+
+
+
+
+
+
+
+
+
 def remove_duplicates(questions):
     """Removes duplicate questions while retaining question type."""
     if not questions or not isinstance(questions, list):
