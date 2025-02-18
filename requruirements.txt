@@ -1,3 +1,23 @@
+Ensure the response is a valid JSON array.
+Do not generate questions based on images.
+Do not include any formatting indicators like "json" or quotation marks in the output.
+Ensure the JSON is properly formatted and fully closed.
+Do not include questions related to version numbers, updates, or document template ownership.
+All questions should be strictly context-related and based on the provided input.
+Do not return text explanations—only provide the JSON output.
+
+
+
+
+
+
+
+
+
+
+
+
+
 Guidelines:
 Context-Specific Questions: The questions must be directly related to the content of the input, focusing on key facts, entities, names, titles, dates, figures, or specific terms.
 No Repetitive or Generic Questions: Avoid generic questions or ones that do not add value to understanding the specific content.
