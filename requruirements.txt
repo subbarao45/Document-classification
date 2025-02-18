@@ -4,6 +4,82 @@ from openpyxl import load_workbook
 from openpyxl.styles import NamedStyle
 
 def save_questions_to_excel(questions, output_file):
+    """Save valid questions and answers to an Excel file with date formatting as YYYY-MM-DD."""
+    
+    # Ensure the input is a list of dictionaries
+    if not isinstance(questions, list) or not all(isinstance(q, dict) for q in questions):
+        print(f"Error: Expected a list of dictionaries but got {type(questions).__name__}")
+        print(f"Input received: {questions}")  # Debugging statement
+        return
+
+    df = pd.DataFrame(questions)
+
+    # Ensure required columns exist
+    required_columns = ["question", "answer"]
+    for col in required_columns:
+        if col not in df.columns:
+            df[col] = ""  # Fill missing columns with empty values
+
+    # Convert valid date-like values in the "answer" column to YYYY-MM-DD format
+    if "answer" in df.columns:
+        df["answer"] = df["answer"].apply(lambda x: pd.to_datetime(x, errors='coerce').strftime('%Y-%m-%d') 
+                                          if isinstance(x, str) and x.replace('-', '').isdigit() else x)
+
+    # Suppress warnings related to Excel saving
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        # Use ExcelWriter to write the file
+        with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Sheet1")
+
+        # Load workbook and apply formatting
+        wb = load_workbook(output_file)
+        ws = wb.active
+
+        # Define date style
+        date_style = NamedStyle(name="custom_date", number_format="YYYY-MM-DD")
+        if "custom_date" not in wb.named_styles:
+            wb.add_named_style(date_style)
+
+        # Apply date format to "answer" column (assuming it's column B)
+        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=2, max_col=2):
+            for cell in row:
+                try:
+                    cell.value = pd.to_datetime(cell.value, errors="coerce").date()
+                    cell.style = "custom_date"
+                except:
+                    pass  # Ignore non-date values
+
+        # Save the workbook
+        wb.save(output_file)
+
+    print(f"Questions successfully saved to {output_file} with correct date formatting.")
+
+# Example JSON Response Data:
+questions = [
+    {"question": "What is the effective date of the procedure named 'Fee reclassification'?", "answer": "2023-12-01"},
+    {"question": "What is the next review date for the procedure named 'Fee reclassification'?", "answer": "2025-08-31"},
+    {"question": "What is the SOP Identifier for the procedure named 'Fee reclassification'?", "answer": "CS1P11SP25-12365"},
+    {"question": "Is the procedure named 'Fee reclassification' a Corporate Policy SOP?", "answer": "No"},
+    {"question": "Does the procedure named 'Fee reclassification' have regulatory applicability?", "answer": "Not Applicable"}
+]
+
+# Call the function to save the JSON response to an Excel file
+save_questions_to_excel(questions, "questions.xlsx")
+
+
+
+
+
+
+
+import warnings
+import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.styles import NamedStyle
+
+def save_questions_to_excel(questions, output_file):
     """Save valid questions and answers to an Excel file with correct date formatting."""
     
     if not questions:
