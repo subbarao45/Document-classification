@@ -17,6 +17,48 @@ def extract_valid_json(response):
         # Fix common JSON format issues
         json_text = re.sub(r',\s*}', '}', json_text)  # Remove trailing commas before }
         json_text = re.sub(r',\s*\]', ']', json_text)  # Remove trailing commas before ]
+        json_text = re.sub(r'[\x00-\x1F\x7F]', '', json_text)  # Remove control characters
+
+        # Load JSON safely
+        parsed_data = json.loads(json_text)
+
+        # Validate JSON structure and fix missing fields
+        valid_data = []
+        for obj in parsed_data:
+            if isinstance(obj, dict) and "question" in obj and obj["question"].strip():
+                obj["answer"] = obj.get("answer", "N/A")  # Ensure an answer field exists
+                valid_data.append(obj)
+
+        return valid_data
+
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON detected. Reason: {e}")
+        return []
+
+
+
+
+
+
+import re
+import json
+
+def extract_valid_json(response):
+    """Extract and fix malformed JSON from an LLM response."""
+    try:
+        # Locate the first and last square brackets
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+
+        if json_start == -1 or json_end == -1:
+            print("Warning: No JSON structure detected.")
+            return []
+
+        json_text = response[json_start:json_end + 1]
+
+        # Fix common JSON format issues
+        json_text = re.sub(r',\s*}', '}', json_text)  # Remove trailing commas before }
+        json_text = re.sub(r',\s*\]', ']', json_text)  # Remove trailing commas before ]
         json_text = re.sub(r'[\x80-\x1F\x7F]', '', json_text)  # Remove control characters
 
         # Load JSON safely
