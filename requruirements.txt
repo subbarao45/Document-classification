@@ -1,3 +1,54 @@
+Guidelines:
+Context-Specific Questions: The questions must be directly related to the content of the input, focusing on key facts, entities, names, titles, dates, figures, or specific terms.
+No Repetitive or Generic Questions: Avoid generic questions or ones that do not add value to understanding the specific content.
+No Template-Related or Procedural Questions: Do not include questions related to document templates, version numbers, procedural identifiers, or metadata details.
+Strictly Text-Based: Do not generate questions from image descriptions.
+Valid JSON Format: Ensure the output is a well-formed JSON array without additional text explanations.
+Input:
+{paragraph}
+
+Output Format:
+json
+Copy code
+[
+  {
+    "question": "What is the key financial strategy mentioned in the text?",
+    "answer": "Specific financial strategy mentioned in the text."
+  },
+  {
+    "question": "Who is the primary entity involved in the investment decision?",
+    "answer": "Name of the entity responsible for the investment decision."
+  },
+  {
+    "question": "When did the mentioned financial event take place?",
+    "answer": "Date of the financial event stated in the text."
+  }
+]
+Ensure that the response is properly formatted and fully closed.
+
+
+
+
+
+
+
+
+
+
+Search
+
+
+ChatGPT can make mistakes. Check im
+
+
+
+
+
+
+
+
+
+
 import re
 import json
 
