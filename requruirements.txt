@@ -8,6 +8,89 @@ def extract_valid_json(response):
         json_start = response.find('[')
         json_end = response.rfind(']')
 
+        if json_start != -1:
+            # If the closing bracket is missing, append it
+            if json_end == -1:
+                response += ']'
+                json_end = len(response) - 1  # Now it includes ]
+
+            json_text = response[json_start:json_end + 1]
+
+            # Remove invalid control characters
+            json_text = re.sub(r'[\x00-\x1F\x7F]', '', json_text)
+
+            # Fix missing commas between objects
+            json_text = re.sub(r'(?<=\})(?=\s*\{)', '},', json_text)
+
+            # Fix trailing commas
+            json_text = re.sub(r',\s*}', '}', json_text)
+            json_text = re.sub(r',\s*\]', ']', json_text)
+
+            # Ensure "Answer" field is always present
+            json_text = re.sub(r'("Answer":\s*)(?=[},\]])', r'\1""', json_text)
+
+            # Remove incomplete JSON objects
+            json_text = re.sub(r'\{[^{}]*$', '', json_text)  # Removes trailing unfinished `{`
+
+            # Ensure proper closing of JSON array
+            if not json_text.endswith(']'):
+                json_text += ']'
+
+            # Attempt to parse JSON
+            parsed_json = json.loads(json_text)
+
+            # Filter out empty "Question" or "Answer"
+            filtered_json = [
+                item for item in parsed_json
+                if "Question" in item and item["Question"].strip() and "Answer" in item
+            ]
+
+            return filtered_json
+
+        else:
+            print("Warning: No valid JSON detected in response.")
+            return []
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON detected. Reason: {e}")
+        return []
+
+# Sample response missing the last "}]"
+response = """[{
+    "Question": "What is the purpose of the Global Delivery Standard Operating Procedure (GD SOP) Template",
+    "Answer": "# Purpose of the GD SOP Template\n\n## Introduction..."
+}, {
+    "Question": "How to reconcile NRM, RTS, and SIT data?",
+    "Answer": "# Reconciling NRM, RTS, and SIT Data\n\n## Introduction..."
+}, {
+    "Question": "What is the system error handling process?",
+    "Answer": ""
+}, {
+    "Question": "How to monitor job performance?",
+    "Answer": "Use the monitoring"
+"""
+
+# Call the function
+valid_json = extract_valid_json(response)
+print(valid_json)
+
+
+
+
+
+
+
+
+
+import json
+import re
+
+def extract_valid_json(response):
+    """Extract and fix malformed JSON from an LLM response."""
+    try:
+        # Find the JSON array within the response
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+
         if json_start != -1 and json_end != -1:
             # Extract potential JSON content
             json_text = response[json_start:json_end + 1]
