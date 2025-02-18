@@ -3,6 +3,42 @@ def remove_duplicates(questions):
     if not questions or not isinstance(questions, list):
         print("Warning: No valid questions provided for deduplication.")
         return []
+    
+    seen = set()
+    unique_questions = []
+    for qa in questions:
+        if not isinstance(qa, dict) or not qa.get("Question"):
+            print(f"Skipping invalid question entry: {qa}")
+            continue  # Skip invalid questions
+        
+        question_text = qa.get("Question", "").strip()
+        answer_text = qa.get("Answer", "").strip()
+        question_type = qa.get("Question Type", "Unknown").strip()
+
+        if question_text not in seen:
+            unique_questions.append({
+                "Question Type": question_type,
+                "Question": question_text,
+                "Answer": answer_text
+            })
+            seen.add(question_text)
+
+    return unique_questions
+
+
+
+
+
+
+
+
+
+
+def remove_duplicates(questions):
+    """Removes duplicate questions while retaining question type."""
+    if not questions or not isinstance(questions, list):
+        print("Warning: No valid questions provided for deduplication.")
+        return []
 
     seen = set()
     unique_questions = []
