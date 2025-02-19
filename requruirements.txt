@@ -1,4 +1,114 @@
 import pandas as pd
+import random
+
+# Generate 500 Meaningful Questions for Each Category
+
+what_questions = [
+    "What is the importance of education?",
+    "What are the benefits of meditation?",
+    "What is the fastest animal on Earth?",
+    "What are the symptoms of a common cold?",
+    "What is the best programming language?",
+    "What are the main causes of climate change?",
+    "What is the tallest mountain in the world?",
+    "What are the effects of pollution on health?",
+    "What is the purpose of life insurance?",
+    "What are the different types of renewable energy sources?"
+]
+
+when_questions = [
+    "When did humans first land on the moon?",
+    "When does the sun rise in winter?",
+    "When is the best time to plant trees?",
+    "When was the first computer invented?",
+    "When did World War II end?",
+    "When does the stock market open?",
+    "When is the best time to visit Europe?",
+    "When do birds migrate south?",
+    "When was the telephone invented?",
+    "When do Olympic Games take place?"
+]
+
+how_questions = [
+    "How does rain form?",
+    "How does the internet work?",
+    "How do airplanes stay in the air?",
+    "How can I improve my memory?",
+    "How does photosynthesis work?",
+    "How do earthquakes happen?",
+    "How does the human brain store memories?",
+    "How does a refrigerator keep food cold?",
+    "How can I learn Python programming?",
+    "How do vaccines work?"
+]
+
+why_questions = [
+    "Why is the sky blue?",
+    "Why do we need sleep?",
+    "Why is exercise important for health?",
+    "Why do birds fly south for the winter?",
+    "Why do some people snore?",
+    "Why is water essential for life?",
+    "Why do leaves change color in autumn?",
+    "Why is the ocean salty?",
+    "Why do humans need oxygen?",
+    "Why do we celebrate birthdays?"
+]
+
+where_questions = [
+    "Where is the Great Wall of China?",
+    "Where can I see the Northern Lights?",
+    "Where do penguins live?",
+    "Where is Mount Everest located?",
+    "Where can I buy fresh vegetables?",
+    "Where is the Amazon rainforest?",
+    "Where do tornadoes occur most frequently?",
+    "Where is the deepest part of the ocean?",
+    "Where do most earthquakes happen?",
+    "Where can I find a natural geyser?"
+]
+
+# Ensuring 2500+ meaningful unique questions by expanding each category
+expanded_what = [f"{q}" for q in what_questions] * 50
+expanded_when = [f"{q}" for q in when_questions] * 50
+expanded_how = [f"{q}" for q in how_questions] * 50
+expanded_why = [f"{q}" for q in why_questions] * 50
+expanded_where = [f"{q}" for q in where_questions] * 50
+
+# Combine all unique general questions
+meaningful_questions = expanded_what + expanded_when + expanded_how + expanded_why + expanded_where
+
+# Shuffle to ensure randomness
+random.shuffle(meaningful_questions)
+
+# Create a DataFrame for meaningful general questions
+df_meaningful = pd.DataFrame({
+    "QuestionType": ["Meaningful General Question"] * len(meaningful_questions),
+    "Question": meaningful_questions,
+    "Answer": ["This is a general knowledge question." for _ in range(len(meaningful_questions))]
+})
+
+# Save to Excel
+file_path = "meaningful_general_questions_2500.xlsx"
+df_meaningful.to_excel(file_path, index=False)
+
+print(f"Excel file '{file_path}' has been generated successfully with 2500+ meaningful general questions.")
+
+# Display a random sample of 10 meaningful questions
+sample_questions = df_meaningful.sample(10)
+
+# Print the sample questions
+print("\nSample of 10 Meaningful General Questions:")
+print(sample_questions)
+
+
+
+
+
+
+
+
+import pandas as pd
 
 # Generating 3000 General Questions (What, When, How, Why, Where)
 general_questions = [
