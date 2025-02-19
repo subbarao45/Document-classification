@@ -1,3 +1,62 @@
+
+import pandas as pd
+
+# List of general financial questions
+questions = [
+    "Is this a good investment?",
+    "Will the stock market rise tomorrow?",
+    "Can I get a loan with a low credit score?",
+    "Is gold a safe investment?",
+    "Do interest rates affect mortgage payments?",
+    "Is cryptocurrency a good option for beginners?",
+    "Will this stock give high returns?",
+    "Should I invest in real estate?",
+    "Can I withdraw money early from my retirement account?",
+    "Is financial planning necessary for young adults?"
+]
+
+# Function to convert positive questions to negative questions
+def convert_to_negative(question):
+    if question.lower().startswith(("is", "are", "can", "will", "do", "does", "should")):
+        return "Isn't " + question[3:].strip() if question.startswith("Is") else \
+               "Aren't " + question[4:].strip() if question.startswith("Are") else \
+               "Can't " + question[3:].strip() if question.startswith("Can") else \
+               "Won't " + question[4:].strip() if question.startswith("Will") else \
+               "Don't " + question[3:].strip() if question.startswith("Do") else \
+               "Doesn't " + question[4:].strip() if question.startswith("Does") else \
+               "Shouldn't " + question[7:].strip() if question.startswith("Should") else \
+               "Isn't it true that " + question.lower()
+    return "Isn't it true that " + question.lower()
+
+# Generate 2000+ negative questions
+negative_questions = [convert_to_negative(q) for q in questions] * 200
+
+# Generate answers (placeholder answers)
+answers = ["I am not aware of that." for _ in range(len(negative_questions))]
+
+# Create DataFrame
+df = pd.DataFrame({
+    "QuestionType": ["Negative Question"] * len(negative_questions),
+    "Question": negative_questions,
+    "Answer": answers
+})
+
+# Save to Excel
+file_path = "negative_questions.xlsx"
+df.to_excel(file_path, index=False)
+
+print(f"Excel file '{file_path}' has been generated successfully with 2000+ negative questions.")
+
+
+
+
+
+
+
+
+
+
+
 PR Description: Added Question Generation Notebook
 This PR introduces a question generation notebook that includes five types of question-answer pairs:
 
