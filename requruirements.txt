@@ -1,3 +1,19 @@
+PR Description: Added Question Generation Notebook
+This PR introduces a question generation notebook that includes five types of question-answer pairs:
+
+Factual Type – Direct fact-based questions.
+Procedural Type – Step-by-step process-based questions.
+Inferential Type – Questions requiring inference from given data.
+Conceptual Type – Questions testing understanding of concepts.
+Reasoning-Based – Logical and analytical reasoning questions
+
+
+
+
+
+
+
+
 import pandas as pd
 import warnings
 
