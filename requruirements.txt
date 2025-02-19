@@ -1,3 +1,88 @@
+import pandas as pd
+
+# List of general questions from different categories
+questions = [
+    # Financial Questions
+    "Is this a good investment?",
+    "Will the stock market rise tomorrow?",
+    "Can I get a loan with a low credit score?",
+    "Is gold a safe investment?",
+    "Do interest rates affect mortgage payments?",
+
+    # Weather Questions
+    "Is it going to rain today?",
+    "Will it be sunny tomorrow?",
+    "Can we expect snowfall this week?",
+    "Is the temperature too high for outdoor activities?",
+    "Should I carry an umbrella today?",
+
+    # Sports Questions
+    "Will our team win the match?",
+    "Is the player in good form?",
+    "Can this team qualify for the finals?",
+    "Is this the best football club in the league?",
+    "Should we expect a high-scoring game?",
+
+    # General Knowledge & Science
+    "Is the Earth round?",
+    "Can humans live on Mars?",
+    "Is gravity the force that keeps us on the ground?",
+    "Does the moon affect ocean tides?",
+    "Should we explore space more actively?",
+
+    # Health & Lifestyle
+    "Is exercise good for health?",
+    "Will eating fruits help in boosting immunity?",
+    "Can stress affect mental health?",
+    "Should we drink at least 8 glasses of water daily?",
+    "Is smoking harmful to the lungs?",
+
+    # Technology & AI
+    "Is AI going to replace human jobs?",
+    "Will quantum computing change the future?",
+    "Can robots think like humans?",
+    "Is cybersecurity important in today's world?",
+    "Should we be concerned about data privacy?"
+]
+
+# Function to convert positive questions to negative questions
+def convert_to_negative(question):
+    if question.lower().startswith(("is", "are", "can", "will", "do", "does", "should")):
+        return "Isn't " + question[3:].strip() if question.startswith("Is") else \
+               "Aren't " + question[4:].strip() if question.startswith("Are") else \
+               "Can't " + question[3:].strip() if question.startswith("Can") else \
+               "Won't " + question[4:].strip() if question.startswith("Will") else \
+               "Don't " + question[3:].strip() if question.startswith("Do") else \
+               "Doesn't " + question[4:].strip() if question.startswith("Does") else \
+               "Shouldn't " + question[7:].strip() if question.startswith("Should") else \
+               "Isn't it true that " + question.lower()
+    return "Isn't it true that " + question.lower()
+
+# Generate 2000+ negative questions by multiplying the dataset
+negative_questions = [convert_to_negative(q) for q in questions] * 100
+
+# Generate answers (placeholder answers)
+answers = ["I am not aware of that." for _ in range(len(negative_questions))]
+
+# Create DataFrame
+df = pd.DataFrame({
+    "QuestionType": ["Negative Question"] * len(negative_questions),
+    "Question": negative_questions,
+    "Answer": answers
+})
+
+# Save to Excel
+file_path = "negative_questions_all_topics.xlsx"
+df.to_excel(file_path, index=False)
+
+print(f"Excel file '{file_path}' has been generated successfully with 2000+ negative questions.")
+
+
+
+
+
+
+
 
 import pandas as pd
 
