@@ -1,5 +1,119 @@
 import pandas as pd
 
+# Generating 3000 General Questions (What, When, How, Why, Where)
+general_questions = [
+    f"What is the meaning of {i}?" for i in range(1, 601)
+] + [
+    f"When did {i} happen?" for i in range(601, 1201)
+] + [
+    f"How does {i} work?" for i in range(1201, 1801)
+] + [
+    f"Why is {i} important?" for i in range(1801, 2401)
+] + [
+    f"Where can I find {i}?" for i in range(2401, 3001)
+]
+
+# List of Positive Questions (domain-specific)
+positive_questions = [
+    # Financial Questions
+    "Is this a good investment?",
+    "Will the stock market rise tomorrow?",
+    "Can I get a loan with a low credit score?",
+    "Is gold a safe investment?",
+    "Do interest rates affect mortgage payments?",
+
+    # Weather Questions
+    "Is it going to rain today?",
+    "Will it be sunny tomorrow?",
+    "Can we expect snowfall this week?",
+    "Is the temperature too high for outdoor activities?",
+    "Should I carry an umbrella today?",
+
+    # Sports Questions
+    "Will our team win the match?",
+    "Is the player in good form?",
+    "Can this team qualify for the finals?",
+    "Is this the best football club in the league?",
+    "Should we expect a high-scoring game?",
+
+    # General Knowledge & Science
+    "Is the Earth round?",
+    "Can humans live on Mars?",
+    "Is gravity the force that keeps us on the ground?",
+    "Does the moon affect ocean tides?",
+    "Should we explore space more actively?",
+
+    # Health & Lifestyle
+    "Is exercise good for health?",
+    "Will eating fruits help in boosting immunity?",
+    "Can stress affect mental health?",
+    "Should we drink at least 8 glasses of water daily?",
+    "Is smoking harmful to the lungs?",
+
+    # Technology & AI
+    "Is AI going to replace human jobs?",
+    "Will quantum computing change the future?",
+    "Can robots think like humans?",
+    "Is cybersecurity important in today's world?",
+    "Should we be concerned about data privacy?"
+] * 10  # Multiplying for larger dataset
+
+# Function to convert positive questions to negative questions
+def convert_to_negative(question):
+    if question.lower().startswith(("is", "are", "can", "will", "do", "does", "should")):
+        return "Isn't " + question[3:].strip() if question.startswith("Is") else \
+               "Aren't " + question[4:].strip() if question.startswith("Are") else \
+               "Can't " + question[3:].strip() if question.startswith("Can") else \
+               "Won't " + question[4:].strip() if question.startswith("Will") else \
+               "Don't " + question[3:].strip() if question.startswith("Do") else \
+               "Doesn't " + question[4:].strip() if question.startswith("Does") else \
+               "Shouldn't " + question[7:].strip() if question.startswith("Should") else \
+               "Isn't it true that " + question.lower()
+    return "Isn't it true that " + question.lower()
+
+# Convert positive questions into negative questions
+negative_questions = [convert_to_negative(q) for q in positive_questions]
+
+# Create placeholders for answers
+general_answers = ["This is a general knowledge question." for _ in range(len(general_questions))]
+positive_answers = ["This is a positive question." for _ in range(len(positive_questions))]
+negative_answers = ["I am not aware of that." for _ in range(len(negative_questions))]
+
+# Create DataFrames
+df_general = pd.DataFrame({
+    "QuestionType": ["General Question"] * len(general_questions),
+    "Question": general_questions,
+    "Answer": general_answers
+})
+
+df_positive = pd.DataFrame({
+    "QuestionType": ["Positive Question"] * len(positive_questions),
+    "Question": positive_questions,
+    "Answer": positive_answers
+})
+
+df_negative = pd.DataFrame({
+    "QuestionType": ["Negative Question"] * len(negative_questions),
+    "Question": negative_questions,
+    "Answer": negative_answers
+})
+
+# Combine all DataFrames
+df = pd.concat([df_general, df_positive, df_negative], ignore_index=True)
+
+# Save to Excel
+file_path = "training_questions_large.xlsx"
+df.to_excel(file_path, index=False)
+
+print(f"Excel file '{file_path}' has been generated successfully with 3000 general, positive, and negative questions.")
+
+
+
+
+
+
+import pandas as pd
+
 
 
 # List of general questions from different categories (200 generic + other domain-specific questions)
