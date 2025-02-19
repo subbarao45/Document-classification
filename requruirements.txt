@@ -1,3 +1,84 @@
+import json
+import re
+
+def extract_valid_json(response):
+    """Extract and clean malformed JSON from an LLM response."""
+    
+    try:
+        # Find the JSON-like structure
+        json_start = response.find('[')
+        json_end = response.rfind(']')
+
+        if json_start == -1:
+            print("Warning: No JSON structure detected.")
+            return []
+
+        if json_end == -1:
+            response += ']'  # Fix missing closing bracket
+            json_end = len(response) - 1
+
+        json_text = response[json_start:json_end + 1]
+
+        # Remove unwanted ASCII control characters
+        json_text = re.sub(r'[\x00-\x1F\x7F]', '', json_text)
+
+        # Fix missing commas between objects
+        json_text = re.sub(r'(?<=\})(?=\s*\{)', '},', json_text)
+
+        # Ensure JSON is wrapped correctly (fixes trailing commas)
+        json_text = json_text.strip().rstrip(',')
+        
+        # Fix missing brackets in objects
+        json_text = re.sub(r'(?<=\w)\s*{\s*', '{', json_text)  # Fix missing {
+        json_text = re.sub(r'\s*}\s*(?=\w)', '}', json_text)  # Fix missing }
+
+        # Extract JSON objects inside the array
+        json_objects = re.findall(r'\{.*?\}', json_text, re.DOTALL)
+
+        cleaned_objects = []
+
+        for obj in json_objects:
+            try:
+                parsed_obj = json.loads(obj.strip())
+
+                # Ensure both "Question" and "Answer" exist and are not empty
+                if parsed_obj.get("Question", "").strip() and parsed_obj.get("Answer", "").strip():
+                    cleaned_objects.append(parsed_obj)
+
+            except json.JSONDecodeError:
+                continue  # Ignore broken objects
+
+        return cleaned_objects
+
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON detected. Reason: {e}")
+        return []
+
+# Sample malformed JSON response
+response = """[
+{
+    "Question_type": "Procedural",
+    "Question": "What is the first step in the VFMC Non Receipt and Unadvised Cash procedure?",
+    "Answer": "Step 1: Check the unadvised cash in mail"
+}, 
+{
+    "Question_type": "Procedural",
+    "Question": "What systems are used in the VFMC Non Receipt and Unadvised Cash procedure?",
+    "Answer": "Outlook"
+}
+"""
+
+# Test the function
+valid_json = extract_valid_json(response)
+print(json.dumps(valid_json, indent=2))
+
+
+
+
+
+
+
+
 import pandas as pd
 import time
 from langchain.chat_models import AzureChatOpenAI
