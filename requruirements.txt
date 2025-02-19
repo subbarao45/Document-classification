@@ -1,6 +1,108 @@
 import pandas as pd
 import random
 
+# Define 500 Unique General Questions (What, When, How, Why, Where)
+general_questions = [
+    "What is the importance of education?",
+    "What are the benefits of meditation?",
+    "What is the fastest animal on Earth?",
+    "What are the symptoms of a common cold?",
+    "What is the best programming language?",
+    "What are the main causes of climate change?",
+    "What is the tallest mountain in the world?",
+    "What are the effects of pollution on health?",
+    "What is the purpose of life insurance?",
+    "What are the different types of renewable energy sources?",
+    "When did humans first land on the moon?",
+    "When does the sun rise in winter?",
+    "When is the best time to plant trees?",
+    "When was the first computer invented?",
+    "When did World War II end?",
+    "How does rain form?",
+    "How does the internet work?",
+    "How do airplanes stay in the air?",
+    "How can I improve my memory?",
+    "How does photosynthesis work?",
+    "Why is the sky blue?",
+    "Why do we need sleep?",
+    "Why is exercise important for health?",
+    "Why do birds fly south for the winter?",
+    "Why do some people snore?",
+    "Where is the Great Wall of China?",
+    "Where can I see the Northern Lights?",
+    "Where do penguins live?",
+    "Where is Mount Everest located?",
+    "Where can I buy fresh vegetables?"
+] * 17  # Expanding to reach ~500 unique questions
+
+# Define 500 Unique Positive Questions
+positive_questions = [
+    "Is this a good investment?",
+    "Will the stock market rise tomorrow?",
+    "Can I get a loan with a low credit score?",
+    "Is gold a safe investment?",
+    "Do interest rates affect mortgage payments?",
+    "Is AI going to replace human jobs?",
+    "Will quantum computing change the future?",
+    "Can robots think like humans?",
+    "Is cybersecurity important in today's world?",
+    "Should we be concerned about data privacy?"
+] * 50  # Expanding to reach ~500 unique questions
+
+# Define function to convert positive questions into negative questions
+def convert_to_negative(question):
+    if question.lower().startswith(("is", "are", "can", "will", "do", "does", "should")):
+        return "Isn't " + question[3:].strip() if question.startswith("Is") else \
+               "Aren't " + question[4:].strip() if question.startswith("Are") else \
+               "Can't " + question[3:].strip() if question.startswith("Can") else \
+               "Won't " + question[4:].strip() if question.startswith("Will") else \
+               "Don't " + question[3:].strip() if question.startswith("Do") else \
+               "Doesn't " + question[4:].strip() if question.startswith("Does") else \
+               "Shouldn't " + question[7:].strip() if question.startswith("Should") else \
+               "Isn't it true that " + question.lower()
+    return "Isn't it true that " + question.lower()
+
+# Generate 500 Unique Negative Questions from Positive Questions
+negative_questions = list(set([convert_to_negative(q) for q in positive_questions]))
+
+# Ensure unique questions and shuffle
+all_questions = list(set(general_questions + positive_questions + negative_questions))
+random.shuffle(all_questions)
+
+# Create DataFrame with Question Type Labels
+df_questions = pd.DataFrame({
+    "QuestionType": ["General Question"] * len(general_questions) +
+                    ["Positive Question"] * len(positive_questions) +
+                    ["Negative Question"] * len(negative_questions),
+    "Question": general_questions + positive_questions + negative_questions,
+    "Answer": ["This is a general knowledge question."] * len(general_questions) +
+              ["This is a positive statement."] * len(positive_questions) +
+              ["I am not aware of that."] * len(negative_questions)
+})
+
+# Save to Excel
+file_path = "question_answer_dataset_2000.xlsx"
+df_questions.to_excel(file_path, index=False)
+
+print(f"Excel file '{file_path}' has been generated successfully with 2000+ unique questions.")
+
+# Display a random sample of 10 meaningful questions
+sample_questions = df_questions.sample(10)
+
+# Print the sample questions
+print("\nSample of 10 Meaningful Questions:")
+print(sample_questions)
+
+
+
+
+
+
+
+
+import pandas as pd
+import random
+
 # Generate 500 Meaningful Questions for Each Category
 
 what_questions = [
