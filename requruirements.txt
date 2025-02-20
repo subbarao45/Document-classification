@@ -1,3 +1,62 @@
+
+def generate_instruction_following_data(
+    output_dir="./generated_data",
+    seed_tasks_path="C:/data/seed_tasks.jsonl",
+    num_instructions_to_generate=52000,
+    num_prompt_instructions=3,
+    request_batch_size=5,
+    temperature=0.7,
+    top_p=1.0
+):
+    # Load seed tasks
+    seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r", encoding="utf-8")]
+    seed_instruction_data = [
+        {"instruction": t["instruction"], "input": t["instances"][0]["input"], "output": t["instances"][0]["output"]}
+        for t in seed_tasks
+    ]
+    print(f"Loaded {len(seed_instruction_data)} human-written seed instructions")
+
+    os.makedirs(output_dir, exist_ok=True)
+    machine_instruction_data = []
+
+    if os.path.exists(os.path.join(output_dir, "regen.json")):
+        with open(os.path.join(output_dir, "regen.json"), "r", encoding="utf-8") as f:
+            machine_instruction_data = json.load(f)
+        print(f"Loaded {len(machine_instruction_data)} machine-generated instructions")
+
+    progress_bar = tqdm.tqdm(total=num_instructions_to_generate)
+    if machine_instruction_data:
+        progress_bar.update(len(machine_instruction_data))
+
+    while len(machine_instruction_data) < num_instructions_to_generate:
+        batch_inputs = []
+        for _ in range(request_batch_size):
+            prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
+            prompt = encode_prompt(prompt_instructions)
+            batch_inputs.append(prompt)
+
+        results = openai_completion(batch_inputs, batch_size=request_batch_size)
+
+        for result in results:
+            if result and "text" in result:
+                new_instructions = post_process_gpt3_response(num_prompt_instructions, result)
+                machine_instruction_data.extend(new_instructions)
+                progress_bar.update(len(new_instructions))
+
+        with open(os.path.join(output_dir, "regen.json"), "w", encoding="utf-8") as f:
+            json.dump(machine_instruction_data, f)
+
+        print(f"Generated {len(machine_instruction_data)} instructions so far.")
+
+    print("Instruction generation completed.")
+
+
+
+
+
+
+
+
 def post_process_gpt3_response(num_prompt_instructions, response):
     if response is None:
         return []
