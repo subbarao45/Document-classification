@@ -1,3 +1,18 @@
+def openai_completion(prompts, batch_size=5, stop_sequences=None):
+    responses = []
+    for prompt in prompts:
+        response = llm([HumanMessage(content=prompt)])
+        responses.append({
+            "text": response.content,
+            "finish_reason": "stop"
+        })
+    return responses
+
+
+
+
+
+
 import os
 import json
 import time
