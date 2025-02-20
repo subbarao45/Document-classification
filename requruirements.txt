@@ -1,3 +1,206 @@
+
+import os
+import json
+import random
+import re
+import string
+from multiprocessing import Pool
+from functools import partial
+
+import numpy as np
+import pandas as pd
+import tqdm
+from rouge_score import rouge_scorer
+from langchain.chat_models import AzureChatOpenAI
+from langchain.schema import HumanMessage
+
+# Initialize Azure GPT-4 Model using Langchain's AzureChatOpenAI
+azure_openai_api_version = "2024-06-01-preview"
+azure_openai_endpoint = "https://<your-azure-openai-endpoint>.openai.azure.com/"
+azure_openai_api_key = "<your-azure-api-key>"
+
+llm = AzureChatOpenAI(
+    temperature=0.7, 
+    api_version=azure_openai_api_version,
+    openai_api_base=azure_openai_endpoint,
+    openai_api_key=azure_openai_api_key,
+    deployment_name="ssgpt-40", 
+    max_tokens=3072
+)
+
+# Load Excel data and create seed_tasks.jsonl
+excel_file_path = "C:/data/your_dataset.xlsx"
+seed_tasks_path = "C:/data/seed_tasks.jsonl"
+
+# Load Excel file and convert to seed_tasks.jsonl
+def generate_seed_tasks_from_excel(excel_file_path, seed_tasks_path):
+    df = pd.read_excel(excel_file_path)
+    seed_data = []
+
+    for idx, row in df.iterrows():
+        input_text = row['question'] if pd.notna(row['question']) else ""
+        output_text = row['answer'] if pd.notna(row['answer']) else ""
+
+        task = {
+            "id": f"seed_task_{idx}",
+            "name": f"SOP_{idx}",
+            "instruction": row['question'],
+            "instances": [{
+                "input": input_text,
+                "output": output_text
+            }],
+            "is_classification": False
+        }
+        seed_data.append(task)
+
+    # Write to JSONL format
+    with open(seed_tasks_path, 'w', encoding="utf-8") as f:
+        for task in seed_data:
+            f.write(json.dumps(task) + '\n')
+
+    print(f"Seed tasks saved at: {seed_tasks_path}")
+
+generate_seed_tasks_from_excel(excel_file_path, seed_tasks_path)
+
+# Validate seed_tasks.jsonl
+def validate_jsonl_file(file_path):
+    valid_tasks = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    json_obj = json.loads(line.strip())
+                    valid_tasks.append(json_obj)
+                except json.JSONDecodeError as e:
+                    print(f"Invalid JSON: {e}")
+        print(f"Loaded {len(valid_tasks)} valid JSON tasks.")
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+    return valid_tasks
+
+seed_tasks = validate_jsonl_file(seed_tasks_path)
+
+# Azure GPT-4 completion function
+def openai_completion(prompts, batch_size=5):
+    responses = []
+    for prompt in prompts:
+        try:
+            response = llm([HumanMessage(content=prompt)])
+            responses.append({
+                "text": response.content,
+                "finish_reason": "stop"
+            })
+        except Exception as e:
+            print(f"Error with model call: {e}")
+            responses.append({"text": "", "finish_reason": "error"})
+    return responses
+
+# Encode prompt for the model
+def encode_prompt(prompt_instructions):
+    """Encode multiple prompt instructions into a single string."""
+    prompt = "You are asked to generate diverse task instructions for a GPT model.\n"
+
+    for idx, task_dict in enumerate(prompt_instructions):
+        (instruction, input_text, output) = task_dict["instruction"], task_dict["input"], task_dict["output"]
+        instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
+        input_text = "<noinput>" if input_text.lower() == "" else input_text
+        prompt += f"###\n"
+        prompt += f"{idx + 1}. Instruction: {instruction}\n"
+        prompt += f"{idx + 1}. Input:\n{input_text}\n"
+        prompt += f"{idx + 1}. Output:\n{output}\n"
+    prompt += f"###\n"
+    prompt += f"{idx + 2}. Instruction:"
+    return prompt
+
+# Post-process GPT responses
+def post_process_gpt3_response(num_prompt_instructions, response):
+    if response is None or not response.get("text"):
+        return []
+    
+    raw_instructions = f"{num_prompt_instructions+1}. Instruction:" + response["text"]
+    raw_instructions = re.split("###", raw_instructions)
+    instructions = []
+
+    for idx, inst in enumerate(raw_instructions):
+        if idx == len(raw_instructions) - 1 and response.get("finish_reason") == "length":
+            continue
+        
+        idx += num_prompt_instructions + 1
+        splitted_data = re.split(f"{idx}\.\s+(Instruction|Input|Output):", inst)
+        
+        if len(splitted_data) < 7:
+            continue
+        
+        instruction = splitted_data[2].strip()
+        input_text = splitted_data[4].strip()
+        input_text = "" if input_text.lower() == "<noinput>" else input_text
+        output = splitted_data[6].strip()
+        
+        instructions.append({"instruction": instruction, "input": input_text, "output": output})
+    
+    return instructions
+
+# Generate instructions using Azure GPT-4
+def generate_instruction_following_data(
+    output_dir="./generated_data",
+    seed_tasks_path="C:/data/seed_tasks.jsonl",
+    num_instructions_to_generate=100,
+    num_prompt_instructions=3,
+    request_batch_size=5
+):
+    os.makedirs(output_dir, exist_ok=True)
+    machine_instruction_data = []
+
+    seed_instruction_data = [
+        {"instruction": t["instruction"], "input": t["instances"][0]["input"], "output": t["instances"][0]["output"]}
+        for t in seed_tasks
+    ]
+    
+    progress_bar = tqdm.tqdm(total=num_instructions_to_generate)
+
+    while len(machine_instruction_data) < num_instructions_to_generate:
+        batch_inputs = []
+        for _ in range(request_batch_size):
+            prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
+            prompt = encode_prompt(prompt_instructions)
+            batch_inputs.append(prompt)
+
+        results = openai_completion(batch_inputs, batch_size=request_batch_size)
+
+        for result in results:
+            if result and "text" in result:
+                new_instructions = post_process_gpt3_response(num_prompt_instructions, result)
+                machine_instruction_data.extend(new_instructions)
+                progress_bar.update(len(new_instructions))
+
+        with open(os.path.join(output_dir, "regen.json"), "w", encoding="utf-8") as f:
+            json.dump(machine_instruction_data, f)
+
+    print("Instruction generation completed.")
+
+# Execute the process
+generate_instruction_following_data()
+
+# Preview the generated output
+output_file = "./generated_data/regen.json"
+
+with open(output_file, "r", encoding="utf-8") as f:
+    generated_data = json.load(f)
+
+for data in generated_data[:10]:
+    print(f"Instruction: {data['instruction']}")
+    print(f"Input: {data['input']}")
+    print(f"Output: {data['output']}\n")
+
+
+
+
+
+
+
+
+
+
 import os
 import json
 import random
