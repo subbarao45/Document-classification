@@ -1,3 +1,38 @@
+import pandas as pd
+import json
+
+# Load the dataset from Excel
+df = pd.read_excel("C:/data/your_dataset.xlsx")
+
+# Prepare data in the expected format for seed tasks
+seed_data = []
+for idx, row in df.iterrows():
+    task = {
+        "id": f"seed_task_{idx}",
+        "name": f"factual_query_{idx}",
+        "instruction": "Factual",
+        "instances": [{
+            "input": row['question'],
+            "output": row['answer']
+        }],
+        "is_classification": False
+    }
+    seed_data.append(task)
+
+# Save the prepared data as a JSONL file
+seed_tasks_path = "C:/data/seed_tasks.jsonl"
+with open(seed_tasks_path, 'w', encoding="utf-8") as f:
+    for task in seed_data:
+        f.write(json.dumps(task) + '\n')
+
+print(f"Seed tasks saved at: {seed_tasks_path}")
+
+
+
+
+
+
+
 def openai_completion(prompts, batch_size=5):
     responses = []
     for prompt in prompts:
