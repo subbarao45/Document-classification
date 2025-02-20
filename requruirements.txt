@@ -1,5 +1,117 @@
 import pandas as pd
 import json
+import random
+
+# Load the dataset from Excel
+df = pd.read_excel("C:/data/your_dataset.xlsx")
+
+# Define potential task types for more diverse instruction generation
+task_types = [
+    "Answer the following question",
+    "Summarize the following information",
+    "Classify the sentiment of the statement",
+    "Translate the following text",
+    "Provide a short description",
+    "Generate a list of key points",
+    "Rewrite in a formal tone",
+    "Identify the main idea",
+    "Provide a Yes or No answer",
+    "Explain the concept in simple terms"
+]
+
+# Prepare data in the expected format for seed tasks
+seed_data = []
+for idx, row in df.iterrows():
+    input_text = row['question'] if pd.notna(row['question']) else ""
+    output_text = row['answer'] if pd.notna(row['answer']) else ""
+
+    # Randomly select a task type to increase instruction diversity
+    instruction = random.choice(task_types)
+    
+    # Construct the task with diverse instructions
+    task = {
+        "id": f"seed_task_{idx}",
+        "name": f"SOP_{idx}",
+        "instruction": f"{instruction}: {input_text}",
+        "instances": [{
+            "input": input_text,
+            "output": output_text
+        }],
+        "is_classification": False
+    }
+    seed_data.append(task)
+
+# Save the prepared data as a JSONL file
+seed_tasks_path = "C:/data/seed_tasks.jsonl"
+with open(seed_tasks_path, 'w', encoding="utf-8") as f:
+    for task in seed_data:
+        f.write(json.dumps(task) + '\n')
+
+print(f"Seed tasks saved at: {seed_tasks_path}")
+
+def encode_prompt(prompt_instructions):
+    prompt = "You are asked to generate diverse task instructions for a GPT model. The instructions must vary in task type and utilize inputs effectively where applicable.\n"
+    
+    for idx, task_dict in enumerate(prompt_instructions):
+        instruction, input_text, output = task_dict["instruction"], task_dict["input"], task_dict["output"]
+        input_text = "<noinput>" if input_text.lower() == "" else input_text
+        
+        prompt += f"###\n"
+        prompt += f"{idx + 1}. Instruction: {instruction}\n"
+        prompt += f"{idx + 1}. Input:\n{input_text}\n"
+        prompt += f"{idx + 1}. Output:\n{output}\n"
+    
+    prompt += f"###\n"
+    prompt += f"{idx + 2}. Instruction:"
+    return prompt
+
+def generate_instruction_following_data(
+    output_dir="./generated_data",
+    seed_tasks_path="C:/data/seed_tasks.jsonl",
+    num_instructions_to_generate=500, 
+    num_prompt_instructions=3,
+    request_batch_size=5
+):
+    seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r", encoding="utf-8")]
+    seed_instruction_data = [
+        {"instruction": t["instruction"], "input": t["instances"][0]["input"], "output": t["instances"][0]["output"]}
+        for t in seed_tasks
+    ]
+    print(f"Loaded {len(seed_instruction_data)} diverse seed instructions")
+
+    os.makedirs(output_dir, exist_ok=True)
+    machine_instruction_data = []
+
+    progress_bar = tqdm.tqdm(total=num_instructions_to_generate)
+
+    while len(machine_instruction_data) < num_instructions_to_generate:
+        batch_inputs = []
+        for _ in range(request_batch_size):
+            prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
+            prompt = encode_prompt(prompt_instructions)
+            batch_inputs.append(prompt)
+
+        results = openai_completion(batch_inputs, batch_size=request_batch_size)
+
+        for result in results:
+            if result and "text" in result:
+                new_instructions = post_process_gpt3_response(num_prompt_instructions, result)
+                machine_instruction_data.extend(new_instructions)
+                progress_bar.update(len(new_instructions))
+
+        with open(os.path.join(output_dir, "regen.json"), "w", encoding="utf-8") as f:
+            json.dump(machine_instruction_data, f)
+
+    print("Instruction generation completed.")
+
+
+
+
+
+
+
+import pandas as pd
+import json
 
 # Load the dataset from Excel
 df = pd.read_excel("C:/data/your_dataset.xlsx")
