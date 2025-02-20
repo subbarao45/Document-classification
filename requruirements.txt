@@ -1,3 +1,78 @@
+def encode_prompt(prompt_instructions):
+    prompt = open("./prompt.txt").read() + "\n"
+    for idx, task_dict in enumerate(prompt_instructions):
+        (instruction, input_text, output) = task_dict["instruction"], task_dict["input"], task_dict["output"]
+        instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
+        input_text = "<noinput>" if input_text.lower() == "" else input_text
+        prompt += f"###\n"
+        prompt += f"{idx + 1}. Instruction: {instruction}\n"
+        prompt += f"{idx + 1}. Input:\n{input_text}\n"
+        prompt += f"{idx + 1}. Output:\n{output}\n"
+    prompt += f"###\n"
+    prompt += f"{idx + 2}. Instruction:"
+    return prompt
+
+def generate_instruction_following_data(
+    output_dir="./",
+    seed_tasks_path="./seed_tasks.jsonl",
+    num_instructions_to_generate=52000,
+    num_prompt_instructions=3,
+    request_batch_size=5,
+    temperature=0.7,
+    top_p=1.0,
+    num_cpus=16,
+):
+    # Load seed tasks
+    seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r")]
+    seed_instruction_data = [
+        {"instruction": t["instruction"], "input": t["instances"][0]["input"], "output": t["instances"][0]["output"]}
+        for t in seed_tasks
+    ]
+    print(f"Loaded {len(seed_instruction_data)} human-written seed instructions")
+
+    os.makedirs(output_dir, exist_ok=True)
+    machine_instruction_data = []
+
+    if os.path.exists(os.path.join(output_dir, "regen.json")):
+        with open(os.path.join(output_dir, "regen.json"), "r") as f:
+            machine_instruction_data = json.load(f)
+        print(f"Loaded {len(machine_instruction_data)} machine-generated instructions")
+
+    progress_bar = tqdm.tqdm(total=num_instructions_to_generate)
+    if machine_instruction_data:
+        progress_bar.update(len(machine_instruction_data))
+
+    while len(machine_instruction_data) < num_instructions_to_generate:
+        batch_inputs = []
+        for _ in range(request_batch_size):
+            prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
+            prompt = encode_prompt(prompt_instructions)
+            batch_inputs.append(prompt)
+
+        results = openai_completion(batch_inputs, batch_size=request_batch_size)
+
+        for result in results:
+            if result and "text" in result:
+                new_instructions = result["text"].split("###")
+                for inst in new_instructions:
+                    if len(inst.strip()) > 0:
+                        machine_instruction_data.append({"instruction": inst.strip(), "input": "<noinput>", "output": ""})
+                        progress_bar.update(1)
+
+        # Save intermediate results
+        with open(os.path.join(output_dir, "regen.json"), "w") as f:
+            json.dump(machine_instruction_data, f)
+
+        print(f"Generated {len(machine_instruction_data)} instructions so far.")
+
+    print("Instruction generation completed.")
+
+
+
+
+
+
+
 def openai_completion(prompts, batch_size=5, stop_sequences=None):
     responses = []
     for prompt in prompts:
