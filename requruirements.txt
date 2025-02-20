@@ -1,3 +1,41 @@
+def post_process_gpt3_response(num_prompt_instructions, response):
+    if response is None:
+        return []
+    raw_instructions = f"{num_prompt_instructions+1}. Instruction:" + response["text"]
+    raw_instructions = re.split("###", raw_instructions)
+    instructions = []
+    
+    for idx, inst in enumerate(raw_instructions):
+        if idx == len(raw_instructions) - 1 and response["finish_reason"] == "length":
+            continue
+        
+        idx += num_prompt_instructions + 1
+        splitted_data = re.split(f"{idx}\.\s+(Instruction|Input|Output):", inst)
+        
+        if len(splitted_data) != 7:
+            continue
+        else:
+            instruction = splitted_data[2].strip()
+            input_text = splitted_data[4].strip()
+            input_text = "" if input_text.lower() == "<noinput>" else input_text
+            output = splitted_data[6].strip()
+            
+        if len(instruction.split()) <= 3 or len(instruction.split()) > 150:
+            continue
+
+        # Adding a check for empty input
+        if not input_text:
+            input_text = "<noinput>"
+        
+        instructions.append({"instruction": instruction, "input": input_text, "output": output})
+    
+    return instructions
+
+
+
+
+
+
 generate_instruction_following_data(
     output_dir="./generated_data",
     seed_tasks_path="seed_tasks.jsonl",
