@@ -1,3 +1,205 @@
+
+import os
+import json
+import random
+import re
+import string
+import pandas as pd
+import tqdm
+import openai
+import copy
+import dataclasses
+import math
+import sys
+import time
+from typing import Optional, Sequence, Union
+from openai import openai_object
+
+# Initialize OpenAI API for decoding with ssgpt-40 model
+openai.api_key = "<your-azure-api-key>"
+openai.api_base = "https://<your-azure-openai-endpoint>.openai.azure.com/"
+openai.api_type = "azure"
+openai.api_version = "2024-06-01-preview"
+
+StrOrOpenAIObject = Union[str, openai_object.OpenAIObject]
+
+# Decoding Arguments Class
+@dataclasses.dataclass
+class OpenAIDecodingArguments(object):
+    max_tokens: int = 1800
+    temperature: float = 0.7
+    top_p: float = 1.0
+    n: int = 1
+    stream: bool = False
+    stop: Optional[Sequence[str]] = None
+    presence_penalty: float = 0.0
+    frequency_penalty: float = 0.0
+    suffix: Optional[str] = None
+    logprobs: Optional[int] = None
+    echo: bool = False
+
+# Load Excel data and create seed_tasks.jsonl
+excel_file_path = "C:/data/your_dataset.xlsx"
+seed_tasks_path = "C:/data/seed_tasks.jsonl"
+
+def generate_seed_tasks_from_excel(excel_file_path, seed_tasks_path):
+    df = pd.read_excel(excel_file_path)
+    seed_data = []
+
+    for idx, row in df.iterrows():
+        input_text = str(row['question']) if pd.notna(row['question']) else ""
+        output_text = str(row['answer']) if pd.notna(row['answer']) else ""
+
+        if input_text and output_text:
+            task = {
+                "id": f"seed_task_{idx}",
+                "name": f"SOP_{idx}",
+                "instruction": input_text,
+                "instances": [{
+                    "input": input_text,
+                    "output": output_text
+                }],
+                "is_classification": False
+            }
+            seed_data.append(task)
+
+    with open(seed_tasks_path, 'w', encoding="utf-8") as f:
+        for task in seed_data:
+            f.write(json.dumps(task) + '\n')
+
+    print(f"Seed tasks saved at: {seed_tasks_path}")
+
+generate_seed_tasks_from_excel(excel_file_path, seed_tasks_path)
+
+# Validate JSONL file to avoid decoding errors
+def validate_jsonl_file(file_path):
+    valid_tasks = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    json_obj = json.loads(line.strip())
+                    valid_tasks.append(json_obj)
+                except json.JSONDecodeError as e:
+                    print(f"Invalid JSON: {e}")
+        print(f"Loaded {len(valid_tasks)} valid JSON tasks.")
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+    return valid_tasks
+
+seed_tasks = validate_jsonl_file(seed_tasks_path)
+
+# Completion function using OpenAIDecodingArguments and openai.Completion.create
+def openai_completion(prompts, decoding_args: OpenAIDecodingArguments, model_name="ssgpt-40", batch_size=5):
+    responses = []
+    is_single_prompt = isinstance(prompts, str)
+    if is_single_prompt:
+        prompts = [prompts]
+
+    prompt_batches = [
+        prompts[batch_id * batch_size : (batch_id + 1) * batch_size]
+        for batch_id in range(int(math.ceil(len(prompts) / batch_size)))
+    ]
+
+    for prompt_batch in tqdm.tqdm(prompt_batches, desc="Prompt Batches"):
+        try:
+            completion_batch = openai.Completion.create(
+                engine=model_name,
+                prompt=prompt_batch,
+                max_tokens=decoding_args.max_tokens,
+                temperature=decoding_args.temperature,
+                top_p=decoding_args.top_p,
+                n=decoding_args.n,
+                stop=decoding_args.stop,
+                logprobs=decoding_args.logprobs,
+                echo=decoding_args.echo
+            )
+            for choice in completion_batch.choices:
+                responses.append({
+                    "text": choice.text.strip(),
+                    "finish_reason": choice.finish_reason
+                })
+        except Exception as e:
+            print(f"Error with model call: {e}")
+            responses.append({"text": "", "finish_reason": "error"})
+    
+    return responses
+
+# Encode prompt for the model
+def encode_prompt(prompt_instructions):
+    prompt = "You are asked to generate diverse task instructions for a GPT model.\n"
+
+    for idx, task_dict in enumerate(prompt_instructions):
+        (instruction, input_text, output) = task_dict["instruction"], task_dict["input"], task_dict["output"]
+        input_text = "<noinput>" if input_text.lower() == "" else input_text
+        prompt += f"###\n"
+        prompt += f"{idx + 1}. Instruction: {instruction}\n"
+        prompt += f"{idx + 1}. Input:\n{input_text}\n"
+        prompt += f"{idx + 1}. Output:\n{output}\n"
+    prompt += f"###\n{idx + 2}. Instruction:"
+    return prompt
+
+# Generate instructions using OpenAI API
+def generate_instruction_following_data(
+    output_dir="./generated_data",
+    num_instructions_to_generate=100,
+    num_prompt_instructions=3,
+    request_batch_size=5
+):
+    os.makedirs(output_dir, exist_ok=True)
+    machine_instruction_data = []
+
+    seed_instruction_data = [
+        {"instruction": t["instruction"], "input": t["instances"][0]["input"], "output": t["instances"][0]["output"]}
+        for t in seed_tasks
+    ]
+
+    decoding_args = OpenAIDecodingArguments(
+        max_tokens=1800,
+        temperature=0.7,
+        top_p=1.0,
+        n=1,
+        stop=["\n20", "20.", "20."]
+    )
+
+    progress_bar = tqdm.tqdm(total=num_instructions_to_generate)
+
+    while len(machine_instruction_data) < num_instructions_to_generate:
+        batch_inputs = []
+        for _ in range(request_batch_size):
+            prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
+            prompt = encode_prompt(prompt_instructions)
+            batch_inputs.append(prompt)
+
+        results = openai_completion(batch_inputs, decoding_args)
+
+        for result in results:
+            if result and "text" in result:
+                machine_instruction_data.append(result)
+                progress_bar.update(1)
+
+        with open(os.path.join(output_dir, "regen.json"), "w", encoding="utf-8") as f:
+            json.dump(machine_instruction_data, f)
+
+    print("Instruction generation completed.")
+
+# Execute the process
+generate_instruction_following_data()
+
+# Preview the generated output
+output_file = "./generated_data/regen.json"
+
+with open(output_file, "r", encoding="utf-8") as f:
+    generated_data = json.load(f)
+
+for data in generated_data[:10]:
+    print(f"Instruction: {data['text']}\n")
+
+
+
+
+
+
 def openai_completion(prompts, batch_size=5):
     responses = []
     for prompt in prompts:
