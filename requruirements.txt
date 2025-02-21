@@ -1,3 +1,50 @@
+def generate_instruction_following_data(
+    output_dir="./",
+    seed_tasks_path="./seed_tasks.xlsx",
+    num_instructions_to_generate=100,
+    num_prompt_instructions=3,
+    temperature=1.0,
+    top_p=1.0
+):
+    seed_tasks_jsonl = os.path.join(output_dir, "seed_tasks.jsonl")
+    convert_excel_to_jsonl(seed_tasks_path, seed_tasks_jsonl)
+
+    with open(seed_tasks_jsonl, "r", encoding="utf-8") as f:
+        seed_instruction_data = [json.loads(line) for line in f]
+
+    print(f"Loaded {len(seed_instruction_data)} human-written seed instructions")
+
+    os.makedirs(output_dir, exist_ok=True)
+    machine_instruction_data = []
+
+    progress_bar = tqdm.tqdm(total=num_instructions_to_generate)
+
+    while len(machine_instruction_data) < num_instructions_to_generate:
+        prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
+        prompt = encode_prompt(prompt_instructions)
+
+        response = llm([HumanMessage(content=prompt)]).content
+        new_instructions = post_process_response(num_prompt_instructions, response)
+        machine_instruction_data.extend(new_instructions)
+        progress_bar.update(len(new_instructions))
+
+        with open(os.path.join(output_dir, "regen.json"), "w", encoding="utf-8") as f:
+            json.dump(machine_instruction_data, f, ensure_ascii=False, indent=4)
+
+    progress_bar.close()
+    print("Generation completed.")
+
+
+if __name__ == '__main__':
+    generate_instruction_following_data()
+
+
+
+
+
+
+
+
 
 import os
 import json
