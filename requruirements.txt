@@ -2,6 +2,55 @@ def post_process_response(num_prompt_instructions, response_text):
     raw_instructions = f"{num_prompt_instructions+1}. Instruction:" + response_text
     raw_instructions = re.split("###", raw_instructions)
     instructions = []
+
+    # Initialize idx with a default value
+    idx = -1
+    
+    for idx, inst in enumerate(raw_instructions):
+        if idx == len(raw_instructions) - 1:
+            continue
+        
+        instruction_index = idx + num_prompt_instructions + 1
+        splitted_data = re.split(f"{instruction_index}\.\s+(Instruction|Input|Output):", inst)
+        
+        if len(splitted_data) != 7:
+            continue
+        instruction = splitted_data[2].strip()
+        input_data = splitted_data[4].strip()
+        input_data = "" if input_data.lower() == "<noinput>" else input_data
+        output = splitted_data[6].strip()
+
+        if len(instruction.split()) <= 3 or len(instruction.split()) > 150:
+            continue
+
+        blacklist = [
+            "image", "images", "graph", "graphs", "picture", "pictures", "file", "files",
+            "map", "maps", "draw", "plot", "go to", "video", "audio", "music",
+            "flowchart", "diagram",
+        ]
+        if any(re.search(rf"\b{word}\b", instruction, re.IGNORECASE) for word in blacklist):
+            continue
+        if instruction.startswith("Write a program"):
+            continue
+        if instruction[0] in string.punctuation or not instruction[0].isascii():
+            continue
+
+        instructions.append({"instruction": instruction, "input": input_data, "output": output})
+
+    return instructions
+
+
+
+
+
+
+
+
+
+def post_process_response(num_prompt_instructions, response_text):
+    raw_instructions = f"{num_prompt_instructions+1}. Instruction:" + response_text
+    raw_instructions = re.split("###", raw_instructions)
+    instructions = []
     for idx, inst in enumerate(raw_instructions):
         if idx == len(raw_instructions) - 1:
             continue
