@@ -1,6 +1,98 @@
 
 import os
 import json
+import pandas as pd
+import tqdm
+import openai
+from typing import List
+
+# Initialize OpenAI API for Azure with the ssgpt-40 deployment
+openai.api_key = "<your-azure-api-key>"
+openai.api_base = "https://<your-azure-openai-endpoint>.openai.azure.com/"
+openai.api_type = "azure"
+openai.api_version = "2024-06-01-preview"
+
+# Instruction templates based on question type
+INSTRUCTION_TEMPLATES = {
+    "Factual": "Using the facts given, write a question-answer pair.",
+    "Conceptual": "Explain the concept behind the provided input and generate a question-answer pair.",
+    "Inferential": "Draw inferences based on the information and create a question-answer pair.",
+    "Reasoning-based": "Apply logical reasoning to generate a relevant question-answer pair.",
+    "Procedural": "Describe the procedure and create a question-answer pair."
+}
+
+# Load Excel data and prepare seed tasks
+excel_file_path = "sample_dataset.xlsx"  # Replace with the actual path to your Excel file
+seed_tasks_path = "seed_tasks.jsonl"
+output_dir = "./generated_data"
+
+os.makedirs(output_dir, exist_ok=True)
+
+# Generate seed tasks from Excel with dynamic instructions
+def generate_seed_tasks_from_excel(excel_file_path, seed_tasks_path):
+    df = pd.read_excel(excel_file_path)
+    seed_data = []
+
+    for idx, row in df.iterrows():
+        question_type = str(row['Question Type']).strip().capitalize() if pd.notna(row['Question Type']) else "Factual"
+        instruction_template = INSTRUCTION_TEMPLATES.get(question_type, INSTRUCTION_TEMPLATES["Factual"])
+        
+        instruction = str(row['Instruction']).strip() if pd.notna(row['Instruction']) else instruction_template
+        input_text = str(row['Input']).strip() if pd.notna(row['Input']) else "<noinput>"
+        question = str(row['Question']).strip() if pd.notna(row['Question']) else ""
+        output_text = str(row['Output']).strip() if pd.notna(row['Output']) else ""
+
+        if question and output_text:
+            task = {
+                "id": f"seed_task_{idx}",
+                "name": f"question_answering_generation_from_{question_type.lower()}",
+                "instruction": instruction,
+                "instances": {
+                    "input": input_text,
+                    "output": [[f"Question: {question}"], [f"Answer: {output_text}"]]
+                },
+                "is_classification": question_type.lower() in ["classification", "reasoning-based"]
+            }
+            seed_data.append(task)
+
+    with open(seed_tasks_path, 'w', encoding="utf-8") as f:
+        for task in seed_data:
+            f.write(json.dumps(task) + '\n')
+
+    print(f"Seed tasks saved at: {seed_tasks_path}")
+
+generate_seed_tasks_from_excel(excel_file_path, seed_tasks_path)
+
+# Load and validate seed tasks from JSONL file
+def validate_jsonl_file(file_path):
+    valid_tasks = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    json_obj = json.loads(line.strip())
+                    valid_tasks.append(json_obj)
+                except json.JSONDecodeError as e:
+                    print(f"Invalid JSON: {e}")
+        print(f"Loaded {len(valid_tasks)} valid JSON tasks.")
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+    return valid_tasks
+
+seed_tasks = validate_jsonl_file(seed_tasks_path)
+
+# Preview the generated output
+for data in seed_tasks[:5]:
+    print(json.dumps(data, indent=4))
+
+
+
+
+
+
+
+import os
+import json
 import random
 import re
 import string
