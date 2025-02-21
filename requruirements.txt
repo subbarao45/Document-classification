@@ -1,3 +1,29 @@
+def openai_completion(prompts, batch_size=5):
+    responses = []
+    for prompt in prompts:
+        try:
+            response = llm(
+                [HumanMessage(content=prompt)],
+                max_tokens=3072,
+                temperature=0.7,
+                top_p=1.0,
+                stop=["\n20", "20.", "20."],
+                logit_bias={"50256": -100}  # Prevent the <|endoftext|> token from being generated
+            )
+            responses.append({
+                "text": response.content,
+                "finish_reason": "stop"
+            })
+        except Exception as e:
+            print(f"Error with model call: {e}")
+            responses.append({"text": "", "finish_reason": "error"})
+    return responses
+
+
+
+
+
+
 
 import os
 import json
