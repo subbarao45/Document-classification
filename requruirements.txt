@@ -1,3 +1,29 @@
+
+def encode_prompt(prompt_instructions):
+    prompt = """
+You are asked to create a set of 5 diverse task instructions based on the given text.
+
+Important Rules:
+1. Read the provided text and extract key concepts, facts, and ideas.
+2. Each instruction must be concise, accurate, and directly derived from the text.
+3. Do not start any instruction with the word "summarize." Use different verbs and sentence structures to ensure diversity.
+4. Vary both the linguistic style and the language where possible. For example, mix imperative instructions with interrogative sentences.
+5. The final output must be under 1000 words.
+6. Each instruction must be unique; avoid repeating any question-answer pair.
+
+Here are some examples of diverse instructions (none of these should start with "summarize"):
+- "Explain the steps required to monitor and process VFMC RightFax documents."
+- "Describe the process involved in handling VFMC RightFax documents."
+- "Identify the key procedures for managing VFMC RightFax document flow."
+- "List the methods used to oversee VFMC RightFax document processing."
+- "Outline the techniques for monitoring VFMC RightFax document activity."
+
+Now, using these guidelines, generate 5 distinct task instructions.
+    """
+    return prompt
+
+
+
 def post_process_response(num_prompt_instructions, response_text):
     raw_instructions = f"{num_prompt_instructions+1}. Instruction:" + response_text
     raw_instructions = re.split("###", raw_instructions)
