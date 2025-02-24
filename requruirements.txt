@@ -1,3 +1,90 @@
+from langchain import PromptTemplate, LLMChain
+import json
+
+# Define the updated diverse procedural prompt template
+DIVERSE_PROCEDURAL_PROMPT = """
+You are tasked to generate diverse procedural question-answer pairs.
+For each given procedural question-answer pair in the input list, generate up to {num_diverse_questions} distinct procedural questions
+while ensuring that the answers remain consistent and relevant to the original answer provided.
+
+Input:
+{input_json}
+
+Instructions:
+- Iterate through all input question-answer pairs.
+- Generate {num_diverse_questions} diverse procedural questions for each input question.
+- The output should contain the original question and answer along with the diverse questions and answers.
+- Ensure the output is in the following JSON format:
+
+[
+    {{
+        "id": <unique_id>,
+        "original_question": "Original Question",
+        "original_answer": "Original Answer",
+        "diverse_questions": [
+            {{
+                "diverse_question": "Diverse Question 1",
+                "diverse_answer": "Original Answer"
+            }},
+            {{
+                "diverse_question": "Diverse Question 2",
+                "diverse_answer": "Original Answer"
+            }},
+            ...
+        ]
+    }},
+    ...
+]
+"""
+
+# Define the input list and parameters
+input_procedural_qa_list = [
+    {
+        "Question_type": "Procedural",
+        "Question": "What is Sachin Tendulkar?",
+        "Answer": "Cricketer"
+    },
+    {
+        "Question_type": "Procedural",
+        "Question": "What does machine learning mean?",
+        "Answer": "Machine learning is a field of AI that involves training algorithms to learn patterns from data."
+    }
+]
+
+num_diverse_questions = 5
+
+# Fill the prompt
+prompt = PromptTemplate(
+    input_variables=["input_json", "num_diverse_questions"],
+    template=DIVERSE_PROCEDURAL_PROMPT
+)
+
+# Generate the filled prompt
+fill_prompt = prompt.format(
+    input_json=json.dumps(input_procedural_qa_list),
+    num_diverse_questions=num_diverse_questions
+)
+
+# Create the LLM chain and predict diverse questions
+llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+response = llm_chain.predict(
+    input_json=json.dumps(input_procedural_qa_list),
+    num_diverse_questions=str(num_diverse_questions),
+    stream=True
+)
+
+# Extract and print the valid JSON response
+response_json = extract_valid_json(response)
+print(response_json)
+
+
+
+
+
+
+
+
 # Define the diverse procedural prompt template
 DIVERSE_PROCEDURAL_PROMPT = """
 You are tasked to generate diverse procedural question-answer pairs. For each given procedural question-answer pair, generate up to {num_diverse_questions} distinct procedural questions while ensuring that the answers remain consistent and relevant to the original answer provided.
