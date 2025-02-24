@@ -1,3 +1,12 @@
+
+
+
+
+
+
+
+
+
 def encode_prompt(prompt_instructions):
     prompt = """
 You are asked to create a set of 5 diverse tasks based on a given text. For each task, please provide the following components:
