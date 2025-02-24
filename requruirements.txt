@@ -1,3 +1,125 @@
+from langchain import PromptTemplate, LLMChain
+import json
+import math
+
+# Define the maximum tokens allowed for the LLM response
+MAX_TOKENS = 4000  # Adjust this according to your model's actual token limit
+num_diverse_questions = 5  # Number of diverse questions per input
+
+# Define the updated diverse procedural prompt template
+DIVERSE_PROCEDURAL_PROMPT = """
+You are tasked to generate diverse procedural question-answer pairs.
+For each procedural question-answer pair provided below, generate up to {num_diverse_questions} distinct procedural questions
+while ensuring that the answers remain consistent and relevant to the original answer provided.
+
+Input:
+{input_json}
+
+Instructions:
+- Iterate through each input question-answer pair.
+- Generate {num_diverse_questions} diverse procedural questions for each input question.
+- The output should contain the original question and answer along with the diverse questions and answers.
+- Ensure the output is in the following JSON format:
+
+[
+    {{
+        "id": <unique_id>,
+        "original_question": "Original Question",
+        "original_answer": "Original Answer",
+        "diverse_questions": [
+            {{
+                "diverse_question": "Diverse Question 1",
+                "diverse_answer": "Original Answer"
+            }},
+            {{
+                "diverse_question": "Diverse Question 2",
+                "diverse_answer": "Original Answer"
+            }},
+            ...
+        ]
+    }},
+    ...
+]
+"""
+
+# Example input with 30 procedural question-answer pairs
+input_procedural_qa_list = [
+    {
+        "Question_type": "Procedural",
+        "Question": f"Sample question {i}",
+        "Answer": f"Sample answer {i}"
+    }
+    for i in range(1, 31)
+]
+
+# Function to split input into batches based on estimated token size
+def split_into_batches(input_list, batch_size=10):
+    """Splits the input list into smaller batches to avoid token overflow."""
+    for i in range(0, len(input_list), batch_size):
+        yield input_list[i:i + batch_size]
+
+# Function to calculate the optimal batch size based on token limits
+def calculate_batch_size(input_list, max_tokens=MAX_TOKENS, avg_tokens_per_pair=100):
+    """Estimates the batch size that can fit within the token limit."""
+    estimated_tokens_per_input = avg_tokens_per_pair * num_diverse_questions
+    max_pairs_per_batch = max_tokens // estimated_tokens_per_input
+    return min(len(input_list), max(1, max_pairs_per_batch))
+
+# Calculate the optimal batch size
+avg_tokens_per_pair = 100  # Estimated token count per question-answer pair
+batch_size = calculate_batch_size(input_procedural_qa_list, MAX_TOKENS, avg_tokens_per_pair)
+
+# Fill the prompt template
+prompt = PromptTemplate(
+    input_variables=["input_json", "num_diverse_questions"],
+    template=DIVERSE_PROCEDURAL_PROMPT
+)
+
+# Create the LLM chain
+llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+# Collect results from all batches
+all_responses = []
+batch_number = 1
+
+for batch in split_into_batches(input_procedural_qa_list, batch_size):
+    print(f"Processing batch {batch_number} with {len(batch)} question-answer pairs...")
+    
+    # Prepare the input as a JSON string
+    batch_input_json = json.dumps(batch)
+
+    # Generate the filled prompt
+    fill_prompt = prompt.format(
+        input_json=batch_input_json,
+        num_diverse_questions=num_diverse_questions
+    )
+
+    # Predict diverse questions using the LLM
+    response = llm_chain.predict(
+        input_json=batch_input_json,
+        num_diverse_questions=str(num_diverse_questions),
+        stream=True
+    )
+
+    # Parse the response as JSON and add to the results
+    try:
+        response_json = json.loads(response)
+        all_responses.extend(response_json)
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse response for batch {batch_number}: {e}")
+    
+    batch_number += 1
+
+# Output the combined results
+print(json.dumps(all_responses, indent=4))
+
+
+
+
+
+
+
+
 
 Prepare the input as individual question-answer pairs
 input_pairs = "\n".join([
