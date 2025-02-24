@@ -1,4 +1,14 @@
 
+Prepare the input as individual question-answer pairs
+input_pairs = "\n".join([
+    f"Question: {item['Question']}\nAnswer: {item['Answer']}"
+    for item in input_procedural_qa_list
+])
+
+
+
+
+
 from langchain import PromptTemplate, LLMChain
 import json
 
