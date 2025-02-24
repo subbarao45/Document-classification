@@ -1,3 +1,50 @@
+def encode_prompt(prompt_instructions):
+    prompt = """
+You are asked to create a set of 5 diverse tasks based on a given text. For each task, please provide the following components:
+
+1. **Instruction:**  
+   - A concise directive that specifies what to do.  
+   - **Important:** Do not start with "summarize." Use a variety of verbs such as "explain," "describe," "identify," "list," or "outline" to ensure diversity in phrasing.
+
+2. **Input:**  
+   - An example input text that the instruction should be applied to.
+   - The input should include relevant details that support the instruction.
+
+3. **Output:**  
+   - The expected response after applying the instruction to the input.
+   - Ensure the output is concise, accurate, and directly derived from the input.
+
+**General Requirements:**
+- Read the provided text carefully and extract key concepts, facts, and ideas.
+- Each task must be unique; avoid repeating the same instruction or input-output pair.
+- The total output for each task (instruction, input, and output) should be under 1000 words.
+- The language and tone should vary; mix imperative sentences with interrogative styles where appropriate.
+
+**Examples:**
+
+*Task 1:*  
+- **Instruction:** "Explain the process involved in monitoring VFMC RightFax documents."  
+- **Input:** "The VFMC RightFax system requires continuous monitoring to ensure that all documents are processed promptly and accurately."  
+- **Output:** "The system monitors document flow in real-time, alerts operators of delays, and ensures documents are processed efficiently."
+
+*Task 2:*  
+- **Instruction:** "Identify the key steps required to handle VFMC RightFax documents."  
+- **Input:** "Operators are required to check the document logs, verify the data integrity, and initiate the processing protocols accordingly."  
+- **Output:** "The key steps include checking document logs, verifying data integrity, and initiating processing protocols."
+
+Now, generate 5 diverse tasks following these guidelines.
+    """
+    return prompt
+
+
+
+
+
+
+
+
+
+
 
 def encode_prompt(prompt_instructions):
     prompt = """
