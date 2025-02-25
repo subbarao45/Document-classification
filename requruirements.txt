@@ -1,3 +1,76 @@
+import pandas as pd
+
+# Example response data (replace this with your actual response data)
+all_responses = [
+    {
+        "id": 1,
+        "original_question": "Sample question 1",
+        "original_answer": "Sample answer 1",
+        "diverse_questions": [
+            {
+                "diverse_question": "What is the explanation for Sample question 1?",
+                "diverse_answer": "Sample answer 1"
+            },
+            {
+                "diverse_question": "How would you describe Sample question 1?",
+                "diverse_answer": "Sample answer 1"
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "original_question": "Sample question 2",
+        "original_answer": "Sample answer 2",
+        "diverse_questions": [
+            {
+                "diverse_question": "What are the key points of Sample question 2?",
+                "diverse_answer": "Sample answer 2"
+            },
+            {
+                "diverse_question": "Can you elaborate on Sample question 2?",
+                "diverse_answer": "Sample answer 2"
+            }
+        ]
+    }
+]
+
+# Prepare data for the Excel file
+excel_data = []
+
+for response in all_responses:
+    original_id = response["id"]
+    original_question = response["original_question"]
+    original_answer = response["original_answer"]
+    
+    for diverse in response["diverse_questions"]:
+        excel_data.append({
+            "ID": original_id,
+            "Original Question": original_question,
+            "Original Answer": original_answer,
+            "Diverse Question": diverse["diverse_question"],
+            "Diverse Answer": diverse["diverse_answer"]
+        })
+
+# Convert to a DataFrame
+df = pd.DataFrame(excel_data)
+
+# Save the DataFrame to an Excel file
+excel_file_path = "diverse_questions_and_answers.xlsx"
+df.to_excel(excel_file_path, index=False)
+
+print(f"Data saved successfully to {excel_file_path}")
+
+
+
+
+
+
+
+
+
+
+
+
 from langchain import PromptTemplate, LLMChain
 import json
 
