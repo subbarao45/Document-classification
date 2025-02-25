@@ -1,3 +1,50 @@
+import pandas as pd
+import json
+
+def convert_excel_to_json(file_path: str, output_json_path: str = "output_data.json") -> str:
+    """
+    Converts an Excel file with procedural questions and answers into a JSON file.
+    
+    :param file_path: The path to the input Excel file.
+    :param output_json_path: The path where the JSON file will be saved.
+    :return: The path to the saved JSON file.
+    """
+    # Load the Excel data into a DataFrame
+    df = pd.read_excel(file_path, dtype=str)
+    
+    # Replace NaN values with empty strings to avoid JSON serialization issues
+    df = df.fillna("")
+
+    # Create a list of dictionaries from the DataFrame
+    json_data = []
+    for _, row in df.iterrows():
+        json_data.append({
+            "Question_type": row.get("Question Type", ""),
+            "Question": row.get("Question", ""),
+            "Answer": row.get("Answer", ""),
+            "Source File": row.get("Source File", "")
+        })
+
+    # Save the JSON data to a file
+    with open(output_json_path, "w", encoding="utf-8") as json_file:
+        json.dump(json_data, json_file, indent=4, ensure_ascii=False)
+    
+    print(f"Data successfully converted to JSON and saved to {output_json_path}")
+    return output_json_path
+
+# Example usage
+file_path = "Resubmit_1021_VFMC_Accounting_Open_Trade_Check_SOP_questions.xlsx"
+output_json_path = "VFMC_procedural_data.json"
+
+convert_excel_to_json(file_path, output_json_path)
+
+
+
+
+
+
+
+
 
 
 import pandas as pd
