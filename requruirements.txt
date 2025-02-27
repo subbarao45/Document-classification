@@ -1,3 +1,16 @@
+ Hi  Ipsita,
+I hope you’re doing well.
+I wish to know if there are any updates on Kiran Babu M's selection process. If possible, please share any progress at your convenience.
+ I wanted to take a moment to recommend Kiran Babu M for a potential opportunity at INFOSYS. I have known and worked with him around 3 years, and I strongly believe he would be a valuable addition to our organization.
+I believe Kiran skills and experience would be a great asset to our organization.
+
+
+
+
+
+
+
+
 import json
 
 def read_json_file(file_path: str) -> list:
