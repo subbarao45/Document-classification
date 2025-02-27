@@ -1,4 +1,83 @@
- Hi  Ipsita,
+from tqdm import tqdm
+from itertools import product
+
+# Define parameter ranges for grid search
+temperature_values = [0.3, 0.5, 0.7]
+top_k_values = [20, 50, 100]
+top_p_values = [0.8, 0.9, 0.95]
+repetition_penalty_values = [1.0, 1.2, 1.5]
+max_new_tokens_values = [200, 400, 600]
+
+best_score = 0
+best_params = {}
+
+# Heuristic function to score generated outputs without ground truth
+def heuristic_score(predicted_answer):
+    score = len(predicted_answer)  # Reward longer responses
+    if "expected_keyword" in predicted_answer:
+        score += 10
+    if predicted_answer.endswith('.'):
+        score += 5  # Reward well-formed sentences
+    return score
+
+# Perform grid search over all parameter combinations
+for temperature, top_k, top_p, repetition_penalty, max_new_tokens in product(
+    temperature_values, top_k_values, top_p_values, repetition_penalty_values, max_new_tokens_values
+):
+    finetuned_output = []
+    total_score = 0
+
+    # Iterate through the test dataset
+    for _, row in tqdm(df_test.iterrows(), total=len(df_test)):
+        prompt = row['inputs']
+        
+        outputs = pipe(prompt, 
+                       max_new_tokens=max_new_tokens, 
+                       do_sample=True, 
+                       return_full_text=False, 
+                       temperature=temperature,
+                       top_k=top_k,
+                       top_p=top_p, 
+                       repetition_penalty=repetition_penalty, 
+                       eos_token_id=pipe.tokenizer.eos_token_id, 
+                       pad_token_id=pipe.tokenizer.pad_token_id)
+
+        predicted_answer = outputs[0]['generated_text'].strip()
+        finetuned_output.append(predicted_answer)
+
+        # Evaluate using heuristic score
+        total_score += heuristic_score(predicted_answer)
+
+    # Calculate average heuristic score for the parameter set
+    avg_score = total_score / len(finetuned_output)
+    
+    print(f"Avg Heuristic Score: {avg_score:.4f} | Params: temp={temperature}, top_k={top_k}, top_p={top_p}, "
+          f"rep_pen={repetition_penalty}, max_tokens={max_new_tokens}")
+
+    # Store the best parameters if the score improves
+    if avg_score > best_score:
+        best_score = avg_score
+        best_params = {
+            'temperature': temperature,
+            'top_k': top_k,
+            'top_p': top_p,
+            'repetition_penalty': repetition_penalty,
+            'max_new_tokens': max_new_tokens
+        }
+
+print(f"Best Heuristic Score: {best_score:.2f}")
+print("Best Parameters:", best_params)
+
+
+
+
+
+
+
+
+
+
+Hi  Ipsita,
 I hope you’re doing well.
 I wish to know if there are any updates on Kiran Babu M's selection process. If possible, please share any progress at your convenience.
  I wanted to take a moment to recommend Kiran Babu M for a potential opportunity at INFOSYS. I have known and worked with him around 3 years, and I strongly believe he would be a valuable addition to our organization.
