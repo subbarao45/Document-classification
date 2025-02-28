@@ -1,3 +1,70 @@
+import pandas as pd
+from tqdm import tqdm
+
+# List to store all results
+results = []
+
+# Define a range of hyperparameters for tuning
+temperature_values = [0.6, 0.7, 0.8]
+top_k_values = [50, 70, 100]
+top_p_values = [0.7, 0.8, 0.9]
+repetition_penalty_values = [1.2, 1.35, 1.5]
+
+# Iterate through all hyperparameter combinations
+for temp in temperature_values:
+    for top_k in top_k_values:
+        for top_p in top_p_values:
+            for rep_penalty in repetition_penalty_values:
+                print(f"Testing with Temperature={temp}, Top-k={top_k}, Top-p={top_p}, Repetition Penalty={rep_penalty}")
+                
+                # Process each row in the test dataset
+                for index, row in tqdm(df_test.iterrows(), total=len(df_test)):
+                    prompt = row['inputs']
+                    actual_answer = row['actual_answer']  # Assuming 'actual_answer' column exists in df_test
+                    
+                    # Generate the output using the model
+                    outputs = pipe(
+                        prompt, 
+                        max_new_tokens=400,  
+                        do_sample=True, 
+                        return_full_text=False, 
+                        temperature=temp, 
+                        top_k=top_k,
+                        top_p=top_p, 
+                        repetition_penalty=rep_penalty,
+                        eos_token_id=pipe.tokenizer.eos_token_id, 
+                        pad_token_id=pipe.tokenizer.pad_token_id
+                    )
+                    
+                    predicted_answer = outputs[0]['generated_text']
+                    
+                    # Store the result with all relevant information
+                    results.append({
+                        'index': index,
+                        'prompt': prompt,
+                        'actual_answer': actual_answer,
+                        'predicted_answer': predicted_answer,
+                        'temperature': temp,
+                        'top_k': top_k,
+                        'top_p': top_p,
+                        'repetition_penalty': rep_penalty
+                    })
+
+# Convert the results to a DataFrame for easy analysis
+results_df = pd.DataFrame(results)
+
+# Save the results to a CSV file
+results_df.to_csv('finetuned_outputs_with_actual_answers.csv', index=False)
+print("All results saved to 'finetuned_outputs_with_actual_answers.csv'")
+
+
+
+
+
+
+
+
+
 from tqdm import tqdm
 from sklearn.model_selection import GridSearchCV
 import numpy as np
