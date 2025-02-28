@@ -1,5 +1,98 @@
 from tqdm import tqdm
 from sklearn.model_selection import GridSearchCV
+import numpy as np
+
+# Define a custom scorer for generative model evaluation
+def custom_score(predictions, prompts):
+    # Example: Scoring based on length of generated text as a placeholder
+    # Replace this with a better heuristic or manual evaluation if needed
+    scores = [len(pred.split()) for pred in predictions]
+    return np.mean(scores)  # Example: Using average length as the score
+
+# Define a scikit-learn compatible model wrapper
+class TextGenerationModel:
+    def __init__(self, pipe, max_new_tokens=300, temperature=0.7, top_k=50, top_p=0.9, repetition_penalty=1.5):
+        self.pipe = pipe
+        self.max_new_tokens = max_new_tokens
+        self.temperature = temperature
+        self.top_k = top_k
+        self.top_p = top_p
+        self.repetition_penalty = repetition_penalty
+
+    def predict(self, X):
+        predictions = []
+        for prompt in X:
+            outputs = self.pipe(prompt, 
+                                max_new_tokens=self.max_new_tokens, 
+                                do_sample=True, 
+                                return_full_text=False, 
+                                temperature=self.temperature, 
+                                top_k=self.top_k, 
+                                top_p=self.top_p, 
+                                repetition_penalty=self.repetition_penalty, 
+                                eos_token_id=self.pipe.tokenizer.eos_token_id, 
+                                pad_token_id=self.pipe.tokenizer.pad_token_id,
+                                early_stopping=True)
+            
+            predicted_answer = outputs[0]['generated_text']
+            
+            # Optional: Post-processing to remove repeated lines
+            unique_lines = list(dict.fromkeys(predicted_answer.split('\n')))
+            predicted_answer = '\n'.join(unique_lines)
+            
+            predictions.append(predicted_answer)
+        return predictions
+
+    def set_params(self, **params):
+        for param, value in params.items():
+            setattr(self, param, value)
+        return self
+
+    def get_params(self, deep=True):
+        return {
+            'max_new_tokens': self.max_new_tokens,
+            'temperature': self.temperature,
+            'top_k': self.top_k,
+            'top_p': self.top_p,
+            'repetition_penalty': self.repetition_penalty,
+            'pipe': self.pipe
+        }
+
+    def fit(self, X, y=None):
+        return self
+
+    def score(self, X, y=None):
+        predictions = self.predict(X)
+        return custom_score(predictions, X)
+
+model = TextGenerationModel(pipe)
+
+# Define the grid of hyperparameters
+param_grid = {
+    'max_new_tokens': [100, 300, 600],
+    'temperature': [0.3, 0.7, 1.0],
+    'top_k': [10, 50, 100],
+    'top_p': [0.7, 0.9, 1.0],
+    'repetition_penalty': [1.0, 1.5, 2.0]
+}
+
+# Perform Grid Search with the custom scoring function
+grid_search = GridSearchCV(model, param_grid, scoring='neg_mean_squared_error', cv=3, verbose=2)
+grid_search.fit(df_test['inputs'])
+
+print("Best Parameters:", grid_search.best_params_)
+print("Best Score:", grid_search.best_score_)
+
+
+
+
+
+
+
+
+
+from tqdm import tqdm
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer, f1_score, accuracy_score
 
 # Define a scikit-learn compatible model wrapper
