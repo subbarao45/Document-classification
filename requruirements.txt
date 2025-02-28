@@ -1,3 +1,22 @@
+# Check for potential issues in the predicted answers
+for i, pred in enumerate(finetuned_output):
+    if not isinstance(pred, str) or pred.strip() == "":
+        print(f"Invalid output at index {i}: {pred}")
+
+# Calculate accuracy and F1 score
+accuracy = accuracy_score(true_answers, finetuned_output)
+f1 = f1_score(true_answers, finetuned_output, average='weighted')
+
+print(f"Model Accuracy: {accuracy:.2f}")
+print(f"F1 Score: {f1:.2f}")
+
+
+
+
+
+
+
+
 import json
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, f1_score
