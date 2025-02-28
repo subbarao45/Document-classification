@@ -1,3 +1,52 @@
+import json
+from tqdm import tqdm
+from sklearn.metrics import accuracy_score, f1_score
+
+finetuned_output = []
+true_answers = df_test['outputs']  # Assuming 'outputs' column has the structured ground truth
+
+for _, row in tqdm(df_test.iterrows(), total=len(df_test)):
+    prompt = row['inputs']
+    outputs = pipe(prompt, 
+                   max_new_tokens=600, 
+                   do_sample=True, 
+                   return_full_text=False, 
+                   temperature=0.3, 
+                   top_k=20, 
+                   top_p=0.8, 
+                   repetition_penalty=1.20, 
+                   eos_token_id=pipe.tokenizer.eos_token_id, 
+                   pad_token_id=pipe.tokenizer.pad_token_id)
+    
+    predicted_answer = outputs[0]['generated_text']
+    finetuned_output.append(predicted_answer)
+
+# Parse JSON if your outputs are structured as JSON strings
+parsed_predicted = [json.loads(pred) if pred else {} for pred in finetuned_output]
+parsed_true = [json.loads(true) if true else {} for true in true_answers]
+
+# Extract the answers to compare
+predicted_answers = [item.get('Answer', '') for instance in parsed_predicted for item in instance.get('instances', [])]
+true_answers = [item.get('Answer', '') for instance in parsed_true for item in instance.get('instances', [])]
+
+# Calculate accuracy
+accuracy = accuracy_score(true_answers, predicted_answers)
+f1 = f1_score(true_answers, predicted_answers, average='weighted')
+
+print(f"Model Accuracy: {accuracy:.2f}")
+print(f"F1 Score: {f1:.2f}")
+
+
+
+
+
+
+
+
+
+
+
+
 from tqdm import tqdm
 from itertools import product
 
