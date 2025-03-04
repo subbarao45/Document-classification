@@ -1,3 +1,98 @@
+import requests
+import json
+
+# ====== STEP 1: GET ACCESS TOKEN ======
+host = "https://api-dev.statestr.com"  # Replace with correct API host
+auth_url = f"{host}/oauth/accesstoken"
+
+# Client credentials (Replace with actual values)
+client_id = "YOUR_CLIENT_ID"
+client_secret = "YOUR_CLIENT_SECRET"
+
+# Headers for authentication request
+headers = {'Accept': 'application/json'}
+
+# Data for OAuth authentication
+data = {"grant_type": "client_credentials"}
+
+# Request access token
+auth_response = requests.post(auth_url, headers=headers, data=data, auth=(client_id, client_secret), verify=False)
+
+# Check if authentication was successful
+if auth_response.status_code == 200:
+    auth_response_json = auth_response.json()
+    access_token = auth_response_json.get("access_token")
+    print("\n✅ Access Token Retrieved Successfully:", access_token)
+else:
+    print("\n❌ Error Getting Access Token:", auth_response.text)
+    exit()  # Stop execution if authentication fails
+
+# ====== STEP 2: CALL HALLUCINATION API ======
+hallucination_url = f"{host}/rai-obs-compute/v1/hallucination"
+
+# Prepare payload
+hallucination_payload = json.dumps({
+    "question": "When was State Street founded?",
+    "answer": "State Street was founded in 1792",
+    "context": [
+        "State Street is a financial services company that provides investment management, research, trading, and servicing. It was founded in 1792."
+    ],
+    "threshold_score": 0.5
+})
+
+# Headers including access token
+headers = {
+    'SSGenAIClient': client_id,
+    'SSGenAIAuth': client_secret,
+    'Authorization': f"Bearer {access_token}",
+    'Content-Type': 'application/json'
+}
+
+# Send request
+hallucination_response = requests.post(hallucination_url, headers=headers, data=hallucination_payload, verify=False)
+
+# Print response
+print("\n🎯 Hallucination API Response:\n", hallucination_response.json())
+
+# ====== STEP 3: CALL EVALUATIONS API ======
+evaluations_url = f"{host}/rai-obs-compute/v1/evaluations"
+
+# Prepare payload
+evaluations_payload = json.dumps({
+    "payload": {
+        "clientId": "2xy7gs8rm183t2vu9",
+        "question": "Which is the largest city in France?",
+        "answer": "Paris",
+        "context": [
+            "Lyon is a major city in France.",
+            "Paris is the capital of France."
+        ],
+        "groundTruth": [
+            "Paris is the largest city in France."
+        ]
+    },
+    "metricNames": [
+        "PRECISION_RECALL_F1",
+        "RANKED_RETRIEVAL"
+    ]
+})
+
+# Send request
+evaluations_response = requests.post(evaluations_url, headers=headers, data=evaluations_payload, verify=False)
+
+# Print response
+print("\n📊 Evaluations API Response:\n", evaluations_response.json())
+
+
+
+
+
+
+
+
+
+
+
 import pandas as pd
 from tqdm import tqdm
 
