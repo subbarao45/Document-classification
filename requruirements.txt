@@ -6,7 +6,18 @@ for qa in qa_data:
         "threshold_score": qa.get("threshold_score", 0.5)
     })
 
-
+for qa in qa_data:
+    if "groundTruth" in qa:  # Ensure ground truth is provided for evaluation
+        payload = json.dumps({
+            "payload": {
+                "clientId": "2xy7gs8rmi83t2vu9",
+                "question": qa["question"],
+                "answer": qa["answer"],
+                "context": qa["context"],
+                "groundTruth": qa["groundTruth"]
+            },
+            "metricNames": ["PRECISION_RECALL_F1"]
+        })
 
 
 
