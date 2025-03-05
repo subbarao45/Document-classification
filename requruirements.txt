@@ -1,3 +1,16 @@
+for qa in qa_data:
+    payload = json.dumps({
+        "question": qa["question"],
+        "answer": qa["answer"],
+        "context": qa["context"],
+        "threshold_score": qa.get("threshold_score", 0.5)
+    })
+
+
+
+
+
+
 import requests
 import json
 
