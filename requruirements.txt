@@ -50,6 +50,111 @@ response_data = [
 
 context = "Global Delivery Standard Operating Procedure (SOP) Template"
 
+# Load previous data if file exists (appending results)
+file_path = "evaluation_results.xlsx"
+try:
+    df_existing = pd.read_excel(file_path)
+except FileNotFoundError:
+    df_existing = pd.DataFrame(columns=['Question', 'Answer', 'Context Precision', 'Context Recall', 'Context F1'])
+
+# Store new results
+new_results = []
+
+for qa in response_data:
+    payload = json.dumps({
+        "payload": {
+            "clientId": "2xy7g&Brmi83t2v49",
+            "question": qa["Question"],
+            "answer": qa["Answer"],
+            "context": [context],
+            "groundTruth": [qa["Answer"]],
+        },
+        "metricNames": ["PRECISION_RECALL_F1"],
+    })
+
+    print("Payload is:", payload)
+
+    eval_response = requests.post(evaluations_url, headers=headers, data=payload, verify=False).json()
+    print("\neval_response \n", eval_response)
+
+    # Extract evaluation results
+    if eval_response.get("status") == "success" and eval_response.get("metric_result"):
+        metric_result = eval_response["metric_result"][0]["Result"]
+        new_results.append([
+            qa["Question"],
+            qa["Answer"],
+            metric_result.get("context_precision", 0.0),
+            metric_result.get("context_recall", 0.0),
+            metric_result.get("context_f1", 0.0)
+        ])
+
+# Convert new results to DataFrame and append to existing data
+df_new = pd.DataFrame(new_results, columns=['Question', 'Answer', 'Context Precision', 'Context Recall', 'Context F1'])
+df_final = pd.concat([df_existing, df_new], ignore_index=True)
+
+# Save to Excel
+df_final.to_excel(file_path, index=False)
+
+print(f"\nResults appended and saved to {file_path}")
+
+
+
+
+
+
+
+import requests
+import json
+import pandas as pd
+
+# ====== STEP 1: GET ACCESS TOKEN ======
+host = "https://api-uat.statestr.com"
+auth_url = f"{host}/oauth/accesstoken"
+
+headers = {"Accept": "application/json"}
+data = {"grant_type": "client_credentials"}
+
+# Client credentials (Replace with actual values)
+client_id = "pwiRDNVzPTSUoFocQwQ5PzAJsEdS9DcU"
+client_secret = "130QKQ9jjCI7bEmD"
+
+response = requests.post(auth_url, headers=headers, data=data, auth=(client_id, client_secret), verify=False)
+response_dict = response.json()
+
+access_token = response_dict.get("access_token", "")
+
+# ====== STEP 2: CALL HALLUCINATION API ======
+hallucination_url = f"{host}/rai-obs-compute/v1/hallucination"
+
+payload = json.dumps({
+    "question": "When was State Street founded",
+    "answer": "State Street was found in 1792",
+    "context": ["State Street is a financial services company that provides investment management, research, trading, and servicing. It was found in 1792"],
+    "threshold_score": 0.5,
+})
+
+headers = {
+    "SSGenAIClient": client_id,
+    "SSGenAIAuth": client_secret,
+    "Authorization": f"Bearer {access_token}",
+    "Content-Type": "application/json",
+}
+
+hal_response = requests.post(hallucination_url, headers=headers, data=payload, verify=False).json()
+print("\nhal_response \n", hal_response)
+
+# ====== STEP 3: CALL EVALUATIONS API ======
+evaluations_url = f"{host}/rai-obs-compute/v1/evaluations"
+
+response_data = [
+    {"Question": "What is the identifier for the VFMC NAS stock recon SOP?", "Answer": "CSIP105P22-15071"},
+    {"Question": "What is the effective date of the VFMC NAS stock recon SOP?", "Answer": "2024/10/30"},
+    {"Question": "What is the next review date for the VFMC NAS stock recon SOP?", "Answer": "2025/10/30"},
+    {"Question": "Is the VFHC NAS stock recon SOP a corporate policy SOP?", "Answer": "No"},
+]
+
+context = "Global Delivery Standard Operating Procedure (SOP) Template"
+
 results = []
 
 for qa in response_data:
