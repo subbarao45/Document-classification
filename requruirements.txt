@@ -1,3 +1,77 @@
+import json
+import requests
+
+# Sample QA Data
+response_data = [
+    {'Question_type': 'Factual', 'Question': 'What is the name of the team responsible for the Global Delivery Standard Operating Procedure?', 'Answer': 'Global Delivery Business Risk Management Team'},
+    {'Question_type': 'Factual', 'Question': "What is the identifier for the VFMC NAS stock recon SOP?", 'Answer': 'CS1P10SP22-15071'},
+    {'Question_type': 'Factual', 'Question': 'What is the effective date of the VFMC NAS stock recon SOP?', 'Answer': '2024/10/30'},
+    {'Question_type': 'Factual', 'Question': "What is the next review date for the VFMC NAS stock recon SOP?", 'Answer': '2025/10/30'},
+    {'Question_type': 'Factual', 'Question': 'Is the VFMC NAS stock recon SOP a corporate policy SOP?', 'Answer': 'No'}
+]
+
+context = "# Global Delivery Standard Operating Procedure (SOP) Template"
+
+# API Endpoint
+evaluations_url = "https://api-uat.statestr.com/rai-obs-compute/v1/evaluations"
+
+# Client credentials (Replace with actual values)
+access_token = "your_access_token_here"
+client_id = "your_client_id_here"
+client_secret = "your_client_secret_here"
+
+# Headers
+headers = {
+    'SSGenAIClient': client_id,
+    'SSGenAIAuth': client_secret,
+    'Authorization': f"Bearer {access_token}",  # Ensure correct formatting
+    'Content-Type': 'application/json'
+}
+
+# Iterating through response_data
+for qa in response_data:
+    if "Answer" in qa:  # Ensure ground truth is provided for evaluation
+        try:
+            # Creating payload
+            payload = {
+                "payload": {
+                    "clientId": "2xy7gs8rmi83t2vu9",
+                    "question": qa["Question"],
+                    "answer": qa["Answer"],
+                    "context": context,
+                    "groundTruth": [qa["Answer"]]  # Ensure it's a list
+                },
+                "metricNames": ["PRECISION_RECALL_F1"]
+            }
+
+            # Print payload for debugging
+            print("\nPayload being sent:")
+            print(json.dumps(payload, indent=4))  # Pretty-print payload
+
+            # Making the API request
+            response = requests.post(evaluations_url, headers=headers, json=payload, verify=False)
+
+            # Debugging response
+            print("\nRaw Response:")
+            print(response.text)
+
+            # Attempt JSON decoding
+            eval_response = response.json()
+            print("\nEvaluation Response:", eval_response)
+
+        except json.JSONDecodeError:
+            print("\nERROR: Unable to decode JSON response. Response might not be valid JSON.")
+            print("Raw Response:", response.text)
+
+        except Exception as e:
+            print(f"\nUnexpected Error: {str(e)}")
+
+
+
+
+
+
+
 import requests
 import json
 
