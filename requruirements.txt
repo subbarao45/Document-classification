@@ -2,6 +2,136 @@ import requests
 import json
 import pandas as pd
 
+# Disable SSL warnings
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Constants
+HOST = "https://api-uat.statestr.com"
+AUTH_URL = f"{HOST}/oauth/accesstoken"
+HALLUCINATION_URL = f"{HOST}/rai-obs-compute/v1/hallucination"
+EVALUATIONS_URL = f"{HOST}/rai-obs-compute/v1/evaluations"
+
+# Client credentials (Replace with actual values)
+CLIENT_ID = "pwiRDNVzPTSUoFocQwQ5PzAJsEdS9DcU"
+CLIENT_SECRET = "130QKQ9jjCI7bEmD"
+
+def get_access_token():
+    """Fetch the access token."""
+    headers = {"Accept": "application/json"}
+    data = {"grant_type": "client_credentials"}
+    
+    response = requests.post(
+        AUTH_URL,
+        headers=headers,
+        data=data,
+        auth=(CLIENT_ID, CLIENT_SECRET),
+        verify=False
+    )
+    
+    response_dict = response.json()
+    return response_dict.get("access_token")
+
+def call_hallucination_api(access_token, question, answer, context, threshold_score=0.5):
+    """Call the hallucination API."""
+    payload = json.dumps({
+        "question": question,
+        "answer": answer,
+        "context": context,
+        "threshold_score": threshold_score
+    })
+    
+    headers = {
+        "SSGenAIClient": CLIENT_ID,
+        "SSGenAIAuth": CLIENT_SECRET,
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(
+        HALLUCINATION_URL,
+        headers=headers,
+        data=payload,
+        verify=False
+    )
+    
+    return response.json()
+
+def call_evaluations_api(access_token, response_data, context):
+    """Call the evaluations API and return the results."""
+    results = []
+    
+    headers = {
+        "SSGenAIClient": CLIENT_ID,
+        "SSGenAIAuth": CLIENT_SECRET,
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    
+    for qa in response_data:
+        payload = json.dumps({
+            "payload": {
+                "clientId": "2xy7g&Brmi83t2v49",
+                "question": qa["Question"],
+                "answer": qa["Answer"],
+                "context": [context],
+                "groundTruth": [qa["Answer"]],
+            },
+            "metricNames": ["PRECISION_RECALL_F1"]
+        })
+        
+        eval_response = requests.post(
+            EVALUATIONS_URL,
+            headers=headers,
+            data=payload,
+            verify=False
+        ).json()
+        
+        # Extracting the results
+        metrics = eval_response.get("metric_result", [{}])[0].get("Result", {})
+        results.append({
+            "Question": qa["Question"],
+            "Answer": qa["Answer"],
+            "context_precision": metrics.get("context_precision", 0.0),
+            "context_recall": metrics.get("context_recall", 0.0),
+            "context_f1": metrics.get("context_f1", 0.0)
+        })
+    
+    return results
+
+def save_results_to_excel(results, filename="evaluation_results.xlsx"):
+    """Save the evaluation results to an Excel file."""
+    df = pd.DataFrame(results)
+    df.to_excel(filename, index=False)
+    print(f"Results saved to {filename}")
+
+# Sample response_data
+response_data = [
+    {"Question": "What is the identifier for the NCS stock recon SOP?", "Answer": "CSIP105P22-15071"},
+    {"Question": "What is the effective date of the VIAC NAS stock recon SOP?", "Answer": "2024/10/30"},
+    {"Question": "What is the next review date for the VIPIC NAS stock recon SOP?", "Answer": "2025/10/30"},
+    {"Question": "Is the VFHC NAS stock recon SOP a corporate policy SOP?", "Answer": "No"}
+]
+
+# Sample context
+context = "Global Delivery Standard Operating Procedure (SOP) Template"
+
+# Run the workflow
+access_token = get_access_token()
+results = call_evaluations_api(access_token, response_data, context)
+save_results_to_excel(results)
+
+
+
+
+
+
+
+
+import requests
+import json
+import pandas as pd
+
 # ====== STEP 1: GET ACCESS TOKEN ======
 host = "https://api-uat.statestr.com"
 auth_url = f"{host}/oauth/accesstoken"
