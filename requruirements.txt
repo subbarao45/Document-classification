@@ -1,3 +1,108 @@
+import requests
+import json
+
+#====== STEP 1: GET ACCESS TOKEN ======
+host = "https://api-uat.statestr.com"
+auth_url = f"{host}/oauth/accesstoken"
+
+headers = {'Accept': 'application/json'}
+data = {"grant_type": "client_credentials"}
+
+# Client credentials (Replace with actual values)
+client_id = "pwiRDNVzPTSUoFocQwQ5PzAJsEdS9DcU"
+client_secret = "130QKQ9jjCI7bEmD"
+
+response = requests.post(auth_url, headers=headers, data=data, auth=(client_id, client_secret), verify=False)
+
+if response.status_code != 200:
+    print(f"Failed to get access token: {response.text}")
+    exit()
+
+response_dict = response.json()
+access_token = response_dict.get("access_token")
+
+# Ensure token is retrieved
+if not access_token:
+    print("Access token not found in response.")
+    exit()
+
+print("Access token retrieved successfully.")
+
+#====== STEP 2: CALL HALLUCINATION API ======
+hallucination_url = f"{host}/rai-obs-compute/v1/hallucination"
+
+response_data = [
+    {'Question_type': 'Factual',
+     'Question': 'What is the name of the team responsible for the Global Delivery Standard Operating Procedure?',
+     'Answer': 'Global Delivery Business Risk Management Team'},
+    {'Question_type': 'Factual',
+     'Question': "What is the identifier for the VFMC NAS stock recon SOP?",
+     'Answer': 'CS1P10SP22-15071'},
+    {'Question_type': 'Factual',
+     'Question': 'What is the effective date of the VFMC NAS stock recon SOP?',
+     'Answer': '2024/10/30'},
+    {'Question_type': 'Factual',
+     'Question': "What is the next review date for the VFMC NAS stock recon SOP?",
+     'Answer': '2025/10/30'},
+    {'Question_type': 'Factual',
+     'Question': 'Is the VFMC NAS stock recon SOP a corporate policy SOP?',
+     'Answer': 'No'}
+]
+
+context = "# Global Delivery Standard Operating Procedure (SOP) Template"
+
+for qa in response_data:
+    payload = json.dumps({
+        "question": qa["Question"],
+        "answer": qa["Answer"],
+        "context": context,
+        "threshold_score": qa.get("threshold_score", 0.5)  # Fixing variable reference
+    })
+
+    headers = {
+        'SSGenAIClient': client_id,
+        'SSGenAIAuth': client_secret,
+        'Authorization': f"Bearer {access_token}",  # Fixed syntax
+        'Content-Type': 'application/json'
+    }
+
+    hal_response = requests.post(hallucination_url, headers=headers, data=payload, verify=False).json()
+    print("\nHallucination Response:\n", hal_response)
+
+#====== STEP 3: CALL EVALUATIONS API ======
+evaluations_url = f"{host}/rai-obs-compute/v1/evaluations"
+
+for qa in response_data:
+    if "Answer" in qa:  # Ensure ground truth is provided for evaluation
+        payload = json.dumps({
+            "payload": {
+                "clientId": "2xy7gs8rmi83t2vu9",
+                "question": qa["Question"],
+                "answer": qa["Answer"],
+                "context": context,
+                "groundTruth": qa["Answer"]
+            },
+            "metricNames": ["PRECISION_RECALL_F1"]
+        })
+
+        headers = {
+            'SSGenAIClient': client_id,
+            'SSGenAIAuth': client_secret,
+            'Authorization': f"Bearer {access_token}",  # Fixed syntax
+            'Content-Type': 'application/json'
+        }
+
+        eval_response = requests.post(evaluations_url, headers=headers, data=payload, verify=False).json()
+        print("\nEvaluation Response:\n", eval_response)
+
+
+
+
+
+
+
+
+
 for qa in qa_data:
     payload = json.dumps({
         "question": qa["question"],
