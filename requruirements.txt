@@ -1,3 +1,27 @@
+import pandas as pd
+import json
+
+def convert_excel_to_json(file_path: str, output_json_path: str = "output_data.json") -> str:
+    # Read Excel file
+    df = pd.read_excel(file_path, dtype=str)
+
+    # Fill NaN values with empty strings
+    df = df.fillna("")
+
+    # Convert DataFrame to list of dictionaries
+    json_data = df.to_dict(orient="records")
+
+    # Write JSON file
+    with open(output_json_path, "w", encoding="utf-8") as json_file:
+        json.dump(json_data, json_file, indent=4, ensure_ascii=False)
+
+    print(f"Data successfully converted to JSON and saved to {output_json_path}")
+
+    return output_json_path
+
+
+
+
 INFERENTIAL_PROMPT = """
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
 
