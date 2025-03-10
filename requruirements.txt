@@ -1,3 +1,9 @@
+The Predicted response lacks the structured format, step-by-step procedure, and key details from the Ground Truth (such as the interface name, image reference, and prerequisites). To improve accuracy, it should retain the procedural instructions and structured format while keeping the importance explanation as a supporting point.
+
+
+
+
+
 The Predicted response is more detailed and structured but introduces unnecessary changes, omits a critical folder copying step, and shifts the scope. It needs fine-tuning to retain key original steps while keeping the added validation process
 
 
