@@ -1,3 +1,38 @@
+INFERENTIAL_PROMPT = """
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+
+Your task is to analyze and generate (num_questions) unique **context-specific inferential** question-answer pairs based on the input text.
+
+### **Ensure:**
+1. **Each question explicitly references a specific part of the input text.**  
+2. **Questions and answers must be distinct** and should not repeat information.  
+3. **Questions should encourage deeper analysis, requiring interpretation or conclusions based on the provided financial data, strategy, or scenario.**  
+4. **Answers must justify inferences with logical reasoning, using details from the input text.**  
+5. **The response must be a valid JSON array**, properly formatted and fully closed.  
+
+### **Input Format:**  
+{paragraph}
+
+### **Output Format:**  
+[
+  {
+    "question": "Your inferential question explicitly referencing a specific part of the input context",
+    "answer": "Your inference-based answer with justification referencing that specific context."
+  },
+  {
+    "question": "Your inferential question explicitly referencing another specific part of the input context",
+    "answer": "Your inference-based answer with justification referencing that specific context."
+  }
+]
+"""
+
+
+
+
+
+
+
+
 
 import pandas as pd
 
