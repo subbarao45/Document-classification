@@ -1,3 +1,48 @@
+Title Difference
+
+Ground Truth: No title mentioned.
+Predicted: Includes a title "Preparing Raw Data for HKHA Annual Currency Risk Exposure Report", specifying a report type.
+Scope & Purpose
+
+Ground Truth: Focuses on preparing raw data, including copying a folder and downloading specific files.
+Predicted: Focuses on data preparation for the HKHA Annual Currency Risk Exposure Report, making it more specific.
+Prerequisites
+
+Ground Truth: None specified.
+Predicted: Adds "Access to MYSS" and "Raw data templates" as prerequisites.
+Data Downloading Steps
+
+Ground Truth: Focuses only on copying last year’s folder and downloading Pending FX and Open Trade file (Mapping: 13210).
+Predicted: Expands the data list to include:
+1-day adjustment (with/without accrual)
+FX Pending Forward Activity
+Currency Exposure
+Open Trades, Tax Reclaim Receivable, Interest Receivable, Dividend Receivable, MBS Interest Receivable.
+Data Review Process
+
+Ground Truth: Does not mention reviewing data.
+Predicted: Adds a "Review Raw Data" section, including checks for:
+Date period accuracy
+Fund completeness
+Open trades, tax reclaim, interest income, and missing funds validation.
+Structural Differences
+
+Ground Truth: Follows a step-based procedural format.
+Predicted: Uses bullet points for clarity and adds extra validation steps.
+Missing Folder Copying Step
+
+Ground Truth: Mentions copying the last year’s folder as Step 1.
+Predicted: Completely omits this step.
+
+
+
+
+
+
+
+
+
+
 import requests
 import json
 import pandas as pd
