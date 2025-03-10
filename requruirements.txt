@@ -1,3 +1,47 @@
+import pandas as pd
+
+def save_responses_to_excel(all_responses, excel_file_path="diverse_questions_and_answers.xlsx"):
+    excel_data = []
+
+    for response in all_responses:
+        original_id = response["id"]
+        question_type = response["question_type"]
+        original_question = response["original_question"]
+        original_answer = response["original_answer"]
+
+        for diverse in response["diverse_questions"]:
+            excel_data.append({
+                "ID": original_id,
+                "Question Type": question_type,
+                "Original Question": original_question,
+                "Original Answer": original_answer,
+                "Diverse Question": diverse["diverse_question"],
+                "Diverse Answer": diverse["diverse_answer"]
+            })
+
+    # Convert to DataFrame
+    df = pd.DataFrame(excel_data, columns=[
+        "ID", "Question Type", "Original Question", "Original Answer",
+        "Diverse Question", "Diverse Answer"
+    ])
+
+    # Sort by Question Type to group similar types together
+    df.sort_values(by=["Question Type", "ID"], inplace=True)
+
+    # Save to Excel
+    df.to_excel(excel_file_path, index=False, engine="openpyxl")
+
+    print(f"Data saved successfully to {excel_file_path}")
+    return excel_file_path
+
+# Call function
+save_responses_to_excel(all_responses, "diverse_questions_and_answers_1000.xlsx")
+
+
+
+
+
+
 import json
 import uuid
 
