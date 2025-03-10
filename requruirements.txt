@@ -1,3 +1,96 @@
+import json
+import uuid
+
+# Define constants
+BATCH_SIZE = 2
+NUM_DIVERSE_QUESTIONS = 5  # Number of diverse questions per input
+
+# Define a general prompt template for generating diverse question types
+DIVERSE_QUESTION_PROMPT = """
+You are tasked to generate diverse question-answer pairs across multiple question types.
+
+For each input question-answer pair, generate up to {num_diverse_questions} distinct questions
+ensuring that the answers remain consistent and relevant to the original answer provided.
+
+### Question Types:
+1. **Factual** - Direct and fact-based questions.
+2. **Conceptual** - Questions that require understanding of principles or ideas.
+3. **Inferential** - Questions that require drawing logical conclusions.
+4. **Reasoning-Based** - Questions requiring analysis and logical reasoning.
+5. **Procedural** - Questions related to step-by-step processes.
+
+### Input Format:
+
+
+### Instructions:
+- Iterate through each input question-answer pair.
+- Generate {num_diverse_questions} diverse questions, ensuring one for each type above.
+- Maintain the original answer where applicable.
+- **Do not include JSON in your response.**
+
+### Output Format (JSON):
+
+
+### Instructions:
+- Iterate through each input question-answer pair.
+- Generate {num_diverse_questions} diverse questions, ensuring one for each type above.
+- Maintain the original answer where applicable.
+- **Do not include JSON in your response.**
+
+### Output Format (JSON):
+
+"""
+
+# Function to split input into batches of fixed size
+def split_into_fixed_batches(input_list, batch_size=BATCH_SIZE):
+    """Splits the input list into fixed-size batches."""
+    for i in range(0, len(input_list), batch_size):
+        yield input_list[i:i + batch_size]
+
+# Function to generate diverse questions using an LLM
+def generate_diverse_questions(input_data, llm_chain):
+    all_responses = []
+    batch_number = 1
+
+    for batch in split_into_fixed_batches(input_data, BATCH_SIZE):
+        print(f"Processing batch {batch_number} with {len(batch)} question-answer pairs...")
+
+        # Convert batch input to JSON
+        batch_input_json = json.dumps(batch)
+
+        # Fill prompt template
+        filled_prompt = DIVERSE_QUESTION_PROMPT.format(
+            input_json=batch_input_json,
+            num_diverse_questions=NUM_DIVERSE_QUESTIONS
+        )
+
+        # Predict diverse questions using the LLM
+        response = llm_chain.predict(
+            input_json=batch_input_json,
+            num_diverse_questions=str(NUM_DIVERSE_QUESTIONS),
+            stream=True
+        )
+
+        # Parse the response JSON
+        try:
+            response_json = json.loads(response)
+            all_responses.extend(response_json)
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse response for batch {batch_number}: {e}")
+
+        batch_number += 1
+
+    # Output the combined results
+    print(json.dumps(all_responses, indent=4))
+    return all_responses
+
+
+
+
+
+
+
+
 The Predicted response lacks the structured format, step-by-step procedure, and key details from the Ground Truth (such as the interface name, image reference, and prerequisites). To improve accuracy, it should retain the procedural instructions and structured format while keeping the importance explanation as a supporting point.
 
 
