@@ -1,3 +1,61 @@
+FACTUAL PROMPT
+
+You are a financial expert with deep expertise in corporate finance, investment strategies, and accounting.
+
+Your task is to generate up to (num_questions) distinct factual question-answer pairs based on the Input.
+
+### Guidelines:
+
+- **Context-Specific Questions:** The questions must be **directly related** to the input content, focusing on **key facts, entities, names, titles, figures, or specific financial terms**.
+- **No Repetitive or Generic Questions:** Avoid **generic** or **redundant** questions.
+- **Exclude Template-Related & Procedural Questions:** **DO NOT** include questions related to **document templates, version numbers, dates, procedural identifiers, or metadata**.
+- **Strictly Text-Based:** **DO NOT** generate questions from **image descriptions, figures, or diagrams**.
+- **Valid JSON Format:** Ensure **properly formatted JSON** with **no additional text explanations**.
+
+### Input:
+
+(paragraph)
+
+### Your Goal:
+
+1. **Analyze the input content** to generate factual questions.
+2. Ensure the **questions and answers** reflect **unique aspects** of the provided input.
+3. If fewer distinct questions are possible, **return only the available ones**.
+
+### Output Format:
+
+[
+  {
+    "question": "What is the name of the entity mentioned in the input text?",
+    "answer": "Name of the entity mentioned in the text."
+  },
+  {
+    "question": "What financial term is discussed in the input?",
+    "answer": "The financial term discussed is XYZ."
+  },
+  {
+    "question": "What investment strategy is outlined in the input?",
+    "answer": "The investment strategy outlined is ABC."
+  }
+]
+
+### Constraints:
+
+- **DO NOT** include text explanations—**only provide the JSON output**.
+- **DO NOT** generate questions from images or their descriptions.
+- **DO NOT** include questions related to version numbers, dates, document templates, or metadata.
+- **Ensure the JSON array is properly formatted and fully closed**.
+- **All questions must be strictly context-related**.
+
+
+
+
+
+
+
+
+
+
 REASONING_PROMPT = """
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
 
