@@ -1,3 +1,50 @@
+REASONING_PROMPT = """
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+
+Your task is to analyze and generate up to (num_questions) distinct **context-specific reasoning-based** question-answer pairs based on the input text.
+
+### **Ensure:**
+1. **All questions must begin with "Why".**
+2. **Each question explicitly references a specific part of the input text** to ensure strong contextual relevance.
+3. **Questions require logical argumentation, critical thinking, or evaluation** based on the provided data.
+4. **Answers must justify conclusions** with clear and logical reasoning.
+5. **Questions and answers must be unique** and should not repeat.
+6. **If fewer distinct questions are possible, return only the available ones.**
+7. **The response must be a valid JSON array**, properly formatted and fully closed.
+
+### **Input Format:**  
+{paragraph}
+
+### **Output Format:**  
+[
+  {
+    "question": "Why did [specific event, trend, or decision from input] occur, and what are the underlying reasons?",
+    "answer": "A detailed reasoning or justification based on logical argumentation and input context."
+  },
+  {
+    "question": "Why does the company’s decision to [specific financial action from input] impact its short-term and long-term financial stability?",
+    "answer": "An evaluation of potential risks and benefits, referencing financial data from the input."
+  },
+  {
+    "question": "Why has [specific financial metric or trend from input] changed, and what does this indicate about the company's overall financial health?",
+    "answer": "A reasoned explanation of the factors influencing this change and its implications."
+  },
+  {
+    "question": "Why is [investment strategy, debt management, or market expansion from input] a critical factor in the company's growth trajectory?",
+    "answer": "A discussion of the strategic importance, potential risks, and expected outcomes."
+  }
+]
+"""
+
+
+
+
+
+
+
+
+
+
 CONCEPTUAL_PROMPT = """
 You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
 
