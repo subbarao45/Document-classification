@@ -1,3 +1,26 @@
+import pandas as pd
+
+# Load the Excel file
+file_path = "your_file.xlsx"  # Update with your actual file path
+df = pd.read_excel(file_path, sheet_name="Sheet1")  # Update the sheet name if needed
+
+# Remove all occurrences of duplicate questions
+df_cleaned = df[df.duplicated(subset=['Question'], keep=False) == False]
+
+# Save the cleaned data back to a new Excel file
+cleaned_file_path = "cleaned_data.xlsx"
+df_cleaned.to_excel(cleaned_file_path, index=False)
+
+# Display the cleaned DataFrame
+print("Cleaned DataFrame:")
+print(df_cleaned)
+
+print(f"\nCleaned data saved to: {cleaned_file_path}")
+
+
+
+
+
 
 import pandas as pd
 import ace_tools as tools  # For displaying the cleaned DataFrame
