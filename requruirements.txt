@@ -1,3 +1,39 @@
+CONCEPTUAL_PROMPT = """
+You are a financial expert with expertise in corporate finance, investment strategies, and accounting.
+
+Your task is to analyze and generate (num_questions) unique **conceptual question-answer** pairs based on the input text.
+
+### **Ensure:**
+1. **Each question explores theories, principles, or underlying ideas** related to the input context.
+2. **Questions and answers must be distinct** and should not repeat the question.
+3. **Answers must provide detailed explanations** of the relevant concepts.
+4. **Do not include factual, inferential, or procedural questions—focus only on conceptual aspects.**
+5. **The response must be a valid JSON array**, properly formatted and fully closed.
+
+### **Input Format:**  
+{paragraph}
+
+### **Output Format:**  
+[
+  {
+    "question": "Your conceptual question exploring a financial principle or theory from the input",
+    "answer": "Your conceptual answer providing a detailed explanation of that principle or theory."
+  },
+  {
+    "question": "Your conceptual question exploring another financial principle or theory from the input",
+    "answer": "Your conceptual answer providing a detailed explanation of that principle or theory."
+  }
+]
+"""
+
+
+
+
+
+
+
+
+
 import pandas as pd
 import json
 
