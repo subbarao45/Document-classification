@@ -18,6 +18,62 @@ def append_responses_to_json(batch_responses, batch_number, output_json_path="in
 
     except Exception as e:
         print(f"❌ Error appending Batch {batch_number} responses to JSON: {e}")
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+def process_batches(data, batch_size=2, num_diverse_questions=3, max_workers=3):
+    clear_incremental_json()  # Clear previous data
+
+    futures = []
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        batch_number = 1  # Start batch numbering from 1
+
+        for batch in split_into_fixed_batches(data, batch_size):
+            print(f"🚀 Processing Batch {batch_number} with {len(batch)} question-answer pairs...")
+            batch_input_json = json.dumps(batch)
+
+            # Submit batch processing in parallel and store both the future and batch number
+            future = executor.submit(generate_diverse_questions, batch_input_json, num_diverse_questions)
+            futures.append((future, batch_number))
+
+            batch_number += 1  # Increment batch count
+
+        # Collect results as they complete
+        for future, batch_number in futures:
+            try:
+                response_json = future.result()  # Get the actual result from the future
+                append_responses_to_json(response_json, batch_number, output_json_path="incremental_responses.json")
+            except Exception as e:
+                print(f"❌ Error processing Batch {batch_number}: {e}")
+
+    save_responses_to_excel()
+
+
+
+
+
+
+
+def append_responses_to_json(batch_responses, batch_number, output_json_path="incremental_responses.json"):
+    try:
+        # Load existing data if the file exists
+        try:
+            with open(output_json_path, "r", encoding="utf-8") as json_file:
+                existing_data = json.load(json_file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            existing_data = []
+
+        # Append new responses
+        existing_data.extend(batch_responses)
+
+        # Save back to file
+        with open(output_json_path, "w", encoding="utf-8") as json_file:
+            json.dump(existing_data, json_file, indent=4, ensure_ascii=False)
+
+        print(f"✅ Batch {batch_number} responses appended to {output_json_path}")
+
+    except Exception as e:
+        print(f"❌ Error appending Batch {batch_number} responses to JSON: {e}")
 
 def process_batches(data, batch_size=2, num_diverse_questions=3, max_workers=3):
     clear_incremental_json()  # Clear previous data
