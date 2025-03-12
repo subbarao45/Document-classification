@@ -4,6 +4,51 @@ from openpyxl import Workbook
 
 def save_responses_to_excel(output_json_path="incremental_responses.json", output_excel_path="final_diverse_questions.xlsx"):
     try:
+        # Load JSON file and check structure
+        with open(output_json_path, "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+
+        if not isinstance(data, list):
+            raise ValueError("JSON data should be a list of dictionaries.")
+
+        # Debug JSON structure
+        print("✅ JSON loaded successfully.")
+        print("🔍 Sample entry:", data[0])
+
+        # Convert JSON to DataFrame
+        df = pd.json_normalize(
+            data,
+            record_path=['diverse_questions'],  
+            meta=['id', 'question_type', 'original_question', 'original_answer'],
+            errors='ignore'  
+        )
+
+        # Debug DataFrame structure
+        print("📊 DataFrame preview:\n", df.head())
+
+        # Write to Excel with explicit engine
+        with pd.ExcelWriter(output_excel_path, engine="openpyxl", mode="w") as writer:
+            df.to_excel(writer, index=False, sheet_name="Diverse Questions")
+
+        print(f"✅ Final responses saved to {output_excel_path}")
+
+    except Exception as e:
+        print(f"❌ Error saving responses to Excel: {e}")
+
+# Run the function
+save_responses_to_excel()
+
+
+
+
+
+
+import json
+import pandas as pd
+from openpyxl import Workbook
+
+def save_responses_to_excel(output_json_path="incremental_responses.json", output_excel_path="final_diverse_questions.xlsx"):
+    try:
         # Load JSON data
         with open(output_json_path, "r", encoding="utf-8") as json_file:
             data = json.load(json_file)
