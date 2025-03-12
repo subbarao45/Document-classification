@@ -1,3 +1,196 @@
+
+import json
+import pandas as pd
+import time
+import concurrent.futures
+from tenacity import retry, stop_after_attempt, wait_exponential
+from langchain_openai import AzureChatOpenAI
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+from openpyxl import Workbook
+
+# Initialize Azure OpenAI model
+llm = AzureChatOpenAI(
+    temperature=0,
+    api_version="your_api_version",
+    api_key="your_api_key",
+    azure_endpoint="your_azure_endpoint",
+    deployment_name="ssgpt-40",
+    seed=1
+)
+
+# Define the prompt template
+DIVERSE_QUESTION_PROMPT = """
+You are tasked to generate diverse question-answer pairs across multiple question types.
+For each input question-answer pair, generate up to {num_diverse_questions} distinct questions and answers.
+
+### Question Types:
+1. **Factual** - Direct and fact-based questions.
+2. **Conceptual** - Questions that require understanding of principles or ideas.
+3. **Inferential** - Questions that require drawing logical conclusions.
+4. **Reasoning-Based** - Questions requiring analysis and logical reasoning.
+5. **Procedural** - Questions related to step-by-step processes.
+
+### Input Format:
+{input_json}
+
+### Instructions:
+- Do not generate questions that are a subset of the original question.
+- Ensure questions maintain the same broad scope.
+- The diverse questions must be rephrased, restructured, or take a different approach while preserving the original intent.
+- Ensure that procedural answers follow the original procedural format.
+
+### Output Format:
+[
+    {
+        "id": <unique_id>,
+        "question_type": "<question type>",
+        "original_question": "<Original Question>",
+        "original_answer": "<Original Answer>",
+        "diverse_questions": [
+            {"diverse_question": "<Diverse Question 1>", "diverse_answer": "<Your Answer>"},
+            {"diverse_question": "<Diverse Question 2>", "diverse_answer": "<Your Answer>"},
+            {"diverse_question": "<Diverse Question 3>", "diverse_answer": "<Your Answer>"}
+        ]
+    }
+]
+"""
+
+# Fill the prompt template
+prompt = PromptTemplate(
+    input_variables=["input_json", "num_diverse_questions"],
+    template=DIVERSE_QUESTION_PROMPT
+)
+
+# Create the LLM chain
+llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+# Retry logic to handle quota limits
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+def generate_diverse_questions(input_json, num_diverse_questions):
+    """Calls the LLM model with retry logic if quota limits are hit."""
+    try:
+        response = llm_chain.predict(
+            input_json=input_json,
+            num_diverse_questions=str(num_diverse_questions)
+        )
+        return json.loads(response)
+    except json.JSONDecodeError as e:
+        print(f"❌ Failed to parse response: {e}")
+        return []
+
+# Append responses to JSON file immediately
+def append_responses_to_json(batch_responses, output_json_path="incremental_responses.json"):
+    try:
+        with open(output_json_path, "r+", encoding="utf-8") as json_file:
+            try:
+                existing_data = json.load(json_file)
+            except json.JSONDecodeError:
+                existing_data = []
+
+            existing_data.extend(batch_responses)
+
+            json_file.seek(0)
+            json.dump(existing_data, json_file, indent=4, ensure_ascii=False)
+
+        print(f"✅ Batch responses appended to {output_json_path}")
+    except Exception as e:
+        print(f"❌ Error appending responses to JSON: {e}")
+
+# Save final responses to an Excel file
+def save_responses_to_excel(output_json_path="incremental_responses.json", output_excel_path="final_diverse_questions.xlsx"):
+    try:
+        with open(output_json_path, "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+
+        # Convert JSON to Pandas DataFrame
+        excel_data = []
+        for response in data:
+            original_id = response.get("id", "")
+            question_type = response.get("question_type", "")
+            original_question = response.get("original_question", "")
+            original_answer = response.get("original_answer", "")
+
+            for diverse in response.get("diverse_questions", []):
+                excel_data.append({
+                    "ID": original_id,
+                    "Question Type": question_type,
+                    "Original Question": original_question,
+                    "Original Answer": original_answer,
+                    "Diverse Question": diverse.get("diverse_question", ""),
+                    "Diverse Answer": diverse.get("diverse_answer", "")
+                })
+
+        df = pd.DataFrame(excel_data)
+
+        # ✅ Ensure OpenPyXL is explicitly used
+        with pd.ExcelWriter(output_excel_path, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False)
+
+        print(f"✅ Final responses saved to Excel at {output_excel_path}")
+    except Exception as e:
+        print(f"❌ Error saving responses to Excel: {e}")
+
+# Parallel processing function
+def process_batch_parallel(batch, num_diverse_questions):
+    """Processes a single batch in parallel."""
+    batch_input_json = json.dumps(batch)
+    response_json = generate_diverse_questions(batch_input_json, num_diverse_questions)
+
+    if response_json:
+        append_responses_to_json(response_json, output_json_path="incremental_responses.json")
+
+# Process all batches in parallel
+def process_batches_parallel(data, batch_size=2, num_diverse_questions=3, max_workers=4):
+    """Processes data in parallel batches using ThreadPoolExecutor."""
+    batch_list = [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(process_batch_parallel, batch, num_diverse_questions) for batch in batch_list]
+        concurrent.futures.wait(futures)
+
+    # Save final responses in Excel
+    save_responses_to_excel(output_json_path="incremental_responses.json", output_excel_path="final_diverse_questions.xlsx")
+
+# Convert Excel to JSON
+def convert_excel_to_json(file_path: str, output_json_path: str = "output_data.json") -> str:
+    df = pd.read_excel(file_path, dtype=str).fillna("")  
+    json_data = [{"Question_type": row["Question Type"], "Question": row["Question"], "Answer": row["Answer"]} 
+                 for _, row in df.iterrows()]
+
+    with open(output_json_path, "w", encoding="utf-8") as json_file:
+        json.dump(json_data, json_file, indent=4, ensure_ascii=False)
+
+    print(f"✅ Data successfully converted to JSON and saved to {output_json_path}")
+    return output_json_path
+
+# Read JSON file function
+def read_json_file(file_path: str) -> list:
+    try:
+        with open(file_path, "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+        print(f"✅ Successfully read {len(data)} records from {file_path}")
+        return data
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"❌ Error reading JSON: {e}")
+    return []
+
+# Convert Excel to JSON & Process Data
+file_path = "/path/to/your/excel.xlsx"
+json_file_path = convert_excel_to_json(file_path)
+data = read_json_file(json_file_path)
+
+if data:
+    process_batches_parallel(data, batch_size=2, num_diverse_questions=3, max_workers=4)
+
+
+
+
+
+
+
+
+
 import json
 import pandas as pd
 from openpyxl import Workbook
