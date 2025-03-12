@@ -1,3 +1,33 @@
+import os
+
+def process_batches_parallel(data, batch_size=2, num_diverse_questions=3, max_workers=4):
+    """Processes all batches in parallel and resets JSON storage before starting."""
+    
+    output_json_path = "incremental_responses.json"
+
+    # ✅ Step 1: Clear previous JSON file before starting a new run
+    if os.path.exists(output_json_path):
+        with open(output_json_path, "w", encoding="utf-8") as json_file:
+            json.dump([], json_file)  # Reset to empty list
+        print(f"🗑 Cleared previous data in {output_json_path}")
+
+    batch_list = [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(process_batch_parallel, batch, batch_number+1, num_diverse_questions): batch_number+1
+            for batch_number, batch in enumerate(batch_list)
+        }
+        concurrent.futures.wait(futures)
+
+    # Save final responses in Excel
+    save_responses_to_excel(output_json_path)
+
+
+
+
+
+
 import json
 import pandas as pd
 import concurrent.futures
