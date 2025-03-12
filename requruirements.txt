@@ -1,5 +1,60 @@
 import json
 import pandas as pd
+
+def save_responses_to_excel(output_json_path, excel_file_path):
+    try:
+        # Load the JSON file
+        with open(output_json_path, "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+
+        excel_data = []
+
+        # Parse JSON and structure it for DataFrame
+        for response in data:
+            original_id = response["id"]
+            question_type = response["question_type"]
+            original_question = response["original_question"]
+            original_answer = response["original_answer"]
+
+            for diverse in response["diverse_questions"]:
+                excel_data.append({
+                    "ID": original_id,
+                    "Question Type": question_type,
+                    "Original Question": original_question,
+                    "Original Answer": original_answer,
+                    "Diverse Question": diverse["diverse_question"],
+                    "Diverse Answer": diverse["diverse_answer"]
+                })
+
+        # Convert list to DataFrame
+        df = pd.DataFrame(excel_data, columns=[
+            "ID", "Question Type", "Original Question", "Original Answer", "Diverse Question", "Diverse Answer"
+        ])
+
+        # Save to Excel
+        df.to_excel(excel_file_path, index=False, engine="openpyxl")
+
+        print(f"Data saved successfully to {excel_file_path}")
+        return excel_file_path
+
+    except Exception as e:
+        print(f"Error saving responses to Excel: {e}")
+        return None
+
+# Define file paths (use raw string `r""` to avoid escape character issues)
+output_json_path = r"C:\Users\P872643\Downloads\incremental_responses.json"
+excel_path = r"C:\Users\P872643\Downloads\incremental_responses.xlsx"
+
+# Run the function
+save_responses_to_excel(output_json_path, excel_path)
+
+
+
+
+
+
+import json
+import pandas as pd
 import time
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
