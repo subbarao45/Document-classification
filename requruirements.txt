@@ -1,3 +1,43 @@
+import json
+import pandas as pd
+from openpyxl import Workbook
+
+def save_responses_to_excel(output_json_path="incremental_responses.json", output_excel_path="final_diverse_questions.xlsx"):
+    try:
+        # Load JSON data
+        with open(output_json_path, "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+
+        # Check if data is a list
+        if not isinstance(data, list):
+            raise ValueError("JSON data should be a list of dictionaries.")
+
+        # Normalize JSON
+        df = pd.json_normalize(
+            data,
+            record_path=['diverse_questions'],  # Extract questions
+            meta=['id', 'question_type', 'original_question', 'original_answer'],
+            errors='ignore'  # Ignore missing keys instead of raising an error
+        )
+
+        # ✅ Ensure OpenPyXL is explicitly used
+        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False)
+
+        print(f"✅ Final responses saved to Excel at {output_excel_path}")
+    except Exception as e:
+        print(f"❌ Error saving responses to Excel: {e}")
+
+# Call function to test
+save_responses_to_excel()
+
+
+
+
+
+
+
+
 import pandas as pd
 from openpyxl import Workbook
 
