@@ -1,3 +1,21 @@
+File: LLM_Model_vs_HF_Comparison.xlsx  
+BU Saving?: Yes  
+Functional Area: AI/ML - Question Generation  
+HM Effort Saved: 20-30 hours per month (estimated)  
+Billing Rate: [Enter billing rate if applicable]  
+PI Category: Process Improvement / AI Model Enhancement  
+Total Benefits USD: [Estimate based on effort saved]  
+PI Idea Detail: Suggested replacing the Hugging Face model with an LLM model for better question-answer generation. This resulted in improved accuracy, question diversity, and consistency.  
+Idea by SS or Infy?: Infy  
+Acknowledged by HM?: [Yes/No - based on confirmation]  
+Comments: The LLM model provided significantly better results in generating factual, procedural, inferential, reasoning-based, and conceptual questions compared to the Hugging Face model.  
+Date of Implementation: [Enter the date when the transition happened or was suggested]  
+One-time effort saving or recurring effort?: Recurring effort saving  
+
+
+
+
+
 **Subject:** Productivity Improvements Summary  
 
 Hello [Requester’s Name],  
